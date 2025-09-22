@@ -4,33 +4,52 @@ const Class = require("../../models/class.schema.js");
 const Attendance = require('../../models/attendance.schema.js')
 const Fees = require('../../models/fees.schema.js')
 const Assignment = require('../../models/assignment.schema.js')
+const Enrollment = require('../../models/students/studentEnrollment.schema.js')
 
 const adminStudent = {
     // Create Student
     addStudent: async (studentData) => {
-        const { name, email, classId } = studentData;
+        const { name, dob, gender, email, phone, address, parents, classId, year, section } = studentData;
 
+        // 1. Find class
         const classObj = await Class.findById(classId);
         if (!classObj) {
-            return null
+            return null;
         }
 
+        // 2. Create student (basic info)
+        const student = await Student.create({
+            name,
+            dob,
+            gender,
+            email: email || null,
+            phone: phone || null,
+            address,
+            parents,
+        });
+
+        // 3. Generate roll number
         classObj.studentCount += 1;
         const rollNo = `${classObj.name}-${String(classObj.studentCount).padStart(3, "0")}`;
 
-        // Save student
-        const student = new Student({
-            name,
-            email,
+        // 4. Create enrollment
+        const enrollment = await Enrollment.create({
+            student: student._id,
             class: classId,
+            year,
+            section,
             rollNo,
         });
+
+        // 5. Update student with current rollNo (for quick reference)
+        student.rollNo = rollNo;
         await student.save();
 
+        // 6. Update class with student reference
         classObj.students.push(student._id);
         await classObj.save();
 
-        return student;
+        return { student, enrollment };
     },
 
     // Get All Students
@@ -183,7 +202,7 @@ const adminStudent = {
             { new: true }
         );
     },
-    
+
     updateStudentAttendance: async (studentId, attendanceId, updateData) => {
         return await Attendance.findOneAndUpdate(
             { _id: attendanceId, student: studentId },
@@ -192,7 +211,7 @@ const adminStudent = {
         );
     },
 
-    updateStudentFees : async (studentId, feeId, updateData) => {
+    updateStudentFees: async (studentId, feeId, updateData) => {
         return await Fees.findOneAndUpdate(
             { _id: feeId, student: studentId },
             updateData,

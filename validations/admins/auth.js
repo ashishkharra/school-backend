@@ -34,7 +34,7 @@ module.exports.validate = (method) => {
       ]
     }
 
-    case "addTeacher": {
+    case "registerTeacher": {
       return [
         body("name")
           .notEmpty()
@@ -62,8 +62,9 @@ module.exports.validate = (method) => {
       ];
     }
 
-    case "addStudent": {
+    case "registerStudent": {
       return [
+        // Name
         body("name")
           .notEmpty()
           .withMessage("NAME_EMPTY")
@@ -72,23 +73,52 @@ module.exports.validate = (method) => {
           .isLength({ max: 50 })
           .withMessage("NAME_LENGTH_MAX"),
 
-        body("email")
+        // DOB
+        body("dob")
           .notEmpty()
-          .withMessage("EMAIL_EMPTY")
+          .withMessage("DOB_EMPTY")
+          .isISO8601()
+          .withMessage("DOB_INVALID"),
+
+        // Gender
+        body("gender")
+          .notEmpty()
+          .withMessage("GENDER_EMPTY")
+          .isIn(["Male", "Female", "Other"])
+          .withMessage("GENDER_INVALID"),
+
+        // Parent Info
+        body("parents")
+          .isArray({ min: 1 })
+          .withMessage("PARENT_REQUIRED"),
+        body("parents.*.name")
+          .notEmpty()
+          .withMessage("PARENT_NAME_EMPTY"),
+
+        // Address (optional but if provided, validate format)
+        body("address.city")
+          .optional()
+          .isString()
+          .withMessage("CITY_STRING"),
+        body("address.state")
+          .optional()
+          .isString()
+          .withMessage("STATE_STRING"),
+
+        body("email")
+          .optional()
           .isEmail()
           .withMessage("EMAIL_VALID"),
 
-        body("password")
-          .notEmpty()
-          .withMessage("PASSWORD_EMPTY")
-          .isLength({ min: 8 })
-          .withMessage("PASSWORD_MIN")
-          .isLength({ max: 30 })
-          .withMessage("PASSWORD_MAX"),
+        body("phone")
+          .optional()
+          .isMobilePhone()
+          .withMessage("PHONE_VALID"),
 
         body("classId")
-          .notEmpty()
-          .withMessage("CLASS_EMPTY"),
+          .optional()
+          .isMongoId()
+          .withMessage("CLASS_ID_INVALID"),
 
         validatorMiddleware,
       ];
