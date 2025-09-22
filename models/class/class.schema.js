@@ -1,7 +1,8 @@
 const mongoose = require('mongoose')
 
 const classSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // "10th Grade - A"
+  name: { type: String, required: true },
+  section: { type: String, required: true},
   subjects: [{ type: String, required: true }], // now supports multiple subjects
   teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
 

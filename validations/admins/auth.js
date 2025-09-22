@@ -124,6 +124,33 @@ module.exports.validate = (method) => {
       ];
     }
 
+    case "registerClass": {
+      return [
+        // Class name
+        body("name")
+          .notEmpty()
+          .withMessage("CLASS_NAME_REQUIRED")
+          .isLength({ min: 3, max: 50 })
+          .withMessage("CLASS_NAME_LENGTH"),
+
+        // Subjects must be array of strings
+        body("subjects")
+          .isArray({ min: 1 })
+          .withMessage("SUBJECTS_REQUIRED"),
+        body("subjects.*")
+          .isString()
+          .withMessage("SUBJECT_MUST_BE_STRING"),
+
+        // Teacher is optional but must be a valid ObjectId if present
+        body("teacher")
+          .optional()
+          .isMongoId()
+          .withMessage("TEACHER_ID_INVALID"),
+
+        validatorMiddleware,
+      ]
+    }
+
     case 'addFAQ': {
       return [
         body('title').notEmpty().withMessage('TITLE_EMPTY'),
