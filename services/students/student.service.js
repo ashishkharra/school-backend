@@ -62,33 +62,40 @@ const studentService = {
 
             const totalCountFilter = { "records.student": new mongoose.Types.ObjectId(studentId) };
 
-            if (year || month) {
-                totalCountFilter.$expr = { $and: [] };
-                if (year) totalCountFilter.$expr.$and.push({ $eq: [{ $year: "$date" }, parseInt(year, 10)] });
-                if (month) totalCountFilter.$expr.$and.push({ $eq: [{ $month: "$date" }, parseInt(month, 10)] });
-            }
+            // if (year || month) {
+            //     totalCountFilter.$expr = { $and: [] };
+            //     if (year) totalCountFilter.$expr.$and.push({ $eq: [{ $year: "$date" }, parseInt(year, 10)] });
+            //     if (month) totalCountFilter.$expr.$and.push({ $eq: [{ $month: "$date" }, parseInt(month, 10)] });
+            // }
 
-            if (date) {
-                const start = new Date(date + "T00:00:00.000Z");
-                const end = new Date(date + "T23:59:59.999Z");
-                totalCountFilter.date = { $gte: start, $lte: end };
-            }
+            // if (date) {
+            //     const start = new Date(date + "T00:00:00.000Z");
+            //     const end = new Date(date + "T23:59:59.999Z");
+            //     totalCountFilter.date = { $gte: start, $lte: end };
+            // }
 
             const attendanceData = await Attendance.aggregate(pipeline)
 
-            console.log(attendanceData)
+            const jsonData = attendanceData[0]?.docs || [];
+
+            const meta = {
+                studentId,
+                month,
+                date,
+                year,
+                page,
+                limit,
+                totalDocs: attendanceData[0]?.totalDocs,
+                totalPages: attendanceData[0]?.totalPages
+            };
 
             return {
                 success: true,
-                data: attendanceData[0],
-                meta: {
-                    studentId,
-                    month,
-                    date,
-                    year,
-                    page,
-                    limit                },
+                jsonData,
+                meta
             };
+
+
         } catch (error) {
             console.error("Error fetching attendance:", error);
             return { success: false, message: "Error fetching attendance" };
