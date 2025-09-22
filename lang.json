@@ -47,12 +47,88 @@
     "en": "This email id is already registered.",
     "ar": ""
   },
+  "EMAIL_VALID": {
+    "en": "Email is not valid",
+    "ar": ""
+  },
   "NO_USER_EXIST": {
     "en": "User is not registered.",
     "ar": ""
   },
   "MOBILE_EXIST": {
     "en": "This mobile number is already registered.",
+    "ar": ""
+  },
+  "NAME_LENGTH_MIN": {
+    "en": "Name must big than minimum length",
+    "ar": ""
+  },
+  "NAME_LENGTH_MAX": {
+    "en": "Name must lower than maximum length",
+    "ar": ""
+  },
+  "DOB_EMPTY": {
+    "en": "DOB must not empty",
+    "ar": ""
+  },
+  "DOB_INVALID": {
+    "en": "DOB must be valid",
+    "ar": ""
+  },
+  "GENDER_EMPTY": {
+    "en": "Gener must not be empty",
+    "ar": ""
+  },
+  "GENDER_INVALID": {
+    "en": "Gender must be valid", 
+    "ar": ""
+  },
+  "PARENT_REQUIRED": {
+    "en": "At least one parent name is required",
+    "ar": ""
+  },
+  "PARENT_NAME_EMPTY": {
+    "en": "Parent must not be empty",
+    "ar": ""
+  },
+  "CITY_STRING": {
+    "en": "City name must be valid string",
+    "ar": ""
+  },
+  "STATE_STRING": {
+    "en": "State name must be valid string",
+    "ar": ""
+  },
+  "PHONE_VALID": {
+    "en": "Phone number must be valid",
+    "ar": ""
+  },
+  "CLASS_ID_INVALID": {
+    "en": "Class id must be valid",
+    "ar": ""
+  },
+  "CLASS_NAME_REQUIRED": {
+    "en": "Class name must required",
+    "ar": ""
+  },
+  "CLASS_NAME_LENGTH": {
+    "en": "Clas name must have some length or not above 50",
+    "ar": ""
+  },
+  "CLASS_REGISTERED": {
+    "en": "Class registered successfully",
+    "ar": ""
+  },
+  "SUBJECTS_REQUIRED": {
+    "en": "Subject is required",
+    "ar": ""
+  },
+  "SUBJECT_MUST_BE_STRING": {
+    "en": "Subject name must be valid string",
+    "ar": ""
+  },
+  "TEACHER_ID_INVALID": {
+    "en": "Teacher id is not valid",
     "ar": ""
   },
   "USERNAME_EXIST": {
@@ -68,7 +144,15 @@
     "ar": ""
   },
   "PASSWORD_EMPTY": {
-    "en": "Please enter your pass code.",
+    "en": "Please enter your password.",
+    "ar": ""
+  },
+  "PASSWORD_MIN": {
+    "en": "Password must bigger than minimum length",
+    "ar": ""
+  },
+  "PASSWORD_MAX": {
+    "en": "Password must smaller than maximum length",
     "ar": ""
   },
   "ACCOUNT_DE_ACTIVE": {
@@ -1025,6 +1109,10 @@
   },
   "STUDENT_REGISTERED": {
     "en": "Student registered successfully",
+    "ar": ""
+  },
+  "CLASS_NOT_FOUND": {
+    "en": "Class not found",
     "ar": ""
   }
   ,

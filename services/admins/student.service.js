@@ -1,4 +1,3 @@
-// services/studentService.js
 const Student = require("../../models/student.schema.js");
 const Class = require("../../models/class.schema.js");
 const Attendance = require('../../models/attendance.schema.js')
@@ -7,14 +6,13 @@ const Assignment = require('../../models/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js')
 
 const adminStudent = {
-    // Create Student
     addStudent: async (studentData) => {
         const { name, dob, gender, email, phone, address, parents, classId, year, section } = studentData;
 
         // 1. Find class
         const classObj = await Class.findById(classId);
         if (!classObj) {
-            return null;
+            return { success: false, message: "CLASS_NOT_FOUND" };
         }
 
         // 2. Create student (basic info)
@@ -32,24 +30,37 @@ const adminStudent = {
         classObj.studentCount += 1;
         const rollNo = `${classObj.name}-${String(classObj.studentCount).padStart(3, "0")}`;
 
-        // 4. Create enrollment
-        const enrollment = await Enrollment.create({
-            student: student._id,
-            class: classId,
-            year,
-            section,
+        // 4. Prepare async operations
+        const tasks = [
+            Enrollment.create({
+                student: student._id,
+                class: classId,
+                year,
+                section,
+                rollNo,
+            }),
+            Student.findByIdAndUpdate(student._id, { rollNo }),
+            Class.findByIdAndUpdate(classId, {
+                $inc: { studentCount: 0 }, // keep the new count
+                $push: { students: student._id }
+            })
+        ];
+
+        // 5. Run all in parallel with allSettled
+        const results = await Promise.allSettled(tasks);
+
+        const summary = results.map((r, i) => ({
+            task: ["enrollment", "updateStudent", "updateClass"][i],
+            status: r.status,
+            value: r.value || r.reason.message,
+        }));
+
+        return {
+            success: true,
+            student,
             rollNo,
-        });
-
-        // 5. Update student with current rollNo (for quick reference)
-        student.rollNo = rollNo;
-        await student.save();
-
-        // 6. Update class with student reference
-        classObj.students.push(student._id);
-        await classObj.save();
-
-        return { student, enrollment };
+            summary, // shows which operations passed/failed
+        };
     },
 
     // Get All Students

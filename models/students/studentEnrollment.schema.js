@@ -7,8 +7,8 @@ const studentEnrollmentSchema = new mongoose.Schema({
   section: { type: String },
   status: {
     type: String,
-    enum: ["Pass", "Fail", "Drop"],
-    default: "Present"
+    enum: ["Pass", "Fail", "Drop", "Ongoing"],
+    default: "Ongoing"
   }
 });
 

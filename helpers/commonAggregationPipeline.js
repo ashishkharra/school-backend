@@ -156,7 +156,8 @@ const studentProfilePipeline = (studentId) => {
               session: 1,
               status: "$records.status",
               remarks: "$records.remarks",
-              className: "$classInfo.name"
+              className: "$classInfo.name",
+              section: "$classInfo.section"
             }
           },
           { $sort: { date: -1 } },
