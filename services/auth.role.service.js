@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs')
 const {generateAuthToken} = require('../helpers/responseData.js')
 
-const Teacher = require('../models/teacher.schema.js')
-const Student = require('../models/student.schema.js')
+const Teacher = require('../models/teacher/teacher.schema.js')
+const Student = require('../models/students/student.schema.js')
 
 module.exports = {
   login: async (email, password) => {
