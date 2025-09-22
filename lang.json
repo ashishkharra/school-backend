@@ -1022,5 +1022,9 @@
   "__ERROR_FETCHING_ATTENDANCE__": {
     "en": "Error in fetching attendance",
     "ar": ""
+  },
+  "STUDENT_REGISTERED": {
+    "en": "Student registered successfully",
+    "ar": ""
   }
 }

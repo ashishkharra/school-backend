@@ -5,6 +5,11 @@ const studentEnrollmentSchema = new mongoose.Schema({
   class: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
   year: { type: Number, required: true },
   section: { type: String },
+  status: {
+    type: String,
+    enum: ["Pass", "Fail", "Drop"],
+    default: "Present"
+  }
 });
 
-module.exports = mongoose.model("Student_Enrollment", studentEnrollmentSchema)
+module.exports = mongoose.model("Enrollment", studentEnrollmentSchema)
