@@ -1,5 +1,5 @@
 
-const Student = require('../../models/class.schema');  
+// const Student = require('../../models/class.schema');  
 // const Attendance = require('../../models/attendance.schema'); // Yeh line add karni hogi
 // const {getPaginationArray} = require('../../helpers/helper');
 module.exports = {

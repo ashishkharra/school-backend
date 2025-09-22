@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const { responseData } = require('../helpers/responseData')
 const { isEmpty } = require('lodash')
-const Admin = require('../models/admin.schema.js')
+const Admin = require('../models/admin/admin.schema.js')
 // const User = require('../models/user.model')
 const constant = require('../helpers/constant')
 // const UserNotificationModel = require('../models/userNotifications.model')

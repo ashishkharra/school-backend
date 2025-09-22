@@ -1,4 +1,4 @@
-const Admin = require('../../models/admin.schema.js')
+const Admin = require('../../models/admin/admin.schema.js')
 // const EmailTemplate = require('../../models/emailTemplate')
 const fs = require('fs')
 const { isEmpty } = require('lodash')

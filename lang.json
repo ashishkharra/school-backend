@@ -1023,4 +1023,13 @@
     "en": "Error in fetching attendance",
     "ar": ""
   }
+  ,
+  "TEACHER_REGISTERED":{
+      "en": "Teacher is registered",
+    "ar": ""
+  },
+  "REGISTRATION_FAILED":{
+       "en": "Teacher Registered Fail",
+    "ar": ""
+  }
 }
