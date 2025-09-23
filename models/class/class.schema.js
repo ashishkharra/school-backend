@@ -17,11 +17,6 @@ const classSchema = new mongoose.Schema({
 
     studentCount: { type: Number, default: 0 }
   },
-  {
-    name: {
-      type: String  
-    }
-  },
   { timestamps: true }
 )
 
