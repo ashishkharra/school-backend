@@ -141,11 +141,11 @@ module.exports.validate = (method) => {
           .isString()
           .withMessage("SUBJECT_MUST_BE_STRING"),
 
-        // Teacher is optional but must be a valid ObjectId if present
-        body("teacher")
-          .optional()
-          .isMongoId()
-          .withMessage("TEACHER_ID_INVALID"),
+        body('section')
+          .notEmpty()
+          .withMessage("CLASS_SECTION_MUST_REQUIRED")
+          .isLength({min: 1, max: 3})
+          .withMessage("CLASS_SECTION_LENGTH"),
 
         validatorMiddleware,
       ]

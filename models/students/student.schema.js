@@ -27,7 +27,6 @@ const studentSchema = new mongoose.Schema({
       occupation: { type: String }
     }
   ],
-
   enrollments: [
     {
       class: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },

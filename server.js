@@ -25,6 +25,11 @@ const adminTeacherRoutes = require('./routes/admins/teacher.routes');
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
 
+
+
+//import student routes
+const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') 
+
 // middlewares
 const corsOption = {
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -64,6 +69,9 @@ app.use('/api/admins/teachers', adminTeacherRoutes);
 app.use('/api/student', studentRoutes)
 
 
+//teacher route
+
+app.use("/api/teacher",teacherAttendanceRoute)
 // 404 Handler
 app.use(function (req, res) {
   res.status(404).json({
