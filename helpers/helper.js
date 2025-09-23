@@ -68,7 +68,7 @@ const sendEmailCommon = async (subject, renderedTemplate, dataBody) => {
   try {
     const transporter = createTransport();
     await transporter.sendMail({
-      from: process.env.EMAIL_ADDRESS,
+      from: process.env.EMAIL_USER,
       to: dataBody.email,
       subject: subject,
       html: renderedTemplate,
@@ -401,7 +401,7 @@ module.exports = {
   },
   generateOTP: async (length) => {
     if (process.env.NODE_ENV === constant.type.production) {
-      const minLength = Math.pow(10, length - 1)
+      const minLength = Math.pow(10, length - 1) 
       const maxLength = Math.pow(10, length) - 1
       return Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength
     }

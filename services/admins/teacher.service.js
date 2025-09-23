@@ -1,6 +1,7 @@
 
 const bcrypt = require('bcrypt');
 const Teacher = require('../../models/teacher/teacher.schema');
+const { sendEmailCommon } = require('../../helpers/helper'); // adjust path
 
 module.exports = {
   registerTeacher: async (data) => {
@@ -38,7 +39,18 @@ module.exports = {
     });
 
     await newTeacher.save();
+    
+  const subject = 'Welcome to School Portal - Your Login Credentials';
+  const htmlContent = `
+    <h2>Hello ${name},</h2>
+    <p>You have been registered as a teacher.</p>
+    <p><b>Email:</b> ${email}</p>
+    <p><b>Password:</b> ${password}</p>
+    <p>Please change your password after your first login for security.</p>
+  `;
 
+  // Send email (sendEmailCommon expects subject, html content, and dataBody with 'email' key)
+  await sendEmailCommon(subject, htmlContent, { email });
     // Return safe teacher info without password and tokens
     return {
       id: newTeacher._id,
