@@ -1,5 +1,4 @@
-
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const Teacher = require('../../models/teacher/teacher.schema');
 const { sendEmailCommon } = require('../../helpers/helper'); // adjust path
 

@@ -1,8 +1,8 @@
-const Student = require("../../models/student.schema.js");
-const Class = require("../../models/class.schema.js");
-const Attendance = require('../../models/attendance.schema.js')
-const Fees = require('../../models/fees.schema.js')
-const Assignment = require('../../models/assignment.schema.js')
+const Student = require("../../models/students/student.schema.js");
+const Class = require("../../models/class/class.schema.js");
+const Attendance = require('../../models/students/attendance.schema.js')
+// const Fees = require('../../models/fees')
+const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js')
 
 const adminStudent = {
@@ -133,14 +133,14 @@ const adminStudent = {
             },
 
 
-            {
-                $lookup: {
-                    from: "Fees",
-                    localField: "_id",
-                    foreignField: "student",
-                    as: "feesRecords"
-                }
-            },
+            // {
+            //     $lookup: {
+            //         from: "Fees",
+            //         localField: "_id",
+            //         foreignField: "student",
+            //         as: "feesRecords"
+            //     }
+            // },
 
             {
                 $lookup: {
@@ -167,7 +167,7 @@ const adminStudent = {
                     rollNo: 1,
                     classInfo: { name: 1, subject: 1 },
                     attendanceRecords: 1,
-                    feesRecords: 1,
+                    // feesRecords: 1,
                     assignments: 1,
                     grades: 1
                 }
@@ -176,82 +176,6 @@ const adminStudent = {
 
         return result[0];
     },
-
-    // Update Student
-    updateStudentProfile: async (id, data) => {
-        return await Student.findByIdAndUpdate(id, data, { new: true });
-    },
-
-    updateStudentClass: async (id, newClassId) => {
-        const student = await Student.findById(id);
-        if (!student) return null
-
-        if (student.class) {
-            await Class.findByIdAndUpdate(student.class, {
-                $pull: { students: student._id },
-                $inc: { studentCount: -1 },
-            });
-        }
-
-        const updatedClass = await Class.findByIdAndUpdate(
-            newClassId,
-            { $push: { students: student._id }, $inc: { studentCount: 1 } },
-            { new: true }
-        );
-
-        student.class = newClassId;
-        student.rollNo = `${updatedClass.name.toUpperCase()}-${updatedClass.studentCount}`;
-        await student.save();
-
-        return student;
-    },
-
-    updateStudentGrades: async (id, grades) => {
-        return await Student.findByIdAndUpdate(
-            id,
-            { grades },
-            { new: true }
-        );
-    },
-
-    updateStudentAttendance: async (studentId, attendanceId, updateData) => {
-        return await Attendance.findOneAndUpdate(
-            { _id: attendanceId, student: studentId },
-            updateData,
-            { new: true }
-        );
-    },
-
-    updateStudentFees: async (studentId, feeId, updateData) => {
-        return await Fees.findOneAndUpdate(
-            { _id: feeId, student: studentId },
-            updateData,
-            { new: true }
-        );
-    },
-
-    // Delete Student
-    deleteStudentById: async (id) => {
-
-        const student = await Student.findById(id);
-        if (!student) return null
-
-        await Class.findByIdAndUpdate(student.class, {
-            $pull: { students: student._id },
-            $inc: { studentCount: -1 },
-        });
-
-        await Attendance.deleteMany({ student: student._id });
-
-        await Fees.deleteMany({ student: student._id });
-
-        await Assignment.updateMany(
-            { "submissions.student": student._id },
-            { $pull: { submissions: { student: student._id } } }
-        );
-
-        return await Student.findByIdAndDelete(id);
-    }
 }
 
 module.exports = adminStudent
