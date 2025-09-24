@@ -1136,20 +1136,13 @@
     "en":"All Teacher are fetched",
     "ar":""
   },
-  "FAILED_TO_FETCH_TEACHERS":{
-        "en":"Failed to fetched all teachers",
-    "ar":""
-  }
-  ,
+
+  
   "TEACHER_UPDATED":{
          "en":"Teacher profile is update",
     "ar":""
   },
-  "UPDATE_FAILED":{
-         "en":"Failed to update profile",
-    "ar":""
-  }
-  },
+
   "STUDENT_ALREADY_EXISTS": {
     "en": "Student already exists",
     "ar": ""
@@ -1206,21 +1199,10 @@
     "en": "Student id is not valid",
     "ar": ""
   },
-  "TEACHERS_FETCHED":{
-    "en":"All Teacher are fetched",
-    "ar":""
-  },
+
   "FAILED_TO_FETCH_TEACHERS":{
         "en":"Failed to fetched all teachers",
     "ar":""
   }
-  ,
-  "TEACHER_UPDATED":{
-         "en":"Teacher profile is update",
-    "ar":""
-  },
-  "UPDATE_FAILED":{
-         "en":"Failed to update profile",
-    "ar":""
-  }
+  
 }
