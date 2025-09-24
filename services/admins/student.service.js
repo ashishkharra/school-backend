@@ -10,7 +10,7 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
 
-const { getClassWithStudentsPipelinem, getStudentDetailsPipeline } = require('../../helpers/commonAggregationPipeline.js')
+const { getClassWithStudentsPipeline, getStudentDetailsPipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 
 const adminStudent = {
@@ -67,7 +67,6 @@ const adminStudent = {
             const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
 
             const admissionNo = "ADM-" + Date.now().toString().slice(-6); // simple unique admission no.
-            const OTP = generateOTP();
 
             // 6. Create student
             const student = await Student.create({
@@ -90,7 +89,6 @@ const adminStudent = {
                 rollNo,
                 physicalDisability: physicalDisability || false,
                 disabilityDetails: disabilityDetails || null,
-                OTP
             });
 
             // 7. Create enrollment record
@@ -145,7 +143,7 @@ const adminStudent = {
                 disabilityDetails
             } = studentData;
 
-            if (!mongoose.Types.ObjectId.isValid(id)) {
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { success: false, message: "STUDENT_ID_NOT_VALID" }
             }
 
