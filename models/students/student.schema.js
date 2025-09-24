@@ -5,7 +5,6 @@ const studentSchema = new mongoose.Schema({
   // 🔑 Identity & Authentication
   admissionNo: { type: String, unique: true, required: true },
   admissionDate: { type: Date, default: Date.now },
-  rollNo: { type: String, unique: true, required: true },
   name: { type: String, required: true },
   username: { type: String, unique: true, sparse: true },
   email: { type: String, unique: true, required: true, lowercase: true },
@@ -57,24 +56,6 @@ const studentSchema = new mongoose.Schema({
     }
   ],
 
-  // 🏫 Academic Info
-  class: { type: String, required: true }, // e.g., "10"
-  section: { type: String }, // e.g., "A"
-  academicYear: { type: String }, // e.g., "2024-2025"
-  currentSemester: { type: String }, // optional
-  subjectsEnrolled: [
-    {
-      subjectName: String,
-      subjectCode: String,
-      teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" }
-    }
-  ],
-  attendance: [
-    {
-      date: { type: Date },
-      status: { type: String, enum: ["present", "absent", "late", "excused"] }
-    }
-  ],
   examResults: [
     {
       examName: String,
