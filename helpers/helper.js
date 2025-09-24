@@ -21,7 +21,8 @@ const Admin = require('../models/admin/admin.schema.js')
 // const Notification = require('../models/notification.model')
 const { default: axios } = require('axios')
 // const { s3 } = require('../configs/aws_config')
-const {S3Client, DeleteObjectCommand} = require('@aws-sdk/client-s3')
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3')
+const EmailTemplate = require('../models/emailTemplate.js')
 // const TempUser = require('../models/tempUser.model')
 // const Subscription = require('../models/subscription.model')
 
@@ -56,28 +57,39 @@ const createTransport = () => {
       secure: true,
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS
       },
-    });
+      tls: {
+        rejectUnauthorized: false
+      }
+    })
   } catch (error) {
-    console.log("error in create transport in helper.js createTransport function=>>>>>>", error);
+    console.log(
+      'error in create transport in helper.js createTransport function=>>>>>>',
+      error
+    )
   }
-};
+}
 
 const sendEmailCommon = async (subject, renderedTemplate, dataBody) => {
   try {
-    const transporter = createTransport();
+    const transporter = createTransport()
     await transporter.sendMail({
-      from: process.env.EMAIL_ADDRESS,
+      from: process.env.EMAIL_USER,
       to: dataBody.email,
       subject: subject,
-      html: renderedTemplate,
-    });
-    console.log(`*******************mail send to user ${dataBody.email}***************`);
+      html: renderedTemplate
+    })
+    console.log(
+      `*******************mail send to user ${dataBody.email}***************`
+    )
   } catch (error) {
-    console.log("err in send mail in helper.js-> sendEmailCommon function ", error);
+    console.log(
+      'err in send mail in helper.js-> sendEmailCommon function ',
+      error
+    )
   }
-};
+}
 
 module.exports = {
   getFileNameFromUrl: (urlString) => {
@@ -199,7 +211,7 @@ module.exports = {
       status,
       startDate,
       endDate,
-      sortKey ='sequence',
+      sortKey = 'sequence',
       sortType = 'desc'
     } = data
     const whereStatement = {}
@@ -349,28 +361,58 @@ module.exports = {
       next()
     }
   },
+  //  sendEmail : async (to, subject, htmlContent) => {
+  //   try {
+  //     const transporter = nodemailer.createTransport({
+  //       service: "gmail",
+  //       auth: {
+  //         user: process.env.EMAIL_USER,  // aapka gmail id
+  //         pass: process.env.EMAIL_PASS,  // gmail app password
+  //       },
+  //       tls: {
+  //         rejectUnauthorized: false // optional - depends on your environment
+  //       }
+  //     });
+
+  //     const mailOptions = {
+  //       from: `"School Portal" <${process.env.EMAIL_USER}>`,
+  //       to,
+  //       subject,
+  //       html: htmlContent,
+  //     };
+  // console.log("mailOptions-----",mailOptions)
+  //     const info = await transporter.sendMail(mailOptions);
+  //     console.log("✅ Email sent:", info.messageId);
+  //     return info;
+  //   } catch (error) {
+  //     console.error("❌ sendEmail failed:", error);
+  //     throw new Error("__EMAIL_SEND_FAILED__");
+  //   }
+  // }
   sendEmail: async (slug, dataBody) => {
-    let emailTempRecord = await EmailTemplate.findOne({ slug });
+    console.log('sludg>>>>>>>11111 ', slug)
+    let emailTempRecord = await EmailTemplate.findOne({ slug })
     if (!_.isEmpty(emailTempRecord)) {
-      dataBody.title = `${emailTempRecord?.title}`;
-      dataBody.subject = `${emailTempRecord?.subject}`;
-      dataBody.logo = process.env.API_BASE_URL + "/images/logo.svg";
+      dataBody.title = `${emailTempRecord?.title}`
+      dataBody.subject = `${emailTempRecord?.subject}`
+      dataBody.logo = process.env.API_BASE_URL + '/images/logo.svg'
 
-      const content = emailTempRecord?.description;
+      const content = emailTempRecord?.description
       const replacedContent = content.replace(/\[(\w+)\]/g, (match, p1) => {
-        return dataBody[p1] || match;
-      });
+        return dataBody[p1] || match
+      })
 
-      dataBody.content = replacedContent;
-      console.log('dataBody: ', dataBody);
+      dataBody.content = replacedContent
+      console.log('dataBody: ', dataBody)
 
-      const template = fs.readFileSync("view/template/email.ejs", "utf8");
-      const renderedTemplate = ejs.render(template, dataBody);
-      await sendEmailCommon(dataBody?.subject, renderedTemplate, dataBody);
+      const template = fs.readFileSync('view/template/email.ejs', 'utf8')
+      const renderedTemplate = ejs.render(template, dataBody)
+      await sendEmailCommon(dataBody?.subject, renderedTemplate, dataBody)
     } else {
-      console.log("email template not found==>>>>>", slug);
+      console.log('email template not found==>>>>>', slug)
     }
   },
+
   sendDynamicEmail: async (subject, email, content) => {
     const transporter = nodemailer.createTransport({
       pool: true,
@@ -945,16 +987,11 @@ module.exports = {
       console.error('Error deleting image:', error)
     }
   },
-  handleTempUser: async (
-    fullName,
-    mobile,
-    email,
-    countryCode
-  ) => {
+  handleTempUser: async (fullName, mobile, email, countryCode) => {
     const tempUserFind = await TempUser.find({
       $or: [{ fullName }, { mobile }, { countryCode }, { email }]
     })
-  
+
     if (!_.isEmpty(tempUserFind)) {
       await TempUser.deleteOne({ _id: tempUserFind?._id })
     }
@@ -969,33 +1006,38 @@ module.exports = {
   },
   checkIfUserExistsForCSV: async (query) => {
     const userDetails = await User.findOne(query)
-    console.log('userDetails: ', userDetails, !_.isEmpty(userDetails));
-    return !_.isEmpty(userDetails);
+    console.log('userDetails: ', userDetails, !_.isEmpty(userDetails))
+    return !_.isEmpty(userDetails)
   },
   sendOtpTwilio: async (countryCode, mobile) => {
-    console.log("process.env.TWILIO_MESSAGING_SERVICE_SID", process.env.TWILIO_MESSAGING_SERVICE_SID, process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-    client.verify.v2.services(process.env.TWILIO_MESSAGING_SERVICE_SID)
-    .verifications
-    .create({to: `+${countryCode}${mobile}`, channel: 'sms'})
-    .then(verification => console.log(verification.sid))
-    .catch((err) => {
-      console.log('SMS Fails err', err)
-      return 'SMS Fails Successfully.' + ' ' + err.toString()
-    })
+    console.log(
+      'process.env.TWILIO_MESSAGING_SERVICE_SID',
+      process.env.TWILIO_MESSAGING_SERVICE_SID,
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    )
+    client.verify.v2
+      .services(process.env.TWILIO_MESSAGING_SERVICE_SID)
+      .verifications.create({ to: `+${countryCode}${mobile}`, channel: 'sms' })
+      .then((verification) => console.log(verification.sid))
+      .catch((err) => {
+        console.log('SMS Fails err', err)
+        return 'SMS Fails Successfully.' + ' ' + err.toString()
+      })
   },
   verifyOTPTwilio: async (countryCode, mobile, otp) => {
-    try{
+    try {
       const verificationCheck = await client.verify.v2
         .services(process.env.TWILIO_MESSAGING_SERVICE_SID)
         .verificationChecks.create({
           code: otp,
           to: `+${countryCode}${mobile}`
         })
-        if(verificationCheck){
-          return verificationCheck.status
-        }
+      if (verificationCheck) {
+        return verificationCheck.status
+      }
     } catch (err) {
-      console.log('err: ', err);
+      console.log('err: ', err)
       console.log('SMS Fails err', err?.message)
     }
   }

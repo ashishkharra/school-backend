@@ -204,8 +204,19 @@ const studentSchema = new mongoose.Schema({
 
   // 🔒 Tokens
   token: { type: String },
+<<<<<<< HEAD
   refreshToken: { type: String }
 
+=======
+  refreshToken: { type: String },
+
+  OTP: { type : Number },
+    status: { type : String, enum: ["active", "inactive"], default : "active"},
+    isRemoved: { type : Number, enum: [0,1], default: 0},
+  token: { type : String },
+  refreashToken: { type : String }
+  
+>>>>>>> 945aac54279ab518d07caca20713de5541b4743d
 }, { timestamps: true });
 
 
