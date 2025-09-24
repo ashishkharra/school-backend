@@ -34,33 +34,74 @@ module.exports.validate = (method) => {
       ]
     }
 
-    case "registerTeacher": {
-      return [
-        body("name")
-          .notEmpty()
-          .withMessage("NAME_EMPTY")
-          .isLength({ min: 2 })
-          .withMessage("NAME_LENGTH_MIN")
-          .isLength({ max: 50 })
-          .withMessage("NAME_LENGTH_MAX"),
+case "registerTeacher": {
+  return [
+    // Name
+ body("name")
+    .notEmpty().withMessage("NAME_EMPTY")
+    .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+    .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
 
-        body("email")
-          .notEmpty()
-          .withMessage("EMAIL_EMPTY")
-          .isEmail()
-          .withMessage("EMAIL_VALID"),
+  // Email validations
+  body("email")
+    .notEmpty().withMessage("EMAIL_EMPTY")
+    .isEmail().withMessage("EMAIL_VALID"),
 
-        body("password")
-          .notEmpty()
-          .withMessage("PASSWORD_EMPTY")
-          .isLength({ min: 8 })
-          .withMessage("PASSWORD_MIN")
-          .isLength({ max: 30 })
-          .withMessage("PASSWORD_MAX"),
+  // Password validations
+  body("password")
+    .notEmpty().withMessage("PASSWORD_EMPTY")
+    .isLength({ min: 8 }).withMessage("PASSWORD_MIN")
+    .isLength({ max: 30 }).withMessage("PASSWORD_MAX"),
 
-        validatorMiddleware,
-      ];
-    }
+  // Phone validations
+  body("phone")
+    .notEmpty().withMessage("PHONE_EMPTY")
+    .isMobilePhone().withMessage("PHONE_VALID"),
+
+  // Date of Birth validations (ISO 8601 format)
+  body("dateOfBirth")
+    .notEmpty().withMessage("DOB_EMPTY")
+    .isISO8601().withMessage("DOB_VALID"),
+
+  // Gender validations (case-insensitive)
+  body("gender")
+    .notEmpty().withMessage("GENDER_EMPTY")
+    .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
+    .withMessage("GENDER_INVALID")
+    .bail()
+    .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
+
+  // Address validations
+  body("address")
+    .notEmpty().withMessage("ADDRESS_EMPTY")
+    .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+
+  // Qualifications validations: array of strings, minimum 1
+  body("qualifications")
+    .isArray({ min: 1 }).withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
+    .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
+
+  // Classes validations: array of strings, minimum 1
+  body("classes")
+    .isArray({ min: 1 }).withMessage("CLASSES_ARRAY_REQUIRED")
+    .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+
+  // Emergency Contact validations
+  body("emergencyContact")
+    .notEmpty().withMessage("EMERGENCY_CONTACT_EMPTY")
+    .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
+
+  body("emergencyContact.name")
+    .notEmpty().withMessage("EMERGENCY_CONTACT_NAME_EMPTY"),
+
+  body("emergencyContact.phone")
+    .notEmpty().withMessage("EMERGENCY_CONTACT_PHONE_EMPTY")
+    .isMobilePhone().withMessage("EMERGENCY_CONTACT_PHONE_VALID"),
+
+  validatorMiddleware
+  ];
+}
+
 
     case "registerStudent": {
       return [

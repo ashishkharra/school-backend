@@ -15,11 +15,10 @@ module.exports = {
     return __(message, language)
   },
   generateAuthToken: (user) => {
-    const payload = { id: user._id, role: user.role };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    const token = jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: process.env.TOKEN_LIFE || "15m"
     });
-    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH, {
+    const refreshToken = jwt.sign(user, process.env.JWT_SECRET_REFRESH, {
       expiresIn: process.env.REFRESH_TOKEN_LIFE || "7d"
     });
     return { token, refreshToken };

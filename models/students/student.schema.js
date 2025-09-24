@@ -42,6 +42,9 @@ const studentSchema = new mongoose.Schema({
       comments: { type: String }
     }
   ],
+  OTP: { type : Number },
+    status: { type : String, enum: ["active", "inactive"], default : "active"},
+    isRemoved: { type : Number, enum: [0,1], default: 0},
   token: { type : String },
   refreashToken: { type : String }
   

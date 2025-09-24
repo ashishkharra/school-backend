@@ -52,7 +52,7 @@
     "multi-lang": "^0.1.2",
     "node-cron": "^3.0.3",
     "nodejs-base64-converter": "^1.0.5",
-    "nodemailer": "^6.7.7",
+    "nodemailer": "^6.10.1",
     "nodemon": "^3.0.1",
     "redis": "^5.8.2",
     "short-unique-id": "^4.4.4",

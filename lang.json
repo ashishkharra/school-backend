@@ -1131,4 +1131,22 @@
     "en": "Class section must have minimum length",
     "ar": ""
   }
+  ,
+  "TEACHERS_FETCHED":{
+    "en":"All Teacher are fetched",
+    "ar":""
+  },
+  "FAILED_TO_FETCH_TEACHERS":{
+        "en":"Failed to fetched all teachers",
+    "ar":""
+  }
+  ,
+  "TEACHER_UPDATED":{
+         "en":"Teacher profile is update",
+    "ar":""
+  },
+  "UPDATE_FAILED":{
+         "en":"Failed to update profile",
+    "ar":""
+  }
 }
