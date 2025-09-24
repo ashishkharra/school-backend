@@ -1120,7 +1120,7 @@
     "ar": ""
   },
   "REGISTRATION_FAILED": {
-    "en": "Teacher Registered Fail",
+    "en": "Registered Failed",
     "ar": ""
   },
   "CLASS_SECTION_MUST_REQUIRED": {
@@ -1130,5 +1130,62 @@
   "CLASS_SECTION_LENGTH": {
     "en": "Class section must have minimum length",
     "ar": ""
+  },
+  "STUDENT_ALREADY_EXISTS": {
+    "en": "Student already exists",
+    "ar": ""
+  },
+  "PARENTS_MUST_BE_ARRAY": {
+    "en": "Parents data must be array",
+    "ar": ""
+  },
+  "INVALID_YEAR": {
+    "en": "Invalid year",
+    "ar": ""
+  },
+  "NAME_TOO_SHORT": {
+    "en": "Name is too short",
+    "ar": ""
+  },
+  "INVALID_GENDER": {
+    "en": "Invalid gender",
+    "ar": ""
+  },
+  "INVALID_PHONE": {
+    "en": "Invalid phone number",
+    "ar": ""
+  },
+  "INVALID_ADDRESS": {
+    "en": "Invalid address",
+    "ar": ""
+  },
+  "INVALID_SECTION": {
+    "en": "Invalid section",
+    "ar": ""
+  },
+  "UPDATE_FAILED": {
+    "en": "Update failed",
+    "ar": ""
+  },
+  "STUDENT_UPDATED_SUCCESSFULLY": {
+    "en": "Student updated successfully",
+    "ar": ""
+  },
+  "SERVER_ERROR": {
+    "en": "Server error",
+    "ar": ""
+  },
+  "STUDENT_CLASS_UPDATED_SUCCESSFULLY": {
+    "en": "Student class updated successfully",
+    "ar": ""
+  },
+  "STUDENT_DELETED_SUCCESSFULLY": {
+    "en": "Student deleted successfully",
+    "ar": ""
+  },
+  "STUDENT_ID_NOT_VALID": {
+    "en": "Student id is not valid",
+    "ar": ""
   }
+
 }

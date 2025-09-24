@@ -2,8 +2,11 @@ const jwt = require('jsonwebtoken')
 const { responseData } = require('../helpers/responseData')
 const { isEmpty } = require('lodash')
 const Admin = require('../models/admin/admin.schema.js')
+const Student = require('../models/students/student.schema.js')
+const Teacher = require('../models/teacher/teacher.schema.js')
 // const User = require('../models/user.model')
 const constant = require('../helpers/constant')
+const { default: mongoose } = require('mongoose')
 // const UserNotificationModel = require('../models/userNotifications.model')
 
 
@@ -15,11 +18,14 @@ const getTokenFromHeaders = (headers) => {
 }
 
 const handleAdminRole = async (user, req, res, next) => {
+  console.log("USER---------", user);
+
   const admin_data = await Admin.findOne({
-    _id: user._id,
+    _id: mongoose.Types.ObjectId(user._id),
     status: user.status,
     forceLogout: false
   })
+  console.log("ADMIN_DATA", admin_data)
   if (!isEmpty(admin_data)) {
     next()
   } else {
@@ -27,8 +33,32 @@ const handleAdminRole = async (user, req, res, next) => {
   }
 }
 
-const handleUserRole = (user, req, res, next) => {
-  User.findOne({
+const handleStudentRole = (user, req, res, next) => {
+  Student.findOne({
+    _id: user._id
+  })
+    .then((data) => {
+      if (data) {
+        if (data.status !== constant.status.active) {
+          return res
+            .status(409)
+            .json(responseData('UNAUTHENTICATED', {}, req, false))
+        }
+
+        next()
+      } else {
+        res.status(409).json(responseData('USER_NOT_FOUND', {}, req, false))
+      }
+    })
+    .catch((error) => {
+      res
+        .status(409)
+        .json(responseData('UNAUTHENTICATED', error.message, req, false))
+    })
+}
+
+const handleTeacherRole = (user, req, res, next) => {
+  Student.findOne({
     _id: user._id
   })
     .then((data) => {
@@ -53,7 +83,7 @@ const handleUserRole = (user, req, res, next) => {
 
 const handleVerification = async (req, res, next, token) => {
   try {
-    const user = await jwt.verify(token, process.env.JWT_SECRET)
+    const user = jwt.verify(token, process.env.JWT_SECRET)
     if (!user) {
       return res
         .status(401)
@@ -61,19 +91,26 @@ const handleVerification = async (req, res, next, token) => {
     }
 
     req.user = user
-    switch (user.userType || user.role) {
+    const role = (user.role || user.userType || "").toLowerCase();
+
+    switch (role) {
       case constant.type.admin:
       case constant.type.subAdmin:
-        await handleAdminRole(user, req, res, next)
-        break
+        await handleAdminRole(user, req, res, next);
+        break;
 
-      case 'user':
-        handleUserRole(user, req, res, next)
-        break
+      case "teacher":
+        handleTeacherRole(user, req, res, next);
+        break;
+
+      case "student": 
+        handleStudentRole(user, req, res, next);
+        break;
 
       default:
-        res.status(409).json(responseData('UNAUTHENTICATED', {}, req, false))
+        res.status(409).json(responseData("UNAUTHENTICATED", {}, req, false));
     }
+
   } catch (error) {
     console.log('error', error)
     return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, true))
@@ -82,6 +119,7 @@ const handleVerification = async (req, res, next, token) => {
 
 exports.verifyToken = async (req, res, next) => {
   const token = getTokenFromHeaders(req.headers)
+  console.log('token : ', token)
   if (!token) {
     return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, true))
   }

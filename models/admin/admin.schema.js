@@ -27,7 +27,7 @@ const adminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["super-admin", "admin"],
+      enum: ["admin"],
       default: "admin",
     },
     status: {
@@ -47,6 +47,8 @@ const adminSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
+    token: {type : String},
+    refreshToken: {type : String}
   },
   {
     timestamps: true,

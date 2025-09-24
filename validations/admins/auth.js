@@ -94,31 +94,68 @@ module.exports.validate = (method) => {
         body("parents.*.name")
           .notEmpty()
           .withMessage("PARENT_NAME_EMPTY"),
-
-        // Address (optional but if provided, validate format)
-        body("address.city")
+        body("parents.*.occupation")
           .optional()
           .isString()
-          .withMessage("CITY_STRING"),
-        body("address.state")
+          .withMessage("PARENT_OCCUPATION_INVALID"),
+
+        // Guardian
+        body("guardian")
+          .optional()
+          .isObject()
+          .withMessage("GUARDIAN_INVALID"),
+        body("guardian.name")
           .optional()
           .isString()
-          .withMessage("STATE_STRING"),
-
-        body("email")
+          .withMessage("GUARDIAN_NAME_INVALID"),
+        body("guardian.phone")
           .optional()
-          .isEmail()
-          .withMessage("EMAIL_VALID"),
+          .isMobilePhone("any")
+          .withMessage("GUARDIAN_PHONE_INVALID"),
 
-        body("phone")
+        // Emergency Contact
+        body("emergencyContact")
           .optional()
-          .isMobilePhone()
-          .withMessage("PHONE_VALID"),
+          .isObject()
+          .withMessage("EMERGENCY_CONTACT_INVALID"),
+        body("emergencyContact.name")
+          .optional()
+          .isString()
+          .withMessage("EMERGENCY_NAME_INVALID"),
+        body("emergencyContact.relationship")
+          .optional()
+          .isString()
+          .withMessage("EMERGENCY_RELATION_INVALID"),
+        body("emergencyContact.phone")
+          .optional()
+          .isMobilePhone("any")
+          .withMessage("EMERGENCY_PHONE_INVALID"),
 
-        body("classId")
+        // Address
+        body("address.street").optional().isString().withMessage("STREET_STRING"),
+        body("address.city").optional().isString().withMessage("CITY_STRING"),
+        body("address.state").optional().isString().withMessage("STATE_STRING"),
+        body("address.zip").optional().isString().withMessage("ZIP_STRING"),
+        body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
+
+        // Email & Phone
+        body("email").optional().isEmail().withMessage("EMAIL_VALID"),
+        body("phone").optional().isMobilePhone("any").withMessage("PHONE_VALID"),
+
+        // Class & Section
+        body("classId").optional().isMongoId().withMessage("CLASS_ID_INVALID"),
+        body("year")
           .optional()
-          .isMongoId()
-          .withMessage("CLASS_ID_INVALID"),
+          .isInt({ min: 2000, max: new Date().getFullYear() + 1 })
+          .withMessage("INVALID_YEAR"),
+        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("INVALID_SECTION"),
+
+        // Physical Disability
+        body("physicalDisability").optional().isBoolean().withMessage("INVALID_DISABILITY"),
+        body("disabilityDetails")
+          .optional()
+          .isString()
+          .withMessage("DISABILITY_DETAILS_INVALID"),
 
         validatorMiddleware,
       ];
@@ -144,12 +181,60 @@ module.exports.validate = (method) => {
         body('section')
           .notEmpty()
           .withMessage("CLASS_SECTION_MUST_REQUIRED")
-          .isLength({min: 1, max: 3})
+          .isLength({ min: 1, max: 3 })
           .withMessage("CLASS_SECTION_LENGTH"),
 
         validatorMiddleware,
       ]
     }
+
+    case "updateStudent": {
+      return [
+        body("name").optional().isString().isLength({ min: 2 }).withMessage("NAME_TOO_SHORT"),
+
+        body("dob").optional().isISO8601().toDate().withMessage("DOB_INVALID"),
+
+        body("gender").optional().isIn(["Male", "Female", "Other"]).withMessage("INVALID_GENDER"),
+
+        body("email").optional().isEmail().withMessage("INVALID_EMAIL"),
+
+        body("phone").optional().isMobilePhone().withMessage("INVALID_PHONE"),
+
+        // Address
+        body("address").optional().isObject().withMessage("INVALID_ADDRESS"),
+        body("address.street").optional().isString().withMessage("STREET_STRING"),
+        body("address.city").optional().isString().withMessage("CITY_STRING"),
+        body("address.state").optional().isString().withMessage("STATE_STRING"),
+        body("address.zip").optional().isString().withMessage("ZIP_STRING"),
+        body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
+
+        // Parents
+        body("parents").optional().isArray().withMessage("PARENTS_MUST_BE_ARRAY"),
+        body("parents.*.name").optional().isString().withMessage("PARENT_NAME_INVALID"),
+        body("parents.*.occupation").optional().isString().withMessage("PARENT_OCCUPATION_INVALID"),
+
+        // Guardian & Emergency
+        body("guardian").optional().isObject().withMessage("GUARDIAN_INVALID"),
+        body("guardian.name").optional().isString().withMessage("GUARDIAN_NAME_INVALID"),
+        body("guardian.phone").optional().isMobilePhone("any").withMessage("GUARDIAN_PHONE_INVALID"),
+        body("emergencyContact").optional().isObject().withMessage("EMERGENCY_CONTACT_INVALID"),
+        body("emergencyContact.name").optional().isString().withMessage("EMERGENCY_NAME_INVALID"),
+        body("emergencyContact.relationship").optional().isString().withMessage("EMERGENCY_RELATION_INVALID"),
+        body("emergencyContact.phone").optional().isMobilePhone("any").withMessage("EMERGENCY_PHONE_INVALID"),
+
+        // Class & Section
+        body("classId").optional().isMongoId().withMessage("CLASS_ID_INVALID"),
+        body("year").optional().isInt({ min: 2000, max: new Date().getFullYear() + 1 }).withMessage("INVALID_YEAR"),
+        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("INVALID_SECTION"),
+
+        // Physical Disability
+        body("physicalDisability").optional().isBoolean().withMessage("INVALID_DISABILITY"),
+        body("disabilityDetails").optional().isString().withMessage("DISABILITY_DETAILS_INVALID"),
+
+        validatorMiddleware,
+      ];
+    }
+
 
     case 'addFAQ': {
       return [

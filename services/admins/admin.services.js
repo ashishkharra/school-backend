@@ -27,7 +27,7 @@ module.exports = {
     // Basic check
     if (!firstName || !lastName || !email || !password) {
       throw new Error("All required fields must be provided");
-    }   
+    }
 
     // Check if email already exists
     const existing = await Admin.findOne({ email });
@@ -36,7 +36,7 @@ module.exports = {
     }
 
     // Create new admin
-    
+
     const newAdmin = new Admin(data);
     await newAdmin.save();
 
@@ -56,7 +56,7 @@ module.exports = {
       email = email?.toLowerCase();
 
       let admin = await Admin.findOne({ email });
-
+console.log("admin-------------",admin)
       if (!isEmpty(admin)) {
         if (admin?.status === constant.status.inactive) {
           return res.json(responseData('ACCOUNT_INACTIVE', {}, req, false));
@@ -67,7 +67,8 @@ module.exports = {
             return res.json(responseData('ADMIN_INVALID_LOGIN', {}, req, false));
           }
 
-          const adminData = admin.toJSON();
+          const adminData = admin.toObject();
+          
           delete adminData['password'];
           adminData.fullName = `${adminData.firstName} ${adminData.lastName}`;
 
@@ -76,18 +77,25 @@ module.exports = {
             _id: adminData._id,
             email: adminData.email,
             fullName: adminData.fullName,
+            status: adminData.status,
             role: adminData.role // <-- include the role here
           });
 
+          console.log('deviceTokens---------- ', deviceTokens)
           await Admin.findOneAndUpdate(
             { _id: admin._id },
-            { forceLogout: false }
+            {
+              forceLogout: false,
+              token: deviceTokens.token,
+              refreshToken: deviceTokens.refreshToken,
+              lastLogin: new Date(),
+            }
           );
 
           return res.json(
             responseData(
               'ACCOUNT_LOGIN',
-              { ...adminData, ...deviceTokens },
+              { ...deviceTokens },
               req,
               true
             )
