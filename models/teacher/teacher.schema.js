@@ -127,6 +127,8 @@ const teacherSchema = new mongoose.Schema(
     // 🏥 Disability Info
     physicalDisability: { type: Boolean, default: false },
     disabilityDetails: { type: String }, // e.g. "Hearing impairment", "Mobility issues"
+
+
  
     // 🏫 Academic & Professional
     department: { type: String }, // e.g., "Mathematics"
@@ -151,7 +153,6 @@ const teacherSchema = new mongoose.Schema(
       deductions: { type: Number },
       netSalary: { type: Number }
     },
- 
     // 📑 Documents & Records
     IDProof: {
       type: { type: String },

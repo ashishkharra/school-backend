@@ -42,6 +42,138 @@ const studentSchema = new mongoose.Schema({
       comments: { type: String }
     }
   ],
+
+  examResults: [
+    {
+      examName: String,
+      subject: String,
+      marksObtained: Number,
+      totalMarks: Number,
+      grade: String
+    }
+  ],
+  // grades: [
+  //   {
+  //     subject: { type: String, required: true },
+  //     grade: { type: String, required: true },
+  //     comments: { type: String }
+  //   }
+  // ],
+  achievements: [
+    {
+      title: String,
+      description: String,
+      date: Date
+    }
+  ],
+  extraCurricular: [
+    {
+      activity: String,
+      achievement: String,
+      year: String
+    }
+  ],
+
+  // 📑 Documents & Records
+  IDProof: {
+    type: { type: String },
+    number: String,
+    fileUrl: String
+  },
+  marksheets: [
+    {
+      exam: String,
+      fileUrl: String
+    }
+  ],
+  certificates: [
+    {
+      name: String,
+      issuedBy: String,
+      issueDate: Date,
+      fileUrl: String
+    }
+  ],
+  medicalRecords: [
+    {
+      condition: String,
+      doctorNote: String,
+      date: Date
+    }
+  ],
+  transferCertificate: { type: String },
+
+  // 💳 Finance & Administration
+  feesStatus: { type: String, enum: ["paid", "due", "partial"], default: "due" },
+  feeDetails: [
+    {
+      amount: Number,
+      dueDate: Date,
+      paidDate: Date,
+      modeOfPayment: String,
+      receiptNo: String
+    }
+  ],
+  scholarship: {
+    type: { type: String },
+    amount: Number,
+    validTill: Date
+  },
+  hostelInfo: {
+    hostelName: String,
+    roomNo: String
+  },
+  transportInfo: {
+    routeNo: String,
+    busNo: String,
+    pickupPoint: String
+  },
+
+  // 📲 Communication & Discipline
+  notifications: [
+    {
+      title: String,
+      body: String,
+      read: { type: Boolean, default: false },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+  remarks: [
+    {
+      teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+      remark: String,
+      date: { type: Date, default: Date.now }
+    }
+  ],
+  disciplinaryActions: [
+    {
+      incident: String,
+      actionTaken: String,
+      date: Date
+    }
+  ],
+
+  // ⚙️ System Metadata
+  OTP: { type: Number },
+  status: { type: String, enum: ["active", "inactive"], default: "active" },
+  isRemoved: { type: Number, enum: [0, 1], default: 0 },
+  removedAt: { type: Date },
+  removedReason: { type: String },
+  removedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+  logs: [
+    {
+      action: String,
+      by: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
+      at: { type: Date, default: Date.now }
+    }
+  ],
+
+  // 🔒 Tokens
+  token: { type: String },
+  refreshToken: { type: String },
+
   OTP: { type : Number },
     status: { type : String, enum: ["active", "inactive"], default : "active"},
     isRemoved: { type : Number, enum: [0,1], default: 0},
