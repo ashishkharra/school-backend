@@ -1,7 +1,7 @@
 
 // const teacherService = require('../../models/admin/teacher.schema');
-const adminTeacherService = require("../../services/admins/teacher.service");
-
+// const adminTeacherService = require("../../services/admins/teacher.service");
+const adminTeacherService = require("../../services/admins/teacher.service")
 const {responseData} = require('../../helpers/responseData');
 
 
@@ -77,5 +77,18 @@ registerTeacher: async (req, res) => {
       return res.status(400).json(responseData("FETCH_HISTORY_FAILED", { error: error.message }, req, false));
     }
   }
-};
 
+//----------------- ASSIGN TEACHER BY ADMIN
+,
+assignTeacherToClassController: async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { teacherId, startTime, endTime } = req.body;
+
+    const updatedClass = await adminTeacherService.assignTeacherToClass({ classId, teacherId, startTime, endTime });
+    return res.status(200).json({ status: "success", data: updatedClass });
+  } catch (error) {
+    return res.status(400).json({ status: "fail", message: error.message });
+  }
+}
+}

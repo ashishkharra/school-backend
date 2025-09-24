@@ -10,7 +10,7 @@ module.exports = {
       const data = req.body
       const result = await adminStudent.addStudent(data)
       if (!result?.success) {
-        return res.status(400).json(responseData(result?.message, result, req, result?.success || true));
+        return res.status(400).json(responseData(result?.message, result, req, result?.success || false));
       }
       return res.status(201).json(responseData(result?.message, result?.message, req, result?.success || true));
     } catch (error) {

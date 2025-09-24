@@ -13,7 +13,20 @@ const classSchema = new mongoose.Schema(
         grade: String
       }
     ],
-    studentCount: { type: Number, default: 0 }
+    isClassTeacher: { type: Boolean, enum: [true, false], default: false },
+
+    studentCount: { type: Number, default: 0 },
+
+    startTime: {
+      type: String,
+      required: true,
+      match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i, // e.g. 09:00 AM
+    },
+    endTime: {
+      type: String,
+      required: true,
+      match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i, // e.g. 03:30 PM
+    }
   },
   { timestamps: true }
 );

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const Teacher = require('../../models/teacher/teacher.schema');
 const { sendEmail } = require('../../helpers/helper'); // adjust path
+const teacherAssignBYClass = require('../../models/class/class.schema');
 const teacherSchema = require('../../models/teacher/teacher.schema');
 const helper = require('../../helpers/helper');
 
@@ -36,6 +37,7 @@ module.exports = {
       emergencyContact
     } = data;
     // Validation for required fields
+   
     if (!name || !email || !password) {
       throw new Error("Name, email, and password are required");
     }
@@ -180,5 +182,59 @@ module.exports = {
     }
 
     return await Teacher.find(whereStatement).sort({ updatedAt: -1 }).lean();
-  }
+  },
+
+//--------------------assign teacher by admin
+
+  convertToMinutes(timeStr) {
+    const [time, ampm] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (ampm.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+    if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  },
+
+  async assignTeacherToClass({ classId, teacherId, startTime, endTime }) {
+    if (!classId || !teacherId || !startTime || !endTime) {
+      throw new Error("Missing required fields");
+    }
+
+    const startMins = this.convertToMinutes(startTime);
+    const endMins = this.convertToMinutes(endTime);
+
+    if (endMins <= startMins) {
+      throw new Error("End time must be after start time");
+    }
+
+    const overlappingClass = await teacherAssignBYClass.findOne({
+      teacher: { $exists: true },
+      $and: [
+        { startMinutes: { $lt: endMins } },
+        { endMinutes: { $gt: startMins } },
+      ],
+    });
+
+    if (overlappingClass) {
+      throw new Error("Selected slot conflicts with existing booked slot. Please choose another slot.");
+    }
+
+    const updatedClass = await teacherAssignBYClass.findByIdAndUpdate(
+      classId,
+      {
+        teacher: teacherId,
+        startTime,
+        endTime,
+        startMinutes: startMins,
+        endMinutes: endMins,
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedClass) {
+      throw new Error("Class not found");
+    }
+
+    return updatedClass;
+  },
+
 }

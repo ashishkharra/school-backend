@@ -18,4 +18,6 @@ router.get('/getAllTeacher', teacherController.getAllTeachers);
 router.put('/updateTeachers/:id', validationRule.validate("registerTeacher"),teacherController.updateTeacher);
 router.put('/soft-delete/:id', teacherController.softDeleteTeacher);
 router.get("/history/deleted", teacherController.getDeletedTeachersHistory);
+router.put('/assign-teacher/:classId', teacherController.assignTeacherToClassController);
+
 module.exports = router
