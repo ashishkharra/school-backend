@@ -118,7 +118,7 @@ const handleVerification = async (req, res, next, token) => {
 exports.verifyToken = async (req, res, next) => {
   const token = getTokenFromHeaders(req.headers)
   if (!token) {
-    return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, true))
+    return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, false))
   }
   handleVerification(req, res, next, token)
 }

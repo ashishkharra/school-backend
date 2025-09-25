@@ -1217,6 +1217,10 @@
   "STUDENT_PROFILE_ERROR": {
     "en": "Student profile error",
     "ar": ""
+  },
+  "CLASS_REGISTERATION_FAILED": {
+    "en": "Class registration failed",
+    "ar": ""
   }
   
 }

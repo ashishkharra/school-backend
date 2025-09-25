@@ -6,10 +6,13 @@ const adminClassController = {
         try {
             const data = req.body;
             const result = await adminClassService.addClass(data);
+            if (!result.success) {
+                return res.status(401).json(responseData("CLASS_REGISTERATION_FAILED", {}, req, result?.success || false));
+            }
             return res.status(201).json(responseData("CLASS_REGISTERED", result, req, true));
         } catch (error) {
             console.log('Class register error : ', error.message)
-            return res.status(400).json(responseData("REGISTRATION_FAILED", { error: error.message }, req, false));
+            return res.status(500).json(responseData("REGISTRATION_FAILED", {}, req, false));
         }
     }
 }

@@ -13,6 +13,8 @@ const adminClassService = {
                 studentCount: 0,
             });
 
+            console.log('new class : ', newClass)
+
             return {
                 success: true,
                 message: "Class created successfully",
