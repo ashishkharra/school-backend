@@ -111,7 +111,7 @@ const handleVerification = async (req, res, next, token) => {
 
   } catch (error) {
     console.log('error', error)
-    return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, true))
+    return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, false))
   }
 }
 
