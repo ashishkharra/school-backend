@@ -1241,6 +1241,12 @@
   "CLASS_ID_NOT_VALID": {
     "en": "Class id is not valid",
     "ar": ""
-  }
+  },
+  
+  "ERROR_WHILE_GETTING_ALL_CLASSES":{
+    "en": "Error while getting classes",
+    "ar": ""
+  },
+  
   
 }

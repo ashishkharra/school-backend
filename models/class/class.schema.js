@@ -6,6 +6,7 @@ const classSchema = new mongoose.Schema(
     subjects: [{ type: String, required: true }], // array of subjects
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
     assignments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assignment" }],
+    classIdentifier: { type: String, required: true },
     section: { type : String , enum : ["A", "B", "C", "D"]},
     grades: [
       {
