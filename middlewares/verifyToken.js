@@ -18,15 +18,13 @@ const getTokenFromHeaders = (headers) => {
 }
 
 const handleAdminRole = async (user, req, res, next) => {
-  console.log("USER---------", user);
-
   const admin_data = await Admin.findOne({
     _id: mongoose.Types.ObjectId(user._id),
     status: user.status,
     forceLogout: false
   })
-  console.log("ADMIN_DATA", admin_data)
   if (!isEmpty(admin_data)) {
+    console.log('admin data : ', admin_data)
     next()
   } else {
     res.status(409).json(responseData('UNAUTHENTICATED', {}, req, false))
@@ -119,7 +117,6 @@ const handleVerification = async (req, res, next, token) => {
 
 exports.verifyToken = async (req, res, next) => {
   const token = getTokenFromHeaders(req.headers)
-  console.log('token : ', token)
   if (!token) {
     return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, true))
   }

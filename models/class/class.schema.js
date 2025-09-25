@@ -6,6 +6,7 @@ const classSchema = new mongoose.Schema(
     subjects: [{ type: String, required: true }], // array of subjects
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
     assignments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assignment" }],
+    section: { type : String , enum : ["A", "B", "C", "D"]},
     grades: [
       {
         student: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
@@ -19,12 +20,10 @@ const classSchema = new mongoose.Schema(
 
     startTime: {
       type: String,
-      required: true,
       match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i, // e.g. 09:00 AM
     },
     endTime: {
       type: String,
-      required: true,
       match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i, // e.g. 03:30 PM
     }
   },

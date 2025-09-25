@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const studentEnrollmentSchema = new mongoose.Schema({
   student: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
   class: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
-  academicYear: { type: Number },
+  academicYear: { type: String },
+  section: { type: String, enum: ["A", "B", "C", "D"]},
   rollNo: { type: String, unique: true, required: true },
   status: {
     type: String,

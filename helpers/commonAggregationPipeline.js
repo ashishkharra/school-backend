@@ -225,57 +225,97 @@ const studentProfilePipeline = (studentId) => {
 };
 
 const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilter = {}) => [
+  // Match the specific class
   { $match: { _id: new mongoose.Types.ObjectId(classId) } },
+
+  // Lookup enrollments for this class
+  {
+    $lookup: {
+      from: "enrollments",
+      localField: "_id",
+      foreignField: "class",
+      as: "enrollments"
+    }
+  },
+
+  // Unwind enrollments
+  { $unwind: "$enrollments" },
+
+  // Lookup student for each enrollment
   {
     $lookup: {
       from: "students",
-      let: { classId: "$_id" },
-      pipeline: [
-        { $match: { $expr: { $eq: ["$class", "$$classId"] }, ...studentFilter } },
-        { $sort: { rollNo: 1 } }, // sort by rollNo
-        { $skip: skip },
-        { $limit: limit },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            rollNo: 1,
-            section: 1,
-            academicYear: 1,
-            status: 1,
-            gender: 1,
-            physicalDisability: 1
-          }
-        }
-      ],
-      as: "students"
+      localField: "enrollments.student",
+      foreignField: "_id",
+      as: "student"
     }
   },
+  { $unwind: "$student" },
+
+  // Apply filters
+  {
+    $match: {
+      "student.isRemoved": 0,
+      ...studentFilter
+    }
+  },
+
+  // Sorting + Pagination
+  { $sort: { "enrollments.rollNo": 1 } },
+  { $skip: skip },
+  { $limit: limit },
+
+  // Project only necessary fields
   {
     $project: {
+      _id: 1,
       name: 1,
-      subject: 1,
+      section: 1,
+      subjects: 1,
       teacher: 1,
-      students: 1
+      "enrollments._id": 1,
+      "enrollments.academicYear": 1,
+      "enrollments.rollNo": 1,
+      "enrollments.status": 1,
+      student: {
+        _id: 1,
+        name: 1,
+        gender: 1,
+        bloodGroup: 1,
+        phone: 1,
+        email: 1
+      }
     }
   }
 ];
 
+
 const getStudentDetailsPipeline = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
 
-  // 1. Class info
+  // 1. Lookup enrollment for this student
   {
     $lookup: {
-      from: "classes", // collection name
-      localField: "class",
+      from: "enrollments", // enrollment collection
+      localField: "_id",
+      foreignField: "student",
+      as: "enrollments"
+    }
+  },
+  { $unwind: { path: "$enrollments", preserveNullAndEmptyArrays: true } },
+
+  // 2. Lookup class info from enrollment
+  {
+    $lookup: {
+      from: "classes",
+      localField: "enrollments.class",
       foreignField: "_id",
       as: "classInfo"
     }
   },
   { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
 
-  // 2. Attendance records
+  // 3. Attendance records
   {
     $lookup: {
       from: "attendances",
@@ -285,7 +325,7 @@ const getStudentDetailsPipeline = (studentId) => [
     }
   },
 
-  // 3. Fees records
+  // 4. Fees records
   {
     $lookup: {
       from: "fees",
@@ -295,7 +335,7 @@ const getStudentDetailsPipeline = (studentId) => [
     }
   },
 
-  // 4. Assignment submissions
+  // 5. Assignment submissions
   {
     $lookup: {
       from: "assignments",
@@ -306,7 +346,13 @@ const getStudentDetailsPipeline = (studentId) => [
           $project: {
             title: 1,
             dueDate: 1,
-            "submissions.$": 1
+            submissions: {
+              $filter: {
+                input: "$submissions",
+                as: "sub",
+                cond: { $eq: ["$$sub.student", "$$studentId"] }
+              }
+            }
           }
         }
       ],
@@ -314,12 +360,12 @@ const getStudentDetailsPipeline = (studentId) => [
     }
   },
 
-  // 5. Final projection
+
+  // 6. Final projection
   {
     $project: {
       name: 1,
       email: 1,
-      rollNo: 1,
       dob: 1,
       gender: 1,
       bloodGroup: 1,
@@ -329,13 +375,25 @@ const getStudentDetailsPipeline = (studentId) => [
       guardian: 1,
       emergencyContact: 1,
       physicalDisability: 1,
-      disabilityDetails: 1,
       profilePic: 1,
       status: 1,
       isRemoved: 1,
       removedAt: 1,
       removedReason: 1,
-      classInfo: 1,
+      enrollments: {
+        _id: 1,
+        section: 1,
+        rollNo: 1,
+        academicYear: 1,
+        status: 1
+      },
+      classInfo: {
+        _id: 1,
+        name: 1,
+        section: 1,
+        subjects: 1,
+        teacher: 1
+      },
       attendanceRecords: 1,
       feesRecords: 1,
       assignments: 1,

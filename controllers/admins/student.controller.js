@@ -45,10 +45,11 @@ module.exports = {
 
   updateStudentClass: async (req, res) => {
     try {
+      console.log('req body : ', req.body)
       const { studentId, classId } = req.params;
-      const { section, year } = req.body; // optional payload
+      const { section, academicYear, status } = req.body; // optional payload
 
-      const result = await adminStudent.updateStudentClass(studentId, classId, section, year);
+      const result = await adminStudent.updateStudentClass(studentId, classId, section, academicYear, status);
 
       if (!result.success) {
         return res
@@ -94,15 +95,19 @@ module.exports = {
 
   getStudentAccordingClass: async (req, res) => {
     try {
+
       const { classId } = req.params;
       const { page = 1, limit = 10, ...filters } = req.query; // filters from query params
 
+      console.log('page : ', 1, 'class id : ', classId, "filteres : ", filters)
+
+      console.log('page : ', 1, 'class id : ', classId, "filteres : ", filters)
       // Convert page & limit to numbers
       const pageNumber = parseInt(page, 10);
       const limitNumber = parseInt(limit, 10);
 
       // Call service to get students
-      const result = await ClassService.getStudentAccordingClass(
+      const result = await adminStudent.getStudentAccordingClass(
         classId,
         filters,
         pageNumber,
@@ -125,19 +130,24 @@ module.exports = {
     try {
       const { studentId } = req.params;
 
-      // 2. Get student data using service
-      const student = await adminStudent.getStudentById(studentId)
+      const student = await adminStudent.getStudentById(studentId);
 
       if (!student.success) {
-        return res.status(400).json(responseData(result?.message, null, req, result?.success || false));
+        return res.status(400).json(
+          responseData(student.message, null, req, student.success)
+        );
       }
 
-      // 3. Return response
-      return res.status(200).json(responseData(result?.message, result, req, result?.success || true));
+      return res.status(200).json(
+        responseData(student.message, student.result, req, student.success)
+      );
     } catch (error) {
       console.error("getStudentById controller error:", error);
-      return res.status(500).json(responseData(result?.message, null, req, result?.success || false));
+      return res.status(500).json(
+        responseData("SERVER_ERROR", null, req, false)
+      );
     }
   }
+
 
 };    

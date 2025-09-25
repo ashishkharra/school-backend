@@ -3,12 +3,13 @@ const Class = require('../../models/class/class.schema.js')
 const adminClassService = {
     addClass: async (classData) => {
         try {
-            const { name, subjects } = classData;
+            const { name, subjects, section } = classData;
 
             const newClass = await Class.create({
                 name,
                 subjects,
                 teacher: null,
+                section,
                 studentCount: 0,
             });
 

@@ -1131,68 +1131,14 @@
     "en": "Class section must have minimum length",
     "ar": ""
   },
-  "STUDENT_ALREADY_EXISTS": {
-    "en": "Student already exists",
-    "ar": ""
-  },
-  "PARENTS_MUST_BE_ARRAY": {
-    "en": "Parents data must be array",
-    "ar": ""
-  },
-  "INVALID_YEAR": {
-    "en": "Invalid year",
-    "ar": ""
-  },
-  "NAME_TOO_SHORT": {
-    "en": "Name is too short",
-    "ar": ""
-  },
-  "INVALID_GENDER": {
-    "en": "Invalid gender",
-    "ar": ""
-  },
-  "INVALID_PHONE": {
-    "en": "Invalid phone number",
-    "ar": ""
-  },
-  "INVALID_ADDRESS": {
-    "en": "Invalid address",
-    "ar": ""
-  },
-  "INVALID_SECTION": {
-    "en": "Invalid section",
-    "ar": ""
-  },
-  "UPDATE_FAILED": {
-    "en": "Update failed",
-    "ar": ""
-  },
-  "STUDENT_UPDATED_SUCCESSFULLY": {
-    "en": "Student updated successfully",
-    "ar": ""
-  },
-  "SERVER_ERROR": {
-    "en": "Server error",
-    "ar": ""
-  },
-  "STUDENT_CLASS_UPDATED_SUCCESSFULLY": {
-    "en": "Student class updated successfully",
-    "ar": ""
-  },
-  "STUDENT_DELETED_SUCCESSFULLY": {
-    "en": "Student deleted successfully",
-    "ar": ""
-  },
-  "STUDENT_ID_NOT_VALID": {
-    "en": "Student id is not valid",
-    "ar": ""
-  }
-  ,
   "TEACHERS_FETCHED":{
     "en":"All Teacher are fetched",
     "ar":""
   },
-
+  "__undefined__": {
+    "en": "undefined",
+    "ar": ""
+  },
   
   "TEACHER_UPDATED":{
          "en":"Teacher profile is update",
@@ -1259,6 +1205,18 @@
   "FAILED_TO_FETCH_TEACHERS":{
         "en":"Failed to fetched all teachers",
     "ar":""
+  },
+  "ADMIN_ID_NOT_VALID": {
+    "en": "Admin id is not valid",
+    "ar": ""
+  },
+  "STUDENT_FETCHED_SUCCESSFULLY": {
+    "en": "students successfully fetched",
+    "ar": ""
+  },
+  "STUDENT_PROFILE_ERROR": {
+    "en": "Student profile error",
+    "ar": ""
   }
   
 }
