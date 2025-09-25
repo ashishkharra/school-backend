@@ -19,7 +19,7 @@ const adminClassController = {
     getAllClasses: async (req, res) => {
         try {
             const { classId, section } = req.params
-            const result = await adminClassController.getAllClasses(classId, section);
+            const result = await adminClassService.getAllClasses(classId, section);
             if (!result.success)
                 return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
 

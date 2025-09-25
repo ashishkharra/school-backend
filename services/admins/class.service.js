@@ -1,5 +1,6 @@
 const uuidv4 = require('uuidv4')
 
+const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
 
 const adminClassService = {
@@ -18,7 +19,7 @@ const adminClassService = {
                 studentCount: 0,
             });
 
-            if (!newClass) return { success : false, message : "REGISTERATION_FAILED"}
+            if (!newClass) return { success: false, message: "REGISTERATION_FAILED" }
 
             return {
                 success: true,
@@ -36,17 +37,20 @@ const adminClassService = {
 
     getAllClasses: async () => {
         try {
-            const result = await 
+            const result = await Class.aggregate(getAllClassesPipeline);
+
+            if (!result) return { success : false, message : "ERROR_WHILE_GETTING_ALL_CLASSES"}
+
             return {
                 success: true,
                 message: "CLASSES_FETCHING_SUCCESSFULLY",
-                data: newClass,
+                data: result
             };
         } catch (error) {
             console.error("Error fetching classes:", error);
             return {
                 success: false,
-                message: "ERROR_WHILE_GETTING_ALL_CLASSES",
+                message: "SERVER_ERROR"
             };
         }
     }
