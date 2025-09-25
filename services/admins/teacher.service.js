@@ -194,47 +194,48 @@ module.exports = {
     return hours * 60 + minutes;
   },
 
-  async assignTeacherToClass({ classId, teacherId, startTime, endTime }) {
-    if (!classId || !teacherId || !startTime || !endTime) {
-      throw new Error("Missing required fields");
-    }
+ assignTeacherToClass: async function({ classId, teacherId, startTime, endTime }) {
+  if (!classId || !teacherId || !startTime || !endTime) {
+    throw new Error("Missing required fields");
+  }
 
-    const startMins = this.convertToMinutes(startTime);
-    const endMins = this.convertToMinutes(endTime);
+  const startMins = this.convertToMinutes(startTime);
+  const endMins = this.convertToMinutes(endTime);
 
-    if (endMins <= startMins) {
-      throw new Error("End time must be after start time");
-    }
+  if (endMins <= startMins) {
+    throw new Error("End time must be after start time");
+  }
 
-    const overlappingClass = await teacherAssignBYClass.findOne({
-      teacher: { $exists: true },
-      $and: [
-        { startMinutes: { $lt: endMins } },
-        { endMinutes: { $gt: startMins } },
-      ],
-    });
+  const overlappingClass = await teacherAssignBYClass.findOne({
+    teacher: { $exists: true },
+    $and: [
+      { startMinutes: { $lt: endMins } },
+      { endMinutes: { $gt: startMins } },
+    ],
+  });
 
-    if (overlappingClass) {
-      throw new Error("Selected slot conflicts with existing booked slot. Please choose another slot.");
-    }
+  if (overlappingClass) {
+    throw new Error("Selected slot conflicts with existing booked slot. Please choose another slot.");
+  }
 
-    const updatedClass = await teacherAssignBYClass.findByIdAndUpdate(
-      classId,
-      {
-        teacher: teacherId,
-        startTime,
-        endTime,
-        startMinutes: startMins,
-        endMinutes: endMins,
-      },
-      { new: true, runValidators: true }
-    );
+  const updatedClass = await teacherAssignBYClass.findByIdAndUpdate(
+    classId,
+    {
+      teacher: teacherId,
+      startTime,
+      endTime,
+      startMinutes: startMins,
+      endMinutes: endMins,
+    },
+    { new: true, runValidators: true }
+  );
 
-    if (!updatedClass) {
-      throw new Error("Class not found");
-    }
+  if (!updatedClass) {
+    throw new Error("Class not found");
+  }
 
-    return updatedClass;
-  },
+  return updatedClass;
+},
+
 
 }
