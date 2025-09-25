@@ -8,8 +8,7 @@ module.exports = {
     response.success = success
     response.message =
       _(message, language) || _('SOMETHING_WENT_WRONG', language) || result.message
-    response.results = result
-
+    response.result = result
     console.log('response : ', response)
     return response
   },

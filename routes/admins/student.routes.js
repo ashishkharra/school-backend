@@ -12,7 +12,7 @@ router
 
     .put('/delete/:studentId', [verifyToken], adminStudentController.deleteStudent)
 
-    .get('/get/students/:classId', [verifyToken], adminStudentController.getStudentAccordingClass)
+    .get('/get/all/:classId', [verifyToken], adminStudentController.getStudentAccordingClass)
 
     .get('/get/student/profile/:studentId', [verifyToken], adminStudentController.getStudentById)
 

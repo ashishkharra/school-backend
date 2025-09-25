@@ -10,11 +10,13 @@ module.exports = {
 registerTeacher: async (req, res) => {
     try {
       const result = await adminTeacherService.registerTeacher(req.body);
-      console.log('result')
-      return res.status(201).json(responseData("TEACHER_REGISTERED", result, req, true));
+      if (!result.success) {
+        res.status(401).json(responseData(result.message, {}, req, result.success || false));
+      }
+      return res.status(201).json(responseData(result.message, result, req, result.success || true));
     } catch (error) {
       console.error("Error registering teacher:", error.message);
-      return res.status(400).json(responseData("REGISTRATION_FAILED", { error: error.message }, req, false));
+      return res.status(500).json(responseData(result.message, {}, req, false));
     }
   }
 ,
