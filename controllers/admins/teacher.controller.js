@@ -82,14 +82,28 @@ registerTeacher: async (req, res) => {
 
 //----------------- ASSIGN TEACHER BY ADMIN
 ,
-assignTeacherToClassController: async (req, res) => {
+ assignTeacherToClassController : async (req, res) => {
   try {
-    const { classId } = req.params;
-    const { teacherId, startTime, endTime } = req.body;
+    const { classId, teacherId, section, subject, startTime, endTime } = req.body;
 
-    const updatedClass = await adminTeacherService.assignTeacherToClass({ classId, teacherId, startTime, endTime });
-    return res.status(200).json({ status: "success", data: updatedClass });
+    console.log("REQ BODY:", req.body);
+
+    const savedAssignment = await adminTeacherService.assignTeacherToClass({
+      classId,
+      teacherId,
+      section,
+      subject,
+      startTime,
+      endTime
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Teacher assigned successfully",
+      data: savedAssignment
+    });
   } catch (error) {
+    console.error("ERROR:", error.message);
     return res.status(400).json({ status: "fail", message: error.message });
   }
 }
