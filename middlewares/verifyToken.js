@@ -24,7 +24,6 @@ const handleAdminRole = async (user, req, res, next) => {
     forceLogout: false
   })
   if (!isEmpty(admin_data)) {
-    console.log('admin data : ', admin_data)
     next()
   } else {
     res.status(409).json(responseData('UNAUTHENTICATED', {}, req, false))

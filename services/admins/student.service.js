@@ -230,106 +230,177 @@ const adminStudent = {
         }
     },
 
-    // Service: adminStudent.js
-    updateStudentClass: async (studentId, classId, section = null, academicYear, status = null) => {
-        console.log(studentId, classId, section, academicYear, status)
+    updateStudentClass: async (studentId, classId, section = null) => {
         try {
+            // Validate IDs
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
+                return { success: false, message: "STUDENT_ID_NOT_VALID" };
+            }
+            if (!mongoose.Types.ObjectId.isValid(classId)) {
+                return { success: false, message: "CLASS_ID_NOT_VALID" };
+            }
+
             // 1. Find student
             const student = await Student.findById(studentId);
-            console.log('student---------> ', student);
             if (!student) return { success: false, message: "STUDENT_NOT_FOUND" };
 
-            // 2. Find class
+            // 2. Find target class
             const classObj = await Class.findById(classId);
-            console.log('class object ---------> ', classObj)
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
             // 3. Get last enrollment
             const lastEnrollment = await Enrollment.findOne({ student: studentId }).sort({ createdAt: -1 });
-            console.log('last enrollment ----------> ', lastEnrollment)
             if (!lastEnrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
 
-            // 4. Determine if this is a new academic year (promotion)
-            const targetYear = academicYear ? String(academicYear) : null;
-            const lastYear = lastEnrollment.academicYear ? String(lastEnrollment.academicYear) : null;
-            const isNewYear = targetYear && targetYear !== lastYear;
+            // 4. Compute next academic year
+            const yearMatch = lastEnrollment.academicYear.match(/^(\d{4})-(\d{4})$/);
+            if (!yearMatch) {
+                return { success: false, message: "INVALID_LAST_ACADEMIC_YEAR_FORMAT" };
+            }
+            const lastStart = parseInt(yearMatch[1], 10);
+            const lastEnd = parseInt(yearMatch[2], 10);
+            const nextAcademicYear = `${lastStart + 1}-${lastEnd + 1}`;
 
-            console.log('targetYear : ', targetYear);
-            console.log('last year : ', lastYear);
-            console.log("is new year : ", isNewYear)
-
-            let assignedSection = section;
-
-            // Auto assign section if not provided
-            if (!assignedSection) {
-                const sectionCounts = { A: 0, B: 0, C: 0, D: 0 };
-                const enrollments = await Enrollment.find({ class: classId, academicYear: targetYear || lastYear });
-                enrollments.forEach((e) => {
-                    if (sectionCounts[e.section] !== undefined) sectionCounts[e.section]++;
-                });
-                assignedSection = Object.keys(sectionCounts).reduce((a, b) =>
-                    sectionCounts[a] <= sectionCounts[b] ? a : b
-                );
+            // 5. If class is not changing, block promotion
+            if (String(lastEnrollment.class) === String(classId)) {
+                return { success: false, message: "CLASS_IS_SAME_AS_PREVIOUS" };
             }
 
-            // Generate new roll number
+            // 6. Mark old enrollment as Passed
+            lastEnrollment.status = "Pass";
+            await lastEnrollment.save();
+
+            // 7. Decide section
+            let assignedSection = section;
+            if (!assignedSection) {
+                // Auto-balance sections if principal didn't provide
+                const sectionCounts = {};
+                const enrollments = await Enrollment.find({ class: classId, academicYear: nextAcademicYear });
+                enrollments.forEach((e) => {
+                    const s = e.section || "A";
+                    sectionCounts[s] = (sectionCounts[s] || 0) + 1;
+                });
+
+                // If no sections exist, default to A
+                if (Object.keys(sectionCounts).length === 0) {
+                    assignedSection = "A";
+                } else {
+                    assignedSection = Object.keys(sectionCounts).reduce((a, b) =>
+                        sectionCounts[a] <= sectionCounts[b] ? a : b
+                    );
+                }
+            }
+
+            // 8. Generate roll number
             const sectionCount = await Enrollment.countDocuments({
                 class: classId,
                 section: assignedSection,
-                academicYear: targetYear || lastYear
+                academicYear: nextAcademicYear
+            });
+            const serial = sectionCount + 1;
+            const classNumber = (classObj.name && classObj.name.match(/\d+/)?.[0]) || classObj.name || "CLS";
+            const newRollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
+
+            // 9. Create new enrollment
+            const newEnrollment = await Enrollment.create({
+                student: studentId,
+                class: classId,
+                academicYear: nextAcademicYear,
+                section: assignedSection,
+                rollNo: newRollNo,
+                status: "Ongoing"
+            });
+
+            // 10. Update student's current details
+            student.class = classId;
+            student.section = assignedSection;
+            student.academicYear = nextAcademicYear;
+            student.rollNo = newRollNo;
+            await student.save();
+
+            // 11. Update class student count
+            classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: nextAcademicYear });
+            await classObj.save();
+
+            return {
+                success: true,
+                student,
+                enrollment: newEnrollment,
+                message: "STUDENT_PROMOTED_TO_NEW_CLASS"
+            };
+        } catch (error) {
+            console.error("UpdateStudentClass error:", error);
+            return { success: false, message: "SERVER_ERROR", error: error.message };
+        }
+    },
+
+    updateStudentSection: async (studentId, classId, newSection) => {
+        try {
+            // 1. Validate IDs
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
+                return { success: false, message: "STUDENT_ID_NOT_VALID" };
+            }
+            if (!mongoose.Types.ObjectId.isValid(classId)) {
+                return { success: false, message: "CLASS_ID_NOT_VALID" };
+            }
+
+            // 2. Fetch student and class
+            const student = await Student.findById(studentId);
+            if (!student) return { success: false, message: "STUDENT_NOT_FOUND" };
+
+            const classObj = await Class.findById(classId);
+            if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
+            // 3. Fetch latest enrollment for this class
+            const lastEnrollment = await Enrollment.findOne({ student: studentId, class: classId }).sort({ createdAt: -1 });
+            if (!lastEnrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
+
+            // 4. Check if section is same
+            if (lastEnrollment.section === newSection) {
+                return { success: false, message: "STUDENT_ALREADY_IN_SECTION" };
+            }
+
+            // 5. Remove old enrollment
+            await Enrollment.deleteOne({ _id: lastEnrollment._id });
+
+            // 6. Count number of students in new section to generate roll number
+            const sectionCount = await Enrollment.countDocuments({
+                class: classId,
+                section: newSection,
+                academicYear: lastEnrollment.academicYear
             });
             const serial = sectionCount + 1;
             const classNumber = classObj.name.match(/\d+/)?.[0] || classObj.name;
-            const newRollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
+            const newRollNo = `${classNumber}${newSection}-${String(serial).padStart(3, "0")}`;
 
-            if (isNewYear) {
-                // 5a. Update last enrollment status (pass/fail/drop)
-                if (status) {
-                    lastEnrollment.status = status;
-                    await lastEnrollment.save();
-                }
+            // 7. Create new enrollment for new section
+            const newEnrollment = await Enrollment.create({
+                student: studentId,
+                class: classId,
+                section: newSection,
+                rollNo: newRollNo,
+                academicYear: lastEnrollment.academicYear,
+                status: lastEnrollment.status
+            });
 
-                // 5b. Create new enrollment for new year/class
-                const newEnrollment = await Enrollment.create({
-                    student: studentId,
-                    class: classId,
-                    academicYear: targetYear,
-                    section: assignedSection,
-                    rollNo: newRollNo,
-                    status: "Ongoing"
-                });
+            // 8. Update student record
+            student.section = newSection;
+            student.rollNo = newRollNo;
+            await student.save();
 
-                console.log('New enrollment : ', newEnrollment)
+            // 9. Update class student count
+            classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: lastEnrollment.academicYear });
+            await classObj.save();
 
-                // 6. Update student record with new rollNo, section, academicYear
-                student.rollNo = newRollNo;
-                student.section = assignedSection;
-                student.academicYear = targetYear;
-                await student.save();
-
-                // 7. Update class student count
-                classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: targetYear });
-                await classObj.save();
-
-                return { success: true, student, enrollment: newEnrollment, message: "STUDENT_PROMOTED_SUCCESSFULLY" };
-            } else {
-                // 5. Only section change → update existing enrollment
-                lastEnrollment.section = assignedSection;
-                lastEnrollment.rollNo = newRollNo;
-                await lastEnrollment.save();
-
-                student.rollNo = newRollNo;
-                student.section = assignedSection;
-                await student.save();
-
-                classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: lastYear });
-                await classObj.save();
-
-                return { success: true, student, enrollment: lastEnrollment, message: "STUDENT_SECTION_UPDATED" };
-            }
+            return {
+                success: true,
+                message: "STUDENT_SECTION_UPDATED_SUCCESSFULLY",
+                student,
+                enrollment: newEnrollment
+            };
         } catch (error) {
-            console.error("UpdateStudentClass error:", error);
-            return { success: false, message: "SERVER_ERROR" };
+            console.error("updateStudentSection error:", error);
+            return { success: false, message: "STUDENT_SECTION_UPDATE_FAILED", error: error.message };
         }
     },
 
@@ -443,7 +514,7 @@ const adminStudent = {
             console.log('total count : ', totalStudents)
 
             return {
-                message : 'STUDENT_FETCHED_SUCCESSFULLY',
+                message: 'STUDENT_FETCHED_SUCCESSFULLY',
                 class: result || [],
                 pagination: {
                     page,
@@ -467,17 +538,17 @@ const adminStudent = {
             const result = await Student.aggregate(getStudentDetailsPipeline(studentId));
 
             console.log('result of student : ', result)
-            
-            if(!result) return {success : false, message : "STUDENT_PROFILE_ERROR"}
+
+            if (!result) return { success: false, message: "STUDENT_PROFILE_ERROR" }
 
             return {
-                success : true,
-                message : "STUDENT_FETCHED_SUCCESSFULLY",
+                success: true,
+                message: "STUDENT_FETCHED_SUCCESSFULLY",
                 result
             }
         } catch (error) {
             console.error("getStudentById error:", error);
-            return { success : false, message : "SERVER_ERROR" }
+            return { success: false, message: "SERVER_ERROR" }
         }
     },
 }

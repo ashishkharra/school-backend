@@ -10,12 +10,12 @@ module.exports = {
       const data = req.body
       const result = await adminStudent.addStudent(data)
       if (!result?.success) {
-        return res.status(400).json(responseData(result?.message, result, req, result?.success || false));
+        return res.status(400).json(responseData(result?.message, {}, req, result?.success || false));
       }
-      return res.status(201).json(responseData(result?.message, result?.message, req, result?.success || true));
+      return res.status(201).json(responseData(result?.message, result, req, result?.success || true));
     } catch (error) {
       console.log('Student register error : ', error.message)
-      return res.status(500).json(responseData(result?.message, { error: error.message }, req, result?.success || false));
+      return res.status(500).json(responseData(result?.message, {}, req, result?.success || false));
     }
   },
 
@@ -29,7 +29,7 @@ module.exports = {
 
       if (!result?.success) {
         console.log('this one running')
-        return res.status(400).json(responseData(result?.message, result, req, false));
+        return res.status(400).json(responseData(result?.message, {}, req, false));
       }
 
       return res.status(200).json(
@@ -39,7 +39,7 @@ module.exports = {
 
     } catch (error) {
       console.error("Error in updateStudent:", error);
-      return res.status(500).json(responseData(result?.message, error?.message, req, result?.success));
+      return res.status(500).json(responseData(result?.message, {}, req, result?.success));
     }
   },
 
@@ -47,14 +47,14 @@ module.exports = {
     try {
       console.log('req body : ', req.body)
       const { studentId, classId } = req.params;
-      const { section, academicYear, status } = req.body; // optional payload
+      const { section } = req.body; // optional payload
 
-      const result = await adminStudent.updateStudentClass(studentId, classId, section, academicYear, status);
+      const result = await adminStudent.updateStudentClass(studentId, classId, section);
 
       if (!result.success) {
         return res
           .status(400)
-          .json(responseData(result.message, result, req, false));
+          .json(responseData(result.message, {}, req, false));
       }
 
       return res
@@ -62,6 +62,30 @@ module.exports = {
         .json(responseData("STUDENT_CLASS_UPDATED_SUCCESSFULLY", result, req, true));
     } catch (error) {
       console.error("student class update error:", error.message);
+      return res
+        .status(500)
+        .json(responseData("SERVER_ERROR", {}, req, false));
+    }
+  },
+
+  udpateStudentSection: async (req, res) => {
+    try {
+      console.log('req body : ', req.body)
+      const { studentId, classId, section } = req.params;
+
+      const result = await adminStudent.updateStudentSection(studentId, classId, section);
+
+      if (!result.success) {
+        return res
+          .status(400)
+          .json(responseData(result.message, {}, req, false));
+      }
+
+      return res
+        .status(200)
+        .json(responseData("STUDENT_SECTION_UPDATED_SUCCESSFULLY", result, req, true));
+    } catch (error) {
+      console.error("student section update error:", error.message);
       return res
         .status(500)
         .json(responseData("SERVER_ERROR", error.message, req, false));

@@ -1221,6 +1221,26 @@
   "CLASS_REGISTERATION_FAILED": {
     "en": "Class registration failed",
     "ar": ""
+  },
+  "STUDENT_SECTION_UPDATED_SUCCESSFULLY": {
+    "en": "Student section update successfully",
+    "ar": ""
+  },
+  "STUDENT_SECTION_UPDATE_FAILED": {
+    "en": "Student section update failed",
+    "ar": ""
+  },
+  "STUDENT_ALREADY_IN_SECTION": {
+    "en": "Student is already in section",
+    "ar": ""
+  },
+  "ENROLLMENT_NOT_FOUND": {
+    "en": "Enrollment not found",
+    "ar": ""
+  },
+  "CLASS_ID_NOT_VALID": {
+    "en": "Class id is not valid",
+    "ar": ""
   }
   
 }

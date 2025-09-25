@@ -10,7 +10,9 @@ router
 
     .put('/update/:classId/:studentId', [verifyToken], adminStudentController.updateStudentClass)
 
-    .put('/delete/:studentId', [verifyToken], adminStudentController.deleteStudent)
+    .put('/update/section/:classId/:studentId/:section', [verifyToken], adminStudentController.udpateStudentSection)
+
+    .put('/delete/:studentId', [verifyToken],adminStudentController.deleteStudent)
 
     .get('/get/all/:classId', [verifyToken], adminStudentController.getStudentAccordingClass)
 
