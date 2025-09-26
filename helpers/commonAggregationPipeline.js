@@ -289,7 +289,6 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilt
   }
 ];
 
-
 const getStudentDetailsPipeline = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
 
@@ -402,10 +401,54 @@ const getStudentDetailsPipeline = (studentId) => [
   }
 ];
 
+const getAllClassesPipeline = () => {
+  return [
+    {
+      // ✅ Match only classes where isClassTeacher is true
+      $match: { isClassTeacher: true }
+    },
+    {
+      // ✅ Join with teachers collection
+      $lookup: {
+        from: "teachers",
+        localField: "teacher",
+        foreignField: "_id",
+        as: "classTeacher"
+      }
+    },
+    {
+      // ✅ Flatten the array (a class has at most one class teacher)
+      $unwind: {
+        path: "$classTeacher",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      // ✅ Limit teacher fields to only the common details you need
+      $project: {
+        name: 1,
+        classIdentifier: 1,
+        section: 1,
+        subjects: 1,
+        startTime: 1,
+        endTime: 1,
+        studentCount: 1,
+        // teacher details you want to expose
+        "classTeacher._id": 1,
+        "classTeacher.name": 1,
+        "classTeacher.email": 1,
+        "classTeacher.department": 1,
+        "classTeacher.specialization": 1
+      }
+    }
+  ];
+}
+
 module.exports = {
   studentAttendancePipeline,
   studentProfilePipeline,
   studentAssignmentPipeline,
   getClassWithStudentsPipeline,
-  getStudentDetailsPipeline
+  getStudentDetailsPipeline,
+  getAllClassesPipeline
 }

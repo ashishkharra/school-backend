@@ -6,6 +6,6 @@ const adminClassController = require('../../controllers/admins/class.controller.
 router
     .post('/add', [verifyToken], validationRule.validate('registerClass'), adminClassController.addClass)
 
-    .get('/get/all/:classId/:section', [verifyToken], adminClassController)
+    .get('/get/all/:classId/:section', [verifyToken], adminClassController.getAllClasses)
 
 module.exports = router
