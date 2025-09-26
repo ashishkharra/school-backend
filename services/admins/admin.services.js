@@ -103,7 +103,7 @@ module.exports = {
           return res.json(
             responseData(
               'ACCOUNT_LOGIN',
-              { ...deviceTokens },
+              { ...deviceTokens, role: admin.role },
               req,
               true
             )

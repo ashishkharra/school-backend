@@ -34,7 +34,7 @@ const adminStudent = {
                 disabilityDetails
             } = studentData;
 
-            console.log('academic year : ', academicYear)
+            console.log('academic year : ', academicYear);
 
             // 1. Check for duplicates
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
@@ -54,21 +54,34 @@ const adminStudent = {
             // 4. Assign section automatically (A–D balance)
             const sectionCounts = { A: 0, B: 0, C: 0, D: 0 };
             const enrollments = await Enrollment.find({ class: classId, academicYear });
-
-            enrollments.forEach((e) => {
+            enrollments.forEach(e => {
                 if (sectionCounts[e.section] !== undefined) sectionCounts[e.section]++;
             });
 
-            const assignedSection = Object.keys(sectionCounts).reduce((a, b) =>
-                sectionCounts[a] <= sectionCounts[b] ? a : b
+            const assignedSection = Object.keys(sectionCounts).reduce(
+                (a, b) => (sectionCounts[a] <= sectionCounts[b] ? a : b)
             );
 
-            // 5. Generate roll number & admission number
-            const serial = sectionCounts[assignedSection] + 1;
+            // ✅ 5. Generate next unique roll number
             const classNumber = classObj.name.replace(/\D/g, "");
-            const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
+            // Find the highest existing rollNo in this class/section/year
+            const lastEnrollment = await Enrollment
+                .findOne({ class: classId, section: assignedSection, academicYear })
+                .sort({ rollNo: -1 })
+                .lean();
 
-            const admissionNo = "ADM-" + Date.now().toString().slice(-6); // simple unique admission no.
+            console.log('last enrollment : ', lastEnrollment)
+
+            let serial = 1;
+            if (lastEnrollment?.rollNo) {
+                const match = lastEnrollment.rollNo.match(/-(\d+)$/);
+                if (match) serial = parseInt(match[1], 10) + 1;
+            }
+
+            const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
+            console.log('roll no --------', rollNo);
+
+            const admissionNo = "ADM-" + Date.now().toString().slice(-6);
 
             // 6. Create student
             const student = await Student.create({
@@ -116,7 +129,7 @@ const adminStudent = {
             };
 
         } catch (error) {
-            console.error("Student register error:", error.message);
+            console.error("Student register error:", error);
             return { success: false, message: "REGISTRATION_FAILED" };
         }
     },
@@ -328,12 +341,21 @@ const adminStudent = {
             await student.save();
 
             // 11. Update class student count
-            classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: nextAcademicYear });
+            classObj.studentCount = await Enrollment.countDocuments({
+                class: classId,
+                academicYear: nextAcademicYear
+            });
             await classObj.save();
 
-            if (classChangeData) {
-                await sendEmail("class-section-change", classChangeData);
-            }
+            const classChangeData = {
+                email: student.email,
+                FirstName: student.name,
+                CLASS_NAME: classObj.name,
+                SECTION: assignedSection,
+                ACADEMIC_YEAR: nextAcademicYear
+            };
+
+            await sendEmail("class-section-change", classChangeData);
 
             return {
                 success: true,
@@ -341,6 +363,7 @@ const adminStudent = {
                 enrollment: newEnrollment,
                 message: "STUDENT_PROMOTED_TO_NEW_CLASS"
             };
+
         } catch (error) {
             console.error("UpdateStudentClass error:", error);
             return { success: false, message: "SERVER_ERROR", error: error.message };
