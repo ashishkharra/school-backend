@@ -95,7 +95,7 @@ console.log("admin-------------",admin)
           return res.json(
             responseData(
               'ACCOUNT_LOGIN',
-              { ...deviceTokens },
+              { ...deviceTokens, role: adminData.role },
               req,
               true
             )

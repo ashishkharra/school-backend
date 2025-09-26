@@ -1,81 +1,3 @@
-// const mongoose = require("mongoose");
-
-// const teacherSchema = new mongoose.Schema(
-//   {
-//     teacherId: {
-//       type: String,
-//       unique: true,
-//       default: () => "T-" + Math.random().toString(36).substring(2, 8).toUpperCase()
-//     },
-//        employeeId: { type: String, unique: true, sparse: true }, // official employee ID
-//     name: { type: String, required: true },
-//     email: { type: String, unique: true, required: true, lowercase: true },
-//     password: { type: String, required: true },
-//     role: { type: String, enum: ["teacher"], default: "teacher" },
-//         isVerified: { type: Boolean, default: false },
-//     lastLogin: { type: Date },
-//     loginAttempts: { type: Number, default: 0 },
- 
-//     classes: [{  type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
-
-//     phone: { type: String },
-//     dateOfBirth: { type: Date },
-//     gender: { type: String, enum: ['Male', 'Female', 'Other'] },
-//       maritalStatus: {
-//       type: String,
-//       enum: ["Single", "Married", "Divorced", "Widowed"]
-//     },
-//       spouseName: { type: String },
-//     children: [
-//       {
-//         name: String,
-//         age: Number,
-//         school: String
-//       }
-//     ],
-//     address: {
-//       street: String,
-//       city: String,
-//       state: String,
-//       zipCode: String
-//     },
-//        bloodGroup: { type: String },
-
-//           physicalDisability: { type: Boolean, default: false },
-//     disabilityDetails: { type: String }, // e.g. "Hearing impairment", "Mobility issues"
- 
- 
-//     qualifications: [{ type: String }],
-//     dateOfJoining: { type: Date, default: Date.now },
-//     emergencyContact: {
-//       name: String,
-//       relationship: String,
-//       phone: String
-//     },
-//     OTP: { type : Number },
-//     status: { type : String, enum: ["active", "inactive"], default : "active"},
-//     status: { type: String, enum: ["active", "inactive"], default: "active" },
-// inactivatedAt: { type: Date },
-// inactivatedReason: { type: String },
-// inactivatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
-// inactivationNotes: { type: String },
-//     isRemoved: { type : Number, enum: [0,1], default: 0},  removedAt: { type: Date },
-//   removedReason: { type: String },
-//   removedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
-//     token: { type: String },
-//     refreashToken: { type: String }
-//   },
-//   { timestamps: true }
-// );
-
-// teacherSchema.index({ role: 1, name: 1 });
-// teacherSchema.index({ dateOfJoining: -1 });
-// teacherSchema.index({ status: -1 });
-// teacherSchema.index({ isRemoved: -1 });
-// module.exports = mongoose.model("Teacher", teacherSchema);
-
-
-
 
 
 
@@ -85,12 +7,7 @@ const mongoose = require("mongoose");
 const teacherSchema = new mongoose.Schema(
   {
     // 🔑 Identity & Authentication
-    teacherId: {
-      type: String,
-      unique: true,
-      default: () =>
-        "T-" + Math.random().toString(36).substring(2, 8).toUpperCase()
-    },
+  
     employeeId: { type: String, unique: true, sparse: true }, // official employee ID
     name: { type: String, required: true },
     email: { type: String, unique: true, required: true, lowercase: true },
@@ -273,3 +190,13 @@ teacherSchema.index({ dateOfJoining: -1 });
 teacherSchema.index({ status: 1 });
 teacherSchema.index({ isRemoved: 1 });
 module.exports = mongoose.model("Teacher", teacherSchema);
+
+
+
+
+  //  teacherId: {
+    //   type: String,
+    //   unique: true,
+    //   default: () =>
+    //     "T-" + Math.random().toString(36).substring(2, 8).toUpperCase()
+    // },

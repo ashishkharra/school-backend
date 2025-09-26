@@ -8,17 +8,26 @@ const {responseData} = require('../../helpers/responseData');
 
 module.exports = {
 registerTeacher: async (req, res) => {
-    try {
-      const result = await adminTeacherService.registerTeacher(req.body);
-      if (!result.success) {
-        res.status(401).json(responseData(result.message, {}, req, result.success || false));
-      }
-      return res.status(201).json(responseData(result.message, result, req, result.success || true));
-    } catch (error) {
-      console.error("Error registering teacher:", error.message);
-      return res.status(500).json(responseData(result.message, {}, req, false));
+  try {
+    const result = await adminTeacherService.registerTeacher(req.body);
+
+    if (!result.success) {
+      return res
+        .status(400)
+        .json(responseData(result.message, {}, req, false));
     }
+
+    return res
+      .status(201)
+      .json(responseData(result.message, result.data, req, true));
+  } catch (error) {
+    console.error("Error registering teacher:", error.message);
+    return res
+      .status(500)
+      .json(responseData(error.message, {}, req, false));
   }
+}
+
 ,
     getAllTeachers: async (req, res) => {
     try {
@@ -29,7 +38,7 @@ registerTeacher: async (req, res) => {
       return res.status(500).json(responseData("FAILED_TO_FETCH_TEACHERS", { error: error.message }, req, false));
     }
   },
-    updateTeacher: async (req, res) => {
+ updateTeacher: async (req, res) => {
     try {
     const { id } = req.params;
     const updateData = req.body;
@@ -46,6 +55,7 @@ registerTeacher: async (req, res) => {
       .json(responseData("UPDATE_FAILED", { error: error.message }, req, false));
   }
   },
+
 //    softDeleteTeacher : async (req, res) => {
 //   try {
 //   const { id } = req.params;
@@ -55,19 +65,20 @@ registerTeacher: async (req, res) => {
 //   return res.status(400).json(responseData("SOFT_DELETE_FAILED", { error: error.message }, req, false));
 // }
 // }
-  softDeleteTeacher: async (req, res) => {
-    try {
-      const { id } = req.params;
-      const teacher = await adminTeacherService.softDeleteTeacher(id);
-      return res
-        .status(200)
-        .json(responseData("TEACHER_SOFT_DELETED", teacher, req, true));
-    } catch (error) {
-      return res
-        .status(400)
-        .json(responseData("SOFT_DELETE_FAILED", { error: error.message }, req, false));
-    }
-  },
+softDeleteTeacher: async (req, res) => {
+  try {
+    const { id } = req.params;
+    const teacher = await adminTeacherService.softDeleteTeacher(id);
+    return res
+      .status(200)
+      .json(responseData("TEACHER_SOFT_DELETED", teacher, req, true));
+  } catch (error) {
+    return res
+      .status(400)
+      .json(responseData("SOFT_DELETE_FAILED", { error: error.message }, req, false));
+  }
+},
+
 
   // Get history (teachers with isRemoved = 1)
    getDeletedTeachersHistory: async (req, res) => {
@@ -83,7 +94,7 @@ registerTeacher: async (req, res) => {
 //----------------- ASSIGN TEACHER BY ADMIN
 ,
 
- assignTeacherToClassController : async (req, res) => {
+assignTeacherToClassController: async (req, res) => {
   try {
     const { classId, teacherId, section, subject, startTime, endTime } = req.body;
 
@@ -97,15 +108,17 @@ registerTeacher: async (req, res) => {
       startTime,
       endTime
     });
-    console.log("savedAssignment",savedAssignment)
-    return res.status(200).json({
-      status: "success",
-      message: "Teacher assigned successfully",
-      data: savedAssignment
-    });
+
+    // Use responseData format
+    return res.status(200).json(
+      responseData("TEACHER_ASSIGNED_SUCCESSFULLY", savedAssignment, req, true)
+    );
+
   } catch (error) {
     console.error("ERROR:", error.message);
-    return res.status(400).json({ status: "fail", message: error.message });
+    return res.status(400).json(
+      responseData("TEACHER_ASSIGNMENT_FAILED", { error: error.message }, req, false)
+    );
   }
 }
 }

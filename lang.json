@@ -1241,4 +1241,40 @@
     "en": "Error while getting classes",
     "ar": ""
   }  
+  ,
+  "EMAIL_NOT_SENT":{
+      "en": "Email cannot sent",
+    "ar": ""
+  },
+  "TEACHER_ASSIGNED_SUCCESSFULLY":{
+       "en": "Teacher assigned successfully",
+    "ar": ""
+  }
+  ,
+  "TEACHER_ASSIGNMENT_FAILED":{
+       "en": "Teacher assigned failed",
+    "ar": ""
+  },
+  
+  "INVALID_INPUT_DATA": {
+    "en": "Invalid input data provided for attendance",
+    "ar": ""
+  },
+  "INVALID_DATE_FORMAT": {
+    "en": "Invalid date format provided",
+    "ar": ""
+  },
+  "INVALID_SESSION": {
+    "en": "Invalid session value, allowed values are 1 (morning), 2 (afternoon), 3 (evening)",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED_SUCCESSFULLY": {
+    "en": "Attendance marked or updated successfully",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKING_FAILED": {
+    "en": "Attendance marking failed",
+    "ar": ""
+  }
 }
+

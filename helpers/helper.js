@@ -408,6 +408,7 @@ module.exports = {
       const template = fs.readFileSync('view/template/email.ejs', 'utf8')
       const renderedTemplate = ejs.render(template, dataBody)
       await sendEmailCommon(dataBody?.subject, renderedTemplate, dataBody)
+      return true
     } else {
       console.log('email template not found==>>>>>', slug)
     }

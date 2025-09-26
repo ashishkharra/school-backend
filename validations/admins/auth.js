@@ -101,6 +101,70 @@ case "registerTeacher": {
   validatorMiddleware
   ];
 }
+case "updateTeacher": {
+  return [
+    // Name (optional)
+    body("name")
+      .optional()
+      .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+      .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
+
+    // Email (optional)
+    body("email")
+      .optional()
+      .isEmail().withMessage("EMAIL_VALID"),
+
+    // Phone (optional)
+    body("phone")
+      .optional()
+      .isMobilePhone().withMessage("PHONE_VALID"),
+
+    // Date of Birth (optional)
+    body("dateOfBirth")
+      .optional()
+      .isISO8601().withMessage("DOB_VALID"),
+
+    // Gender (optional)
+    body("gender")
+      .optional()
+      .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
+      .withMessage("GENDER_INVALID")
+      .bail()
+      .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
+
+    // Address (optional)
+    body("address")
+      .optional()
+      .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+
+    // Qualifications (optional)
+    body("qualifications")
+      .optional()
+      .isArray().withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
+      .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
+
+    // Classes (optional)
+    body("classes")
+      .optional()
+      .isArray().withMessage("CLASSES_ARRAY_REQUIRED")
+      .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+
+    // Emergency Contact (optional)
+    body("emergencyContact")
+      .optional()
+      .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
+
+    body("emergencyContact.name")
+      .optional()
+      .notEmpty().withMessage("EMERGENCY_CONTACT_NAME_EMPTY"),
+
+    body("emergencyContact.phone")
+      .optional()
+      .isMobilePhone().withMessage("EMERGENCY_CONTACT_PHONE_VALID"),
+
+    validatorMiddleware
+  ];
+}
 
 
     case "registerStudent": {
