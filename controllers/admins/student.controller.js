@@ -71,9 +71,9 @@ module.exports = {
   udpateStudentSection: async (req, res) => {
     try {
       console.log('req body : ', req.body)
-      const { studentId, classId, section } = req.params;
+      const { classId,studentId,  section } = req.params;
 
-      const result = await adminStudent.updateStudentSection(studentId, classId, section);
+      const result = await adminStudent.updateStudentSection(classId ,studentId, section);
 
       if (!result.success) {
         return res

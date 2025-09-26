@@ -47,8 +47,11 @@ const adminSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
-    token: {type : String},
-    refreshToken: {type : String}
+    permission:{
+      type:Array
+    },
+    token: { type: String },
+    refreshToken: { type: String }
   },
   {
     timestamps: true,

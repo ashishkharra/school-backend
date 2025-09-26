@@ -370,7 +370,7 @@ const adminStudent = {
         }
     },
 
-    updateStudentSection: async (studentId, classId, newSection) => {
+    updateStudentSection: async (classId ,studentId, newSection) => {
         try {
             // 1. Validate IDs
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
@@ -383,12 +383,9 @@ const adminStudent = {
             // 2. Fetch student and class
             const student = await Student.findById(studentId);
             if (!student) return { success: false, message: "STUDENT_NOT_FOUND" };
-
-            const classObj = await Class.findById(classId);
-            if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
-
             // 3. Fetch latest enrollment for this class
-            const lastEnrollment = await Enrollment.findOne({ student: studentId, class: classId }).sort({ createdAt: -1 });
+            console.log("s c",studentId ,classId)
+            const lastEnrollment = await Enrollment.findOne({ class: studentId, student: classId }).sort({ createdAt: -1 });
             if (!lastEnrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
 
             // 4. Check if section is same
@@ -396,9 +393,7 @@ const adminStudent = {
                 return { success: false, message: "STUDENT_ALREADY_IN_SECTION" };
             }
 
-            // 5. Remove old enrollment
-            await Enrollment.deleteOne({ _id: lastEnrollment._id });
-
+            lastEnrollment.section = newSection;
             // 6. Count number of students in new section to generate roll number
             const sectionCount = await Enrollment.countDocuments({
                 class: classId,
@@ -406,27 +401,25 @@ const adminStudent = {
                 academicYear: lastEnrollment.academicYear
             });
             const serial = sectionCount + 1;
-            const classNumber = classObj.name.match(/\d+/)?.[0] || classObj.name;
+            const classNumber = Class.name.match(/\d+/)?.[0] || Class.name;
             const newRollNo = `${classNumber}${newSection}-${String(serial).padStart(3, "0")}`;
 
-            // 7. Create new enrollment for new section
-            const newEnrollment = await Enrollment.create({
-                student: studentId,
-                class: classId,
-                section: newSection,
-                rollNo: newRollNo,
-                academicYear: lastEnrollment.academicYear,
-                status: lastEnrollment.status
-            });
-
-            // 8. Update student record
-            student.section = newSection;
-            student.rollNo = newRollNo;
-            await student.save();
+            // 7. 
+lastEnrollment.rollNo = newRollNo;
+await lastEnrollment.save()
 
             // 9. Update class student count
             classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: lastEnrollment.academicYear });
             await classObj.save();
+
+            await sendEmail("student-section-change", {
+                to: student.email,
+                FirstName: student.name.split(" ")[0],
+                CLASS_NAME: classObj.name,
+                NEW_SECTION: newSection,
+                ACADEMIC_YEAR: lastEnrollment.academicYear,
+                ROLL_NO: newRollNo
+            });
 
             return {
                 success: true,

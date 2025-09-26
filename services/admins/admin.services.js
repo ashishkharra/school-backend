@@ -77,33 +77,23 @@ module.exports = {
             email: adminData.email,
             fullName: adminData.fullName,
             status: adminData.status,
-            role: adminData.role      // should print value here
+            role: adminData.role
           });
 
-          // Include role explicitly in the token payload
-          const deviceTokens = generateAuthToken({
-            _id: adminData._id,
-            email: adminData.email,
-            fullName: adminData.fullName,
-            status: adminData.status,
-            role: adminData.role // <-- include the role here
-          });
+          const deviceTokens = generateAuthToken(adminData);
 
           console.log('deviceTokens---------- ', deviceTokens)
           await Admin.findOneAndUpdate(
             { _id: admin._id },
             {
               forceLogout: false,
-              token: deviceTokens.token,
-              refreshToken: deviceTokens.refreshToken,
-              lastLogin: new Date(),
             }
           );
 
           return res.json(
             responseData(
               'ACCOUNT_LOGIN',
-              { ...deviceTokens, role: adminData.role },
+              { ...deviceTokens },
               req,
               true
             )
