@@ -56,7 +56,7 @@ module.exports = {
       email = email?.toLowerCase();
 
       let admin = await Admin.findOne({ email });
-console.log("admin-------------",admin)
+      console.log("admin-------------", admin)
       if (!isEmpty(admin)) {
         if (admin?.status === constant.status.inactive) {
           return res.json(responseData('ACCOUNT_INACTIVE', {}, req, false));
@@ -68,9 +68,17 @@ console.log("admin-------------",admin)
           }
 
           const adminData = admin.toObject();
-          
+          console.log('admin data : ', adminData)
+
           delete adminData['password'];
           adminData.fullName = `${adminData.firstName} ${adminData.lastName}`;
+          console.log('payload to token ===>', {
+            _id: adminData._id,
+            email: adminData.email,
+            fullName: adminData.fullName,
+            status: adminData.status,
+            role: adminData.role      // should print value here
+          });
 
           // Include role explicitly in the token payload
           const deviceTokens = generateAuthToken({

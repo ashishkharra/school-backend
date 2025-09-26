@@ -32,6 +32,7 @@ const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js')
 
 // middlewares
 const corsOption = {
+  origin: 'http://localhost:7001',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };

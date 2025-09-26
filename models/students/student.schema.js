@@ -189,9 +189,6 @@ const studentSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-
-// Indexes for faster search
-studentSchema.index({ rollNo: 1 });
 studentSchema.index({ admissionNo: 1 });
 studentSchema.index({ email: 1 });
 studentSchema.index({ name: 1 });

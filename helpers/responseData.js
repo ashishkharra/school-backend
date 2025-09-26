@@ -16,6 +16,7 @@ module.exports = {
     return __(message, language)
   },
   generateAuthToken: (user) => {
+    console.log('user-------------', user)
     const token = jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: process.env.TOKEN_LIFE || "15m"
     });

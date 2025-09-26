@@ -19,11 +19,13 @@ const adminClassController = {
     getAllClasses: async (req, res) => {
         try {
             const { classId, section } = req.params
+            console.log('class id : ', classId);
+            console.log('section : ', section)
             const result = await adminClassService.getAllClasses(classId, section);
             if (!result.success)
                 return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
 
-            return res.status(200).json(responseData(result?.message, {}, req, result?.success || true));
+            return res.status(200).json(responseData(result?.message, result, req, result?.success || true));
         } catch (error) {
             console.log('Get all class error : ', error.message)
             return res.status(500).json(responseData("ERROR_WHILE_GETTING_ALL_CLASSES", {}, req, false));
