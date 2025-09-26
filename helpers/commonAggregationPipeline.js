@@ -405,7 +405,7 @@ const getStudentDetailsPipeline = (studentId) => [
 const getAllClassesPipeline = (classIdentifier, section) => {
   const match = {};
 
-  
+
 
   if (classIdentifier) {
     if (section) {
@@ -502,6 +502,97 @@ const getStudentWithDetails = async (studentId) => {
   ]);
 
   return result || null;
+};
+
+const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
+  return [
+    { $match: { class: new mongoose.Types.ObjectId({class : classId})}},
+
+    { $unwind: { path: "$records", preserveNullAndEmptyArrays: true}},
+
+    {
+      $lookup: {
+        from: "classes",
+        localField: "class",
+        foreignField: "_id",
+        as: "classData"
+      }
+    },
+
+    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true} },
+
+    {
+      $project: {
+        
+      }
+    }
+  ]
+}
+
+function buildAttendancePipeline(classId, skip = 0, limit = 10) {
+  return [
+    { $match: { class: new mongoose.Types.ObjectId(classId) } },
+
+    { $unwind: { path: "$records", preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: "students",
+        localField: "records.student",
+        foreignField: "_id",
+        as: "stud"
+      }
+    },
+    { $unwind: { path: "$stud", preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: "classes",
+        localField: "class",
+        foreignField: "_id",
+        as: "classData"
+      }
+    },
+    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "takenBy",
+        foreignField: "_id",
+        as: "teacherData"
+      }
+    },
+    { $unwind: { path: "$teacherData", preserveNullAndEmptyArrays: true } },
+
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            {
+              _id: "$_id",
+              status: "$records.status",
+              remarks: "$records.remarks",
+              studentName: "$stud.name",
+              className: "$classData.name",
+              classSection: "$classData.section",
+              teacherName: "$teacherData.name",
+              teacherSubjects: {
+                $map: {
+                  input: "$teacherData.subjectsHandled",
+                  as: "subj",
+                  in: "$$subj.subjectName"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    { $skip: skip },
+    { $limit: limit }
+  ];
 }
 
 module.exports = {
@@ -511,5 +602,7 @@ module.exports = {
   getClassWithStudentsPipeline,
   getStudentDetailsPipeline,
   getAllClassesPipeline,
-  getStudentWithDetails
+  getStudentWithDetails,
+  buildAttendancePipeline,
+  buildAssignmentPipeline
 }

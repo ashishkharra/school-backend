@@ -5,6 +5,6 @@ const router = require('express').Router()
 
 
 router
-    .get('/:classId/:section?', [verifyToken], adminAttendanceController.getAttendances)
+    .get('/:classId', [verifyToken], adminAttendanceController.getAttendances)
 
 module.exports = router
