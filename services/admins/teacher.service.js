@@ -1,9 +1,12 @@
 const bcrypt = require('bcryptjs');
 const Teacher = require('../../models/teacher/teacher.schema');
 const { sendEmail } = require('../../helpers/helper'); // adjust path
-const teacherAssignBYClass = require('../../models/class/class.schema');
+// const teacherAssignBYClass = require('../../models/class/class.schema');
+const Class = require('../../models/class/class.schema');
+const assignTimeTable= require("../../models/class/teacher.timetable.schema")
 const teacherSchema = require('../../models/teacher/teacher.schema');
 const helper = require('../../helpers/helper');
+const teacherTimetableSchema = require('../../models/class/teacher.timetable.schema');
 
 module.exports = {
   registerTeacher: async (data) => {
@@ -196,49 +199,52 @@ module.exports = {
     if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
     return hours * 60 + minutes;
   },
+assignTeacherToClass: async function({ classId, teacherId, section, subject, startTime, endTime }) {
+    // Validation
+    if (!classId || !teacherId || !section || !subject || !startTime || !endTime) {
+      throw new Error("Missing required fields");
+    }
 
- assignTeacherToClass: async function({ classId, teacherId, startTime, endTime }) {
-  if (!classId || !teacherId || !startTime || !endTime) {
-    throw new Error("Missing required fields");
-  }
+    const startMinutes = this.convertToMinutes(startTime);
+    const endMinutes = this.convertToMinutes(endTime);
+    if (endMinutes <= startMinutes) {
+      throw new Error("End time must be after start time");
+    }
 
-  const startMins = this.convertToMinutes(startTime);
-  const endMins = this.convertToMinutes(endTime);
+    // Fetch class and teacher info
+    const classData = await Class.findById(classId);
+    if (!classData) throw new Error("Class not found");
+    console.log("ClassData",classData)
+    const teacherData = await Teacher.findById(teacherId);
+    console.log("TeacherData",teacherData)
+    if (!teacherData) throw new Error("Teacher not found");
 
-  if (endMins <= startMins) {
-    throw new Error("End time must be after start time");
-  }
+    // Check overlapping slot for same teacher
+    const overlapping = await assignTimeTable.findOne({
+      teacher: teacherId,
+      $and: [
+        { startMinutes: { $lt: endMinutes } },
+        { endMinutes: { $gt: startMinutes } }
+      ]
+    });
 
-  const overlappingClass = await teacherAssignBYClass.findOne({
-    teacher: { $exists: true },
-    $and: [
-      { startMinutes: { $lt: endMins } },
-      { endMinutes: { $gt: startMins } },
-    ],
-  });
+    if (overlapping) {
+      throw new Error("Selected slot conflicts with existing booked slot. Please choose another slot.");
+    }
 
-  if (overlappingClass) {
-    throw new Error("Selected slot conflicts with existing booked slot. Please choose another slot.");
-  }
-
-  const updatedClass = await teacherAssignBYClass.findByIdAndUpdate(
-    classId,
-    {
+    // Save assignment
+    const newAssignment = new teacherTimetableSchema({
+      class: classId,
+      section,
+      subject,
       teacher: teacherId,
       startTime,
       endTime,
-      startMinutes: startMins,
-      endMinutes: endMins,
-    },
-    { new: true, runValidators: true }
-  );
+      startMinutes,
+      endMinutes
+    });
 
-  if (!updatedClass) {
-    throw new Error("Class not found");
+    return await newAssignment.save();
   }
-
-  return updatedClass;
-},
-
 
 }

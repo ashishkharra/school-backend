@@ -1039,10 +1039,7 @@
     "en": "Description limit reached.",
     "ar": ""
   },
-  "NAME_EMPTY": {
-    "en": "Name is required.",
-    "ar": ""
-  },
+ 
   "NAME_LIMIT_REACHED": {
     "en": "Name must not exceed 100 characters.",
     "ar": ""
@@ -1055,10 +1052,7 @@
     "en": "Duration is required.",
     "ar": ""
   },
-  "PRICE_EMPTY": {
-    "en": "Price is required.",
-    "ar": ""
-  },
+ 
   "MONTHS_EMPTY": {
     "en": "Number of months is required.",
     "ar": ""
@@ -1246,7 +1240,6 @@
   "ERROR_WHILE_GETTING_ALL_CLASSES":{
     "en": "Error while getting classes",
     "ar": ""
-  },
-  
+  }
   
 }
