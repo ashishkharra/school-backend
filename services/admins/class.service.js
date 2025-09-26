@@ -1,4 +1,4 @@
-const uuidv4 = require('uuidv4')
+const { v4: uuidv4 } = require('uuid');
 
 const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
@@ -35,11 +35,16 @@ const adminClassService = {
         }
     },
 
-    getAllClasses: async () => {
+    getAllClasses: async (classId, section) => {
         try {
-            const result = await Class.aggregate(getAllClassesPipeline);
+            const pipeline = getAllClassesPipeline(classId, section);
+            console.log('pipeline : ', pipeline)
+            
+            const result = await Class.aggregate(pipeline);
 
-            if (!result) return { success : false, message : "ERROR_WHILE_GETTING_ALL_CLASSES"}
+            if (!result || result.length === 0) {
+                return { success: false, message: "ERROR_WHILE_GETTING_ALL_CLASSES" };
+            }
 
             return {
                 success: true,

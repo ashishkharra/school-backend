@@ -401,48 +401,61 @@ const getStudentDetailsPipeline = (studentId) => [
   }
 ];
 
-const getAllClassesPipeline = () => {
+const getAllClassesPipeline = (classIdentifier, section) => {
+  const match = {};
+
+  
+
+  if (classIdentifier) {
+    if (section) {
+      match.section = section;
+    }
+  }
+
   return [
+    { $match: match },
+
     {
-      // ✅ Match only classes where isClassTeacher is true
-      $match: { isClassTeacher: true }
-    },
-    {
-      // ✅ Join with teachers collection
       $lookup: {
         from: "teachers",
         localField: "teacher",
         foreignField: "_id",
-        as: "classTeacher"
+        as: "teacherDoc"
       }
     },
+    { $unwind: { path: "$teacherDoc", preserveNullAndEmptyArrays: true } },
+
     {
-      // ✅ Flatten the array (a class has at most one class teacher)
-      $unwind: {
-        path: "$classTeacher",
-        preserveNullAndEmptyArrays: true
+      $addFields: {
+        classTeacher: {
+          $cond: [
+            { $eq: ["$isClassTeacher", true] },
+            {
+              _id: "$teacherDoc._id",
+              name: "$teacherDoc.name",
+              email: "$teacherDoc.email",
+              department: "$teacherDoc.department",
+              specialization: "$teacherDoc.specialization"
+            },
+            null
+          ]
+        }
       }
     },
+
+    // Final projection
     {
-      // ✅ Limit teacher fields to only the common details you need
       $project: {
         name: 1,
         classIdentifier: 1,
         section: 1,
         subjects: 1,
-        startTime: 1,
-        endTime: 1,
         studentCount: 1,
-        // teacher details you want to expose
-        "classTeacher._id": 1,
-        "classTeacher.name": 1,
-        "classTeacher.email": 1,
-        "classTeacher.department": 1,
-        "classTeacher.specialization": 1
+        classTeacher: 1
       }
     }
   ];
-}
+};
 
 module.exports = {
   studentAttendancePipeline,

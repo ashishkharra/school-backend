@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose')
 
-const { generateOTP } = require('../../helpers/helper.js')
+const { generateOTP, sendEmail } = require('../../helpers/helper.js')
 
 const Student = require("../../models/students/student.schema.js");
 const Class = require("../../models/class/class.schema.js");
@@ -218,6 +218,15 @@ const adminStudent = {
                 new: true
             });
 
+            const mail = await sendEmail("profile-updated-notification", {
+                email: updatedStudent.email,
+                FirstName: updatedStudent.name,
+                EMAIL: updatedStudent.email,
+                MOBILE: updatedStudent.phone
+            });
+
+            console.log(mail)
+
             return {
                 success: true,
                 student: updatedStudent,
@@ -321,6 +330,10 @@ const adminStudent = {
             // 11. Update class student count
             classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: nextAcademicYear });
             await classObj.save();
+
+            if (classChangeData) {
+                await sendEmail("class-section-change", classChangeData);
+            }
 
             return {
                 success: true,
