@@ -3,7 +3,7 @@ const Teacher = require('../../models/teacher/teacher.schema');
 const { sendEmail } = require('../../helpers/helper'); // adjust path
 // const teacherAssignBYClass = require('../../models/class/class.schema');
 const Class = require('../../models/class/class.schema');
-const assignTimeTable= require("../../models/class/teacher.timetable.schema.js")
+const assignTimeTable= require("../../models/class/teacher.timetable.schema")
 const teacherSchema = require('../../models/teacher/teacher.schema');
 const helper = require('../../helpers/helper');
 const teacherTimetableSchema = require('../../models/class/teacher.timetable.schema');
@@ -197,24 +197,13 @@ softDeleteTeacher: async (teacherId) => {
 
 //--------------------assign teacher by admin
 
- convertToMinutes(timeStr) {
-  if (!timeStr) throw new Error("Time string required");
-
-  const parts = timeStr.trim().split(' ');
-  let time = parts[0];
-  let ampm = parts[1]; // may be undefined
-
-  let [hours, minutes] = time.split(':').map(Number);
-
-  if (ampm) { // only convert if AM/PM is provided
-    ampm = ampm.toUpperCase();
-    if (ampm === 'PM' && hours !== 12) hours += 12;
-    if (ampm === 'AM' && hours === 12) hours = 0;
-  }
-
-  return hours * 60 + minutes;
-}
-,
+  convertToMinutes: function(timeStr) {
+    const [time, ampm] = timeStr.split(" ");
+    let [hours, minutes] = time.split(":").map(Number);
+    if (ampm.toUpperCase() === "PM" && hours !== 12) hours += 12;
+    if (ampm.toUpperCase() === "AM" && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  },
 assignTeacherToClass: async function({ classId, teacherId, section, subject, startTime, endTime }) {
     // Validation
     if (!classId || !teacherId || !section || !subject || !startTime || !endTime) {
@@ -230,13 +219,12 @@ assignTeacherToClass: async function({ classId, teacherId, section, subject, sta
     // Fetch class and teacher info
     const classData = await Class.findById(classId);
     if (!classData) throw new Error("Class not found");
-    console.log("ClassData",classData)
+
     const teacherData = await Teacher.findById(teacherId);
-    console.log("TeacherData",teacherData)
     if (!teacherData) throw new Error("Teacher not found");
 
     // Check overlapping slot for same teacher
-    const overlapping = await assignTimeTable.findOne({
+    const overlapping = await TeacherTimeTable.findOne({
       teacher: teacherId,
       $and: [
         { startMinutes: { $lt: endMinutes } },
@@ -249,7 +237,7 @@ assignTeacherToClass: async function({ classId, teacherId, section, subject, sta
     }
 
     // Save assignment
-    const newAssignment = new teacherTimetableSchema({
+    const newAssignment = new TeacherTimeTable({
       class: classId,
       section,
       subject,
@@ -262,5 +250,4 @@ assignTeacherToClass: async function({ classId, teacherId, section, subject, sta
 
     return await newAssignment.save();
   }
-
 }

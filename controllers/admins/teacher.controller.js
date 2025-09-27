@@ -93,8 +93,7 @@ softDeleteTeacher: async (req, res) => {
 
 //----------------- ASSIGN TEACHER BY ADMIN
 ,
-
-assignTeacherToClassController: async (req, res) => {
+ assignTeacherToClassController : async (req, res) => {
   try {
     const { classId, teacherId, section, subject, startTime, endTime } = req.body;
 
@@ -109,16 +108,14 @@ assignTeacherToClassController: async (req, res) => {
       endTime
     });
 
-    // Use responseData format
-    return res.status(200).json(
-      responseData("TEACHER_ASSIGNED_SUCCESSFULLY", savedAssignment, req, true)
-    );
-
+    return res.status(200).json({
+      status: "success",
+      message: "Teacher assigned successfully",
+      data: savedAssignment
+    });
   } catch (error) {
     console.error("ERROR:", error.message);
-    return res.status(400).json(
-      responseData("TEACHER_ASSIGNMENT_FAILED", { error: error.message }, req, false)
-    );
+    return res.status(400).json({ status: "fail", message: error.message });
   }
 }
 }
