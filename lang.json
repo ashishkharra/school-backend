@@ -1275,6 +1275,14 @@
   "ATTENDANCE_MARKING_FAILED": {
     "en": "Attendance marking failed",
     "ar": ""
+  },
+  "EMAIL_ERROR": {
+    "en": "Email error",
+    "ar": ""
+  },
+  "EMAIL_SUCCESSFULLY_SENT": {
+    "en": "Email successfully sent",
+    "ar": ""
   }
 }
 
