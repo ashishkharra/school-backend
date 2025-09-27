@@ -1,6 +1,8 @@
 const Student = require('../../models/students/student.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Attendance = require('../../models/students/attendance.schema.js')
+const { sendEmail } = require('../../helpers/helper.js')
+
 const mongoose = require('mongoose')
 const path = require("path");
 const fs = require("fs");
@@ -99,6 +101,48 @@ const studentService = {
         } catch (error) {
             console.error("Error fetching attendance:", error);
             return { success: false, message: "Error fetching attendance" };
+        }
+    },
+
+    requestUpdateProfile: async (studentId, requestedFields) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
+                return { success : false, message : "STUDENT_ID_NOT_VALID"}
+            }
+
+            const student = await Student.findById(studentId)
+                .populate('class')
+                .lean();
+
+            if (!student) {
+                return { success: false, message : 'STUDENT_NOT_FOUND' }
+            }
+
+            const requestedFieldsHtml = Object.entries(requestedFields || {})
+                .map(([key, value]) => `${_.startCase(key)}: ${value}`)
+                .join('<br/>');
+
+            const emailData = {
+                ADMIN_NAME: 'Admin',
+                STUDENT_NAME: student.name,
+                ROLL_NO: student.rollNo || '',
+                CLASS_NAME: student.class?.name || '',
+                SECTION: student.class?.section || '',
+                REQUESTED_FIELDS: requestedFieldsHtml,
+                REQUEST_DATE: new Date().toLocaleString(),
+                SCHOOL_NAME: process.env.SCHOOL_NAME || 'Your School'
+            };
+
+            const emailSent = await sendEmail('student-profile-update-request', emailData);
+
+            if (!emailSent) {
+                return { success : false, message : 'EMAIL_ERROR'}
+            }
+
+            return { success : true, message : 'EMAIL_SUCCESSFULLY_SENT'}
+        } catch (error) {
+            console.error('Error in requestUpdateProfile:', error.message);
+            return { success : false, message : "SERVER_ERROR" }
         }
     }
 

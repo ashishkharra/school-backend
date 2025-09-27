@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const studentService = require('../../services/students/student.service.js')
 const { responseData } = require('../../helpers/responseData.js')
+const { sendEmail } = require('../../helpers/helper.js')
 
 const studentController = {
     downloadAssignment: async (req, res) => {
@@ -101,6 +102,27 @@ const studentController = {
         } catch (error) {
             console.error("Error in viewAttendanceByClass:", error.message);
             return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
+        }
+    },
+
+    requestUpdateProfile: async (req, res) => {
+        try {
+            const { studentId } = req.params
+            const { requestedFields } = req.body
+            // const { id } = req.user;
+            const result = await studentService.requestUpdateProfile(studentId, requestedFields);
+
+            if (!result.success) {
+                return res.status(401).json(responseData(result?.message, {}, req, result?.success || false))
+            }
+            return res
+                .status(200)
+                .json(responseData(result?.message, { studentId }, req, true));
+        } catch (error) {
+            console.error('Error in requestUpdateProfile:', error.message);
+            return res
+                .status(500)
+                .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
         }
     }
 

@@ -225,6 +225,63 @@ const studentProfilePipeline = (studentId) => {
   ];
 };
 
+const teacherProfilePipeline = (teacherId) => {
+  return [
+    { $match: { _id: new mongoose.Types.ObjectId({ _id: teacherId }) } },
+
+    {
+      $lookup: {
+        from: 'classes',
+        localField: '_id',
+        foreignField: 'teacher',
+        as: 'classData'
+      }
+    },
+
+    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
+
+    {
+      $project: {
+        "name": 1,
+        "email": 1,
+        "phone": 1,
+        "dateOfBirth": 1,
+        "gender": 1,
+        "maritalStatus": 1,
+        "spouseName": 1,
+        "children": 1,
+        "address": 1,
+        "bloodGroup": 1,
+        "physicalDisability": 1,
+        "department": 1,
+        "designation": 1,
+        "qualifications": 1,
+        "specialization": 1,
+        "experience": 1,
+        "dateOfJoining": 1,
+        "classes": 1,
+        "subjectsHandled": 1,
+        "salaryInfo": 1,
+        "IDProof": 1,
+        "certificates": 1,
+        "resume": 1,
+        "joiningLetter": 1,
+        "emergencyContact": 1,
+        "achievements": 1,
+        "clubsInCharge": 1,
+        "eventsHandled": 1,
+        "status": 1,
+        "createdAt": 1,
+        "updatedAt": 1,
+
+        "classData.name": 1,
+        "classData.section": 1
+      }
+    }
+
+  ];
+}
+
 const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilter = {}) => [
   // Match the specific class
   { $match: { _id: new mongoose.Types.ObjectId(classId) } },
@@ -502,9 +559,9 @@ const getStudentWithDetails = async (studentId) => {
   return result || null;
 }
 
-const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
+const buildAssignmentPipeline = (classId, skip = 0, limit = 10) => {
   return [
-    { $match: { class: new mongoose.Types.ObjectId({class : classId})}},
+    { $match: { class: new mongoose.Types.ObjectId({ class: classId }) } },
 
     {
       $lookup: {
@@ -515,7 +572,7 @@ const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
       }
     },
 
-    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true} },
+    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
 
     {
       $project: {
@@ -523,7 +580,7 @@ const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
         "instructions": 1,
         "dueDate": 1,
         "maxMarks": 1,
-        "passingMarks":1,
+        "passingMarks": 1,
         "fileUrl": 1,
         "resources": 1,
         "uploadedBy": 1,
@@ -533,8 +590,8 @@ const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
       }
     },
 
-    { $skip : skip},
-    { $limit : limit}
+    { $skip: skip },
+    { $limit: limit }
   ]
 }
 
@@ -608,6 +665,7 @@ module.exports = {
   studentAttendancePipeline,
   studentProfilePipeline,
   studentAssignmentPipeline,
+  teacherProfilePipeline,
   getClassWithStudentsPipeline,
   getStudentDetailsPipeline,
   getAllClassesPipeline,

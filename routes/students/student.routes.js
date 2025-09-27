@@ -15,4 +15,8 @@ router.get("/:studentId/assignments/:assignmentId/download",
   studentController.downloadAssignment
 );
 
+router.post('/update-profile-request/:studentId/', 
+  studentController.requestUpdateProfile
+);
+
 module.exports = router
