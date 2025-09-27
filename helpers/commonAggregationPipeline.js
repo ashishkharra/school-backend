@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper')
 const Student = require('../models/students/student.schema.js')
+const Student = require('../models/students/student.schema.js')
 
 const studentAssignmentPipeline = (assignmentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(assignmentId) } },
@@ -405,8 +406,6 @@ const getStudentDetailsPipeline = (studentId) => [
 const getAllClassesPipeline = (classIdentifier, section) => {
   const match = {};
 
-
-
   if (classIdentifier) {
     if (section) {
       match.section = section;
@@ -502,7 +501,7 @@ const getStudentWithDetails = async (studentId) => {
   ]);
 
   return result || null;
-};
+}
 
 const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
   return [
@@ -602,7 +601,5 @@ module.exports = {
   getClassWithStudentsPipeline,
   getStudentDetailsPipeline,
   getAllClassesPipeline,
-  getStudentWithDetails,
-  buildAttendancePipeline,
-  buildAssignmentPipeline
+  getStudentWithDetails
 }
