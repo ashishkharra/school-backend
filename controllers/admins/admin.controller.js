@@ -52,6 +52,7 @@ module.exports = {
     }
   },
   editAdmin: async (req, res) => {
+    console.log('file : ',req.files)
     try {
       await adminService.editAdmin(req, res)
     } catch (err) {

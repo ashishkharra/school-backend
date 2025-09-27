@@ -21,6 +21,7 @@ const adminClassRoutes = require('./routes/admins/class.routes');
 const adminReportRoutes = require('./routes/admins/reports.routes');
 const adminStudentRoutes = require('./routes/admins/student.routes');
 const adminTeacherRoutes = require('./routes/admins/teacher.routes');
+const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js')
 
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
@@ -65,6 +66,7 @@ app.use('/api/admins/classes', adminClassRoutes);
 app.use('/api/admins/reports', adminReportRoutes);
 app.use('/api/admins/students', adminStudentRoutes);
 app.use('/api/admins/teachers', adminTeacherRoutes);
+app.use('/api/admins/attendances', adminAttendanceRoutes)
 
 // Student routes
 app.use('/api/student', studentRoutes)

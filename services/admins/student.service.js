@@ -10,7 +10,7 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
 
-const { getClassWithStudentsPipeline, getStudentDetailsPipeline } = require('../../helpers/commonAggregationPipeline.js')
+const { getClassWithStudentsPipeline, getStudentDetailsPipeline, getStudentWithDetails } = require('../../helpers/commonAggregationPipeline.js')
 
 
 const adminStudent = {
@@ -370,7 +370,7 @@ const adminStudent = {
         }
     },
 
-    updateStudentSection: async (classId ,studentId, newSection) => {
+    updateStudentSection: async (classId, studentId, newSection) => {
         try {
             // 1. Validate IDs
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
@@ -383,9 +383,12 @@ const adminStudent = {
             // 2. Fetch student and class
             const student = await Student.findById(studentId);
             if (!student) return { success: false, message: "STUDENT_NOT_FOUND" };
+
+            const classObj = await Class.findById(classId);
+            if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
             // 3. Fetch latest enrollment for this class
-            console.log("s c",studentId ,classId)
-            const lastEnrollment = await Enrollment.findOne({ class: studentId, student: classId }).sort({ createdAt: -1 });
+            const lastEnrollment = await Enrollment.findOne({ class: classId, student: studentId }).sort({ createdAt: -1 });
             if (!lastEnrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
 
             // 4. Check if section is same
@@ -401,19 +404,19 @@ const adminStudent = {
                 academicYear: lastEnrollment.academicYear
             });
             const serial = sectionCount + 1;
-            const classNumber = Class.name.match(/\d+/)?.[0] || Class.name;
+            const classNumber = classObj.name.match(/\d+/)?.[0] || classObj.name;
             const newRollNo = `${classNumber}${newSection}-${String(serial).padStart(3, "0")}`;
 
-            // 7. 
-lastEnrollment.rollNo = newRollNo;
-await lastEnrollment.save()
+            // 7. save enrollment with updated section
+            lastEnrollment.rollNo = newRollNo;
+            await lastEnrollment.save()
 
             // 9. Update class student count
             classObj.studentCount = await Enrollment.countDocuments({ class: classId, academicYear: lastEnrollment.academicYear });
             await classObj.save();
 
             await sendEmail("student-section-change", {
-                to: student.email,
+                email: student.email,
                 FirstName: student.name.split(" ")[0],
                 CLASS_NAME: classObj.name,
                 NEW_SECTION: newSection,
@@ -424,8 +427,7 @@ await lastEnrollment.save()
             return {
                 success: true,
                 message: "STUDENT_SECTION_UPDATED_SUCCESSFULLY",
-                student,
-                enrollment: newEnrollment
+                student
             };
         } catch (error) {
             console.error("updateStudentSection error:", error);
@@ -433,59 +435,73 @@ await lastEnrollment.save()
         }
     },
 
-    deleteStudent: async (studentId, adminId, reason = "No reason provided") => {
+    deleteStudent: async (studentId, adminId, reason = 'No reason provided') => {
         try {
-            if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success: false, message: "STUDENT_ID_NOT_VALID" }
-            }
+            if (!mongoose.Types.ObjectId.isValid(studentId))
+                return { success: false, message: 'STUDENT_ID_NOT_VALID' };
+            if (!mongoose.Types.ObjectId.isValid(adminId))
+                return { success: false, message: 'ADMIN_ID_NOT_VALID' };
 
-            if (!mongoose.Types.ObjectId.isValid(adminId)) {
-                return { success: false, message: "ADMIN_ID_NOT_VALID" }
-            }
-            // 1. Find student
-            const student = await Student.findById(studentId);
-            if (!student) {
-                return { success: false, message: "STUDENT_NOT_FOUND" };
-            }
+            // Aggregate everything in one go
+            const studentData = await getStudentWithDetails(studentId);
+            if (!studentData) return { success: false, message: 'STUDENT_NOT_FOUND' };
 
-            // 2. Check if already removed
-            if (student.isRemoved === 1) {
-                return { success: false, message: "STUDENT_ALREADY_REMOVED" };
-            }
+            if (studentData.isRemoved === 1)
+                return { success: false, message: 'STUDENT_ALREADY_REMOVED' };
 
-            // 3. Soft delete student
-            student.status = "inactive";
-            student.isRemoved = 1;
-            student.removedAt = new Date();
-            student.removedReason = reason;
-            student.removedBy = adminId;
-
-            await student.save();
-
-            // 4. Soft delete enrollments
-            await Enrollment.updateMany(
-                { student: studentId },
-                { $set: { status: "Pass" } }
+            // Soft delete student
+            await Student.updateOne(
+                { _id: studentId },
+                {
+                    $set: {
+                        status: 'inactive',
+                        isRemoved: 1,
+                        removedAt: new Date(),
+                        removedReason: reason,
+                        removedBy: adminId
+                    }
+                }
             );
 
-            // 5. Return response
+            // Soft delete all enrollments
+            await Enrollment.updateMany(
+                { student: studentId },
+                { $set: { status: 'Pass' } }
+            );
+
+            console.log('student data : ', studentData)
+
+            // Send email
+            await sendEmail('student-soft-delete', {
+                email: studentData.email,
+                PARENT_NAME:
+                    studentData.parents?.[0]?.name ||
+                    studentData.guardian?.name ||
+                    'Parent/Guardian',
+                STUDENT_NAME: studentData.name,
+                ROLL_NO: studentData.enrollments?.rollNo || '',
+                CLASS_NAME: studentData.classInfo?.name || '',
+                ACADEMIC_YEAR: studentData.enrollments?.academicYear || '',
+                REASON: reason
+            });
+
             return {
                 success: true,
-                message: "STUDENT_SOFT_DELETED",
+                message: 'STUDENT_SOFT_DELETED',
                 student: {
-                    id: student._id,
-                    name: student.name,
-                    email: student.email,
-                    status: student.status,
-                    isRemoved: student.isRemoved,
-                    removedAt: student.removedAt,
-                    removedReason: student.removedReason,
-                    removedBy: student.removedBy
+                    id: studentId,
+                    name: studentData.name,
+                    email: studentData.email,
+                    status: 'inactive',
+                    isRemoved: 1,
+                    removedAt: new Date(),
+                    removedReason: reason,
+                    removedBy: adminId
                 }
             };
-        } catch (error) {
-            console.error("deleteStudent error:", error);
-            return { success: false, message: "SERVER_ERROR" };
+        } catch (err) {
+            console.error('deleteStudent error:', err);
+            return { success: false, message: 'SERVER_ERROR' };
         }
     },
 

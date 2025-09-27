@@ -37,8 +37,7 @@ const adminSchema = new mongoose.Schema(
     },
     profilePic: {
       type: String,
-      default: "no_image.png", // fallback
-      get: (image) => process.env.AWS_MEDIA_URL + image,
+      default: "no_image.png",
     },
     forceLogout: {
       type: Boolean,

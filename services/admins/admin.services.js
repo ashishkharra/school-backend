@@ -1,6 +1,7 @@
 const Admin = require('../../models/admin/admin.schema.js')
 // const EmailTemplate = require('../../models/emailTemplate')
 const fs = require('fs')
+const path = require('path')
 const { isEmpty } = require('lodash')
 const {
   responseData,
@@ -216,61 +217,53 @@ module.exports = {
   },
   editAdmin: async (req, res) => {
     try {
-      const { fullName, profilePic } = req.body
-      const { _id } = req.user
+      const { fullName } = req.body;
+      const { _id } = req.user;
+      const updateValues = {};
 
-      const updateValues = {}
-      if (profilePic) {
-        updateValues.profilePic = profilePic
+      if (req.file) {
+        const relativePath = path.relative(
+          path.join(__dirname, '..'),
+          req.file.path
+        ).replace(/\\/g, '/');
+        updateValues.profilePic = relativePath;
       }
+
+      console.log('updated values : ', updateValues.profilePic)
 
       if (fullName) {
-        function splitFullName(fullNameAdmin) {
-          const firstSpaceIndex = fullNameAdmin?.indexOf(' ')
-          if (firstSpaceIndex === -1) {
-            return {
-              firstName: fullNameAdmin,
-              lastName: ''
-            }
-          }
-
-          const firstName = fullNameAdmin?.substring(0, firstSpaceIndex)
-          const lastName = fullNameAdmin?.substring(firstSpaceIndex + 1)
-
-          return {
-            firstName: firstName,
-            lastName: lastName
-          }
-        }
-        const splitName = splitFullName(fullName)
-        updateValues.firstName = splitName?.firstName
-        updateValues.lastName = splitName?.lastName
+        const [firstName, ...rest] = fullName.trim().split(' ');
+        updateValues.firstName = firstName;
+        updateValues.lastName = rest.join(' ');
       }
-      updateValues.lastUpdate = new Date()
-      const adminUpdate = await Admin.findOneAndUpdate(
-        { _id },
+
+      updateValues.lastUpdate = new Date();
+
+      console.log('update values ; ', updateValues)
+
+      const adminUpdate = await Admin.findByIdAndUpdate(
+        _id,
         { $set: updateValues },
         { new: true }
-      )
-      if (adminUpdate) {
-        const adminData = adminUpdate.toJSON()
-        delete adminData['password']
-        adminData.fullName = adminData.firstName + ' ' + adminData.lastName
-        let deviceTokens = generateAuthToken(adminData)
-        return res.json(
-          responseData(
-            'ADMIN_UPDATE_SUCCESS',
-            { ...adminData, ...deviceTokens },
-            req,
-            true
-          )
-        )
-      } else {
-        return res.json(responseData('ERROR_OCCUR', {}, req, false))
+      );
+
+      console.log('admin update : ', adminUpdate)
+
+      if (!adminUpdate) {
+        return res.json(responseData('ERROR_OCCUR', {}, req, false));
       }
+
+      const adminData = adminUpdate.toJSON();
+      delete adminData.password;
+      adminData.fullName = `${adminData.firstName} ${adminData.lastName}`;
+      const deviceTokens = generateAuthToken(adminData);
+
+      return res.json(
+        responseData('ADMIN_UPDATE_SUCCESS', { ...adminData, ...deviceTokens }, req, true)
+      );
     } catch (err) {
-      console.log('Error', err.message)
-      return res.json(responseData('ERROR_OCCUR', {}, req, false))
+      console.error('editAdmin error:', err);
+      return res.json(responseData('ERROR_OCCUR', {}, req, false));
     }
   },
   notificationToggle: async (req, res) => {

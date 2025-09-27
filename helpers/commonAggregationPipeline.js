@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper')
+const Student = require('../models/students/student.schema.js')
 
 const studentAssignmentPipeline = (assignmentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(assignmentId) } },
@@ -457,11 +458,58 @@ const getAllClassesPipeline = (classIdentifier, section) => {
   ];
 };
 
+const getStudentWithDetails = async (studentId) => {
+  if (!mongoose.Types.ObjectId.isValid(studentId)) return null;
+
+  const [result] = await Student.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
+
+    // Join with enrollments
+    {
+      $lookup: {
+        from: 'enrollments',
+        localField: '_id',
+        foreignField: 'student',
+        as: 'enrollments'
+      }
+    },
+    { $unwind: { path: '$enrollments', preserveNullAndEmptyArrays: true } },
+
+    // Join with class (from enrollment.class)
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'enrollments.class',
+        foreignField: '_id',
+        as: 'classInfo'
+      }
+    },
+    { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } },
+
+    // Optionally project only the fields you need
+    {
+      $project: {
+        name: 1,
+        email: 1,
+        status: 1,
+        parents: 1,
+        guardian: 1,
+        'enrollments.rollNo': 1,
+        'enrollments.academicYear': 1,
+        'classInfo.name': 1
+      }
+    }
+  ]);
+
+  return result || null;
+}
+
 module.exports = {
   studentAttendancePipeline,
   studentProfilePipeline,
   studentAssignmentPipeline,
   getClassWithStudentsPipeline,
   getStudentDetailsPipeline,
-  getAllClassesPipeline
+  getAllClassesPipeline,
+  getStudentWithDetails
 }
