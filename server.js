@@ -28,8 +28,11 @@ const studentRoutes = require('./routes/students/student.routes.js');
 
 
 
-//import student routes
-const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') 
+//import Teacher routes
+const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') ;
+const teacherProfileRoute = require('./routes/teachers/teacher.route.js');
+const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
+
 
 // middlewares
 const corsOption = {
@@ -73,8 +76,9 @@ app.use('/api/student', studentRoutes)
 
 
 //teacher route
-
 app.use("/api/teacher",teacherAttendanceRoute)
+app.use("/api/teacher",teacherProfileRoute)
+app.use("/api/teacher",teacherAssignmentRoute)
 // 404 Handler
 app.use(function (req, res) {
   res.status(404).json({

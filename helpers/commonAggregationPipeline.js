@@ -1,7 +1,6 @@
 const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper')
 const Student = require('../models/students/student.schema.js')
-const Student = require('../models/students/student.schema.js')
 
 const studentAssignmentPipeline = (assignmentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(assignmentId) } },
