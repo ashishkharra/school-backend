@@ -1,7 +1,6 @@
 const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper')
 const Student = require('../models/students/student.schema.js')
-const Student = require('../models/students/student.schema.js')
 
 const studentAssignmentPipeline = (assignmentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(assignmentId) } },
@@ -507,8 +506,6 @@ const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
   return [
     { $match: { class: new mongoose.Types.ObjectId({class : classId})}},
 
-    { $unwind: { path: "$records", preserveNullAndEmptyArrays: true}},
-
     {
       $lookup: {
         from: "classes",
@@ -522,9 +519,22 @@ const buildAssignmentPipeline = (classId, skip=0, limit=10) => {
 
     {
       $project: {
-        
+        "title": 1,
+        "instructions": 1,
+        "dueDate": 1,
+        "maxMarks": 1,
+        "passingMarks":1,
+        "fileUrl": 1,
+        "resources": 1,
+        "uploadedBy": 1,
+        "subject": 1,
+        "classData.name": 1,
+        "classData.section": 1,
       }
-    }
+    },
+
+    { $skip : skip},
+    { $limit : limit}
   ]
 }
 
@@ -601,5 +611,7 @@ module.exports = {
   getClassWithStudentsPipeline,
   getStudentDetailsPipeline,
   getAllClassesPipeline,
-  getStudentWithDetails
+  getStudentWithDetails,
+  buildAssignmentPipeline,
+  buildAttendancePipeline
 }
