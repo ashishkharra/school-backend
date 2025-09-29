@@ -182,6 +182,11 @@ const studentSchema = new mongoose.Schema({
       at: { type: Date, default: Date.now }
     }
   ],
+    classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true
+  },
 
   // 🔒 Tokens
   token: { type: String },

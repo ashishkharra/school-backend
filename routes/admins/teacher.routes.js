@@ -13,7 +13,7 @@ const teacherController = require('../../controllers/admins/teacher.controller.j
 
 
 
-router.post('/register',[verifyToken],validationRule.validate("registerTeacher") ,teacherController.registerTeacher);
+router.post('/register',validationRule.validate("registerTeacher") ,teacherController.registerTeacher);
 router.get('/getAllTeacher', teacherController.getAllTeachers);
 router.put('/updateTeachers/:id',[verifyToken], validationRule.validate("updateTeacher"),teacherController.updateTeacher);
 router.put('/soft-delete/:id',[verifyToken], teacherController.softDeleteTeacher);

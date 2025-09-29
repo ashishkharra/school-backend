@@ -47,6 +47,7 @@ const teacherSchema = new mongoose.Schema(
     department: { type: String }, // e.g., "Mathematics"
     designation: { type: String }, // e.g., "Senior Teacher"
     qualifications: [{ type: String }],
+    specialization: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
     specialization: { type: String }, // main subject expertise
     experience: { type: Number }, // in years
     dateOfJoining: { type: Date, default: Date.now },
