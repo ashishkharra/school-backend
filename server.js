@@ -22,6 +22,8 @@ const adminReportRoutes = require('./routes/admins/reports.routes');
 const adminStudentRoutes = require('./routes/admins/student.routes');
 const adminTeacherRoutes = require('./routes/admins/teacher.routes');
 const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js')
+const adminEmailTemplateRouter = require('./routes/admins/emailTemplate.route')
+const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
 
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
@@ -33,7 +35,7 @@ const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js')
 
 // middlewares
 const corsOption = {
-  origin: 'http://localhost:7001',
+  origin: 'http://localhost:5173',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };
@@ -61,17 +63,18 @@ app.get('/', (req, res) => {
 app.use('/role/auth', roleLoginRoute);
 
 // Admin routes
+app.use('/api/admins', adminDashboardRoutes)
 app.use('/api/admins/auth', adminAuthRoutes);
 app.use('/api/admins/classes', adminClassRoutes);
 app.use('/api/admins/reports', adminReportRoutes);
 app.use('/api/admins/students', adminStudentRoutes);
 app.use('/api/admins/teachers', adminTeacherRoutes);
 app.use('/api/admins/attendances', adminAttendanceRoutes)
+app.use('/admin/email-template', adminEmailTemplateRouter)
+// app.use('/v1/admin/notification', adminNotificationRouter)
 
 // Student routes
 app.use('/api/student', studentRoutes)
-
-
 //teacher route
 
 app.use("/api/teacher",teacherAttendanceRoute)

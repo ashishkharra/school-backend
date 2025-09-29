@@ -65,43 +65,36 @@ const studentController = {
     viewAttendanceByClass: async (req, res) => {
         try {
             const { studentId } = req.params;
-            const { month, date, year, page, limit, teacher } = req.query;
+            const { month, date, year, page = 1, limit = 10, teacher } = req.query;
 
             if (!studentId) {
                 return res.status(400).json(responseData("STUDENT_ID_REQUIRED", {}, req));
             }
-
             if (!mongoose.isValidObjectId(studentId)) {
                 return res.status(400).json(responseData("INVALID_STUDENT_ID", {}, req));
             }
 
-            const pageNum = !isNaN(parseInt(page, 10)) && parseInt(page, 10) > 0
-                ? parseInt(page, 10)
-                : process.env.DEFAULT_PAGE;
-            const limitNum = !isNaN(parseInt(limit, 10)) && parseInt(limit, 10) > 0
-                ? parseInt(limit, 10)
-                : process.env.DEFAULT_LIMIT;
-
-            const attendance = await studentService.getAttendanceByClass(
-                studentId,
-                {
-                    month: month ? parseInt(month, 10) : null,
-                    year: year ? parseInt(year, 10) : null,
-                    date: date || null,
-                    page: pageNum,
-                    limit: limitNum,
-                }
-            );
+            const attendance = await studentService.getAttendanceByClass(studentId, {
+                month: month ? parseInt(month, 10) : null,
+                year: year ? parseInt(year, 10) : null,
+                date: date || null,
+                page: parseInt(page, 10) || 1,
+                limit: parseInt(limit, 10) || 10,
+                teacherNameFilter: teacher || null
+            });
 
             if (!attendance.success) {
                 return res.status(500).json(responseData("ERROR_FETCHING_ATTENDANCE", {}, req));
             }
 
-            return res.status(200).json(responseData("GET_ATTENDANCE", attendance, req, true));
-
+            return res
+                .status(200)
+                .json(responseData("GET_ATTENDANCE", attendance, req, true));
         } catch (error) {
-            console.error("Error in viewAttendanceByClass:", error.message);
-            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
+            console.error("Error in viewAttendanceByClass:", error);
+            return res
+                .status(500)
+                .json(responseData("SOMETHING_WENT_WRONG", {}, req));
         }
     },
 

@@ -1283,6 +1283,22 @@
   "EMAIL_SUCCESSFULLY_SENT": {
     "en": "Email successfully sent",
     "ar": ""
+  },
+  "NO_SUBJECTS_FOUND": {
+    "en": "No subjects found",
+    "ar": ""
+  },
+  "SUBJECTS_FETCHED_SUCCESSFULLY": {
+    "en": "Subjects fetched successfully",
+    "ar": ""
+  },
+  "CLASS_NAME_INVALID_FORMAT": {
+    "en": "Class name is invalid",
+    "ar": ""
+  },
+  "CLASSES_FETCHING_SUCCESSFULLY": {
+    "en": "Class fetched successfully",
+    "ar": ""
   }
 }
 

@@ -28,62 +28,47 @@ const adminStudent = {
                 parents,
                 guardian,
                 emergencyContact,
-                classId,
+                classId,        // must be the specific class (e.g. 11A)
                 academicYear,
                 physicalDisability,
                 disabilityDetails
             } = studentData;
 
-            console.log('academic year : ', academicYear);
+            // 1️⃣ require a valid classId
+            if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+                return { success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
+            }
 
-            // 1. Check for duplicates
+            // 2️⃣ duplicate check
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
-            if (existingStudent) {
-                return { success: false, message: "STUDENT_ALREADY_EXISTS" };
-            }
+            if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
 
-            // 2. Find class
+            // 3️⃣ fetch class
             const classObj = await Class.findById(classId);
-            if (!classObj) {
-                return { success: false, message: "CLASS_NOT_FOUND" };
-            }
+            if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
-            // 3. Hash password
+            // 4️⃣ hash password
             const hashedPassword = await bcrypt.hash(password, 12);
 
-            // 4. Assign section automatically (A–D balance)
-            const sectionCounts = { A: 0, B: 0, C: 0, D: 0 };
-            const enrollments = await Enrollment.find({ class: classId, academicYear });
-            enrollments.forEach(e => {
-                if (sectionCounts[e.section] !== undefined) sectionCounts[e.section]++;
-            });
+            // 5️⃣ section comes directly from the class (no balancing!)
+            const assignedSection = classObj.section;   // e.g. "A"
 
-            const assignedSection = Object.keys(sectionCounts).reduce(
-                (a, b) => (sectionCounts[a] <= sectionCounts[b] ? a : b)
-            );
-
-            // ✅ 5. Generate next unique roll number
+            // 6️⃣ generate next roll number
             const classNumber = classObj.name.replace(/\D/g, "");
-            // Find the highest existing rollNo in this class/section/year
             const lastEnrollment = await Enrollment
-                .findOne({ class: classId, section: assignedSection, academicYear })
+                .findOne({ class: classId, academicYear })
                 .sort({ rollNo: -1 })
                 .lean();
-
-            console.log('last enrollment : ', lastEnrollment)
 
             let serial = 1;
             if (lastEnrollment?.rollNo) {
                 const match = lastEnrollment.rollNo.match(/-(\d+)$/);
                 if (match) serial = parseInt(match[1], 10) + 1;
             }
-
             const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
-            console.log('roll no --------', rollNo);
 
+            // 7️⃣ create student
             const admissionNo = "ADM-" + Date.now().toString().slice(-6);
-
-            // 6. Create student
             const student = await Student.create({
                 admissionNo,
                 admissionDate: new Date(),
@@ -97,13 +82,14 @@ const adminStudent = {
                 address,
                 parents,
                 guardian,
-                status: 'active',
                 emergencyContact,
+                status: "active",
+                classId,
                 physicalDisability: physicalDisability || false,
                 disabilityDetails: disabilityDetails || null,
             });
 
-            // 7. Create enrollment record
+            // 8️⃣ create enrollment
             await Enrollment.create({
                 student: student._id,
                 class: classId,
@@ -112,7 +98,7 @@ const adminStudent = {
                 rollNo
             });
 
-            // 8. Update class student count
+            // 9️⃣ increment class count
             classObj.studentCount += 1;
             await classObj.save();
 
@@ -127,9 +113,8 @@ const adminStudent = {
                     class: classObj.name
                 }
             };
-
-        } catch (error) {
-            console.error("Student register error:", error);
+        } catch (err) {
+            console.error("Student register error:", err);
             return { success: false, message: "REGISTRATION_FAILED" };
         }
     },
@@ -252,7 +237,7 @@ const adminStudent = {
         }
     },
 
-    updateStudentClass: async (studentId, classId, section = null) => {
+    updateStudentClass: async (studentId, classId) => {
         try {
             // Validate IDs
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
@@ -268,7 +253,10 @@ const adminStudent = {
 
             // 2. Find target class
             const classObj = await Class.findById(classId);
+            console.log('class object : ', classObj)
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
+            const assignedSection = classObj.section;
 
             // 3. Get last enrollment
             const lastEnrollment = await Enrollment.findOne({ student: studentId }).sort({ createdAt: -1 });
@@ -279,48 +267,30 @@ const adminStudent = {
             if (!yearMatch) {
                 return { success: false, message: "INVALID_LAST_ACADEMIC_YEAR_FORMAT" };
             }
-            const lastStart = parseInt(yearMatch[1], 10);
-            const lastEnd = parseInt(yearMatch[2], 10);
-            const nextAcademicYear = `${lastStart + 1}-${lastEnd + 1}`;
+            const nextAcademicYear = `${parseInt(yearMatch[1], 10) + 1}-${parseInt(yearMatch[2], 10) + 1}`;
 
-            // 5. If class is not changing, block promotion
+            // 5. Block if same class
             if (String(lastEnrollment.class) === String(classId)) {
                 return { success: false, message: "CLASS_IS_SAME_AS_PREVIOUS" };
             }
 
-            // 6. Mark old enrollment as Passed
+            // 6. Mark old enrollment as passed
             lastEnrollment.status = "Pass";
             await lastEnrollment.save();
 
-            // 7. Decide section
-            let assignedSection = section;
-            if (!assignedSection) {
-                // Auto-balance sections if principal didn't provide
-                const sectionCounts = {};
-                const enrollments = await Enrollment.find({ class: classId, academicYear: nextAcademicYear });
-                enrollments.forEach((e) => {
-                    const s = e.section || "A";
-                    sectionCounts[s] = (sectionCounts[s] || 0) + 1;
-                });
+            // 7. Derive class number & section directly from class name
+            const match = classObj.name.match(/^(\d+)/);
+            console.log('match : --------- ', match)
+            if (!match) return { success: false, message: "CLASS_NAME_INVALID_FORMAT" };
+            const classNumber = match[1];
 
-                // If no sections exist, default to A
-                if (Object.keys(sectionCounts).length === 0) {
-                    assignedSection = "A";
-                } else {
-                    assignedSection = Object.keys(sectionCounts).reduce((a, b) =>
-                        sectionCounts[a] <= sectionCounts[b] ? a : b
-                    );
-                }
-            }
-
-            // 8. Generate roll number
+            // 8. Generate next roll number
             const sectionCount = await Enrollment.countDocuments({
                 class: classId,
                 section: assignedSection,
                 academicYear: nextAcademicYear
             });
             const serial = sectionCount + 1;
-            const classNumber = (classObj.name && classObj.name.match(/\d+/)?.[0]) || classObj.name || "CLS";
             const newRollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
 
             // 9. Create new enrollment
@@ -333,7 +303,7 @@ const adminStudent = {
                 status: "Ongoing"
             });
 
-            // 10. Update student's current details
+            // 10. Update student’s current details
             student.class = classId;
             student.section = assignedSection;
             student.academicYear = nextAcademicYear;
@@ -347,15 +317,14 @@ const adminStudent = {
             });
             await classObj.save();
 
-            const classChangeData = {
+            // 12. Send notification
+            await sendEmail("class-section-change", {
                 email: student.email,
                 FirstName: student.name,
                 CLASS_NAME: classObj.name,
                 SECTION: assignedSection,
                 ACADEMIC_YEAR: nextAcademicYear
-            };
-
-            await sendEmail("class-section-change", classChangeData);
+            });
 
             return {
                 success: true,
@@ -363,7 +332,6 @@ const adminStudent = {
                 enrollment: newEnrollment,
                 message: "STUDENT_PROMOTED_TO_NEW_CLASS"
             };
-
         } catch (error) {
             console.error("UpdateStudentClass error:", error);
             return { success: false, message: "SERVER_ERROR", error: error.message };
@@ -509,58 +477,41 @@ const adminStudent = {
     getStudentAccordingClass: async (classId, filters = {}, page = 1, limit = 10) => {
         try {
             const skip = (page - 1) * limit;
-            console.log('filteres : ', filters)
 
-            // Build student filter
+            // ---- Build dynamic filter for aggregation ----
             const studentFilter = {};
-            if (filters.name)
-                studentFilter["student.name"] = { $regex: filters.name, $options: "i" };
-            if (filters.rollNo)
-                studentFilter["enrollments.rollNo"] = { $regex: filters.rollNo, $options: "i" };
-            if (filters.section)
-                studentFilter["enrollments.section"] = filters.section;
             if (filters.academicYear)
                 studentFilter["enrollments.academicYear"] = filters.academicYear;
+            if (filters.section)
+                studentFilter["enrollments.section"] = filters.section;
+            if (filters.rollNo)
+                studentFilter["enrollments.rollNo"] = { $regex: filters.rollNo, $options: "i" };
+            if (filters.name)
+                studentFilter["student.name"] = { $regex: filters.name, $options: "i" };
             if (filters.gender)
                 studentFilter["student.gender"] = filters.gender;
-            if (filters.status)
-                studentFilter["enrollments.status"] = filters.status;
-            if (typeof filters.physicalDisability !== "undefined")
-                studentFilter["student.physicalDisability"] = filters.physicalDisability;
-            if (filters.bloodGroup)
-                studentFilter["student.bloodGroup"] = filters.bloodGroup;
-            if (filters.parentsName)
-                studentFilter["student.parents.name"] = { $regex: filters.parentsName, $options: "i" };
-            if (filters.guardianName)
-                studentFilter["student.guardian.name"] = { $regex: filters.guardianName, $options: "i" };
-            if (filters.emergencyContactName)
-                studentFilter["student.emergencyContact.name"] = { $regex: filters.emergencyContactName, $options: "i" };
-            if (filters.siblingName)
-                studentFilter["student.siblings.name"] = { $regex: filters.siblingName, $options: "i" };
-            if (filters.achievementTitle)
-                studentFilter["student.achievements.title"] = { $regex: filters.achievementTitle, $options: "i" };
-            if (filters.activity)
-                studentFilter["student.extraCurricular.activity"] = { $regex: filters.activity, $options: "i" };
-            if (filters.subjectName)
-                studentFilter["student.subjectsEnrolled.subjectName"] = { $regex: filters.subjectName, $options: "i" };
+            // Add more filters as needed …
 
-            console.log('student filters : ', studentFilter)
-            // Run pipeline
-            const pipeline = getClassWithStudentsPipeline(classId, skip, limit, studentFilter);
-            console.log('pipeline : ', pipeline)
-            const result = await Class.aggregate(pipeline);
-            console.log('result : ', result)
+            const pipeline = getClassWithStudentsPipeline(
+                classId,
+                skip,
+                limit,
+                studentFilter
+            );
 
-            // Count total students for pagination
+            const data = await Class.aggregate(pipeline);
+
+            // Total count for pagination
             const totalStudents = await Enrollment.countDocuments({
-                class: new mongoose.Types.ObjectId(classId)
+                class: new mongoose.Types.ObjectId(classId),
+                ...(filters.academicYear && { academicYear: filters.academicYear }),
+                ...(filters.section && { section: filters.section })
             });
 
-            console.log('total count : ', totalStudents)
-
             return {
-                message: 'STUDENT_FETCHED_SUCCESSFULLY',
-                class: result || [],
+                success: true,
+                message: "STUDENT_FETCHED_SUCCESSFULLY",
+                class: data,
                 pagination: {
                     page,
                     limit,
@@ -569,7 +520,7 @@ const adminStudent = {
                 }
             };
         } catch (error) {
-            console.error("getStudentAccordingClass error:", error);
+            console.error("getStudentAccordingClass service error:", error);
             return { success: false, message: "SERVER_ERROR" };
         }
     },

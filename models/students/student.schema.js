@@ -26,6 +26,10 @@ const studentSchema = new mongoose.Schema({
     country: String
   },
   profilePic: { type: String, default: "default_profile.png" },
+  classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+  },
 
   // 👨‍👩‍👦 Family & Emergency
   parents: [
@@ -149,13 +153,6 @@ const studentSchema = new mongoose.Schema({
       body: String,
       read: { type: Boolean, default: false },
       createdAt: { type: Date, default: Date.now }
-    }
-  ],
-  remarks: [
-    {
-      teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
-      remark: String,
-      date: { type: Date, default: Date.now }
     }
   ],
   disciplinaryActions: [

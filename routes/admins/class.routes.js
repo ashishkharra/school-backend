@@ -5,7 +5,9 @@ const adminClassController = require('../../controllers/admins/class.controller.
 
 router
     .post('/reg', [verifyToken], validationRule.validate('registerClass'), adminClassController.addClass)
+    .post('/subjects/reg', [verifyToken], adminClassController.addSubjects)
 
     .get('/get/all/:classId?/:section?', [verifyToken], adminClassController.getAllClasses)
+    .get('/get/subjects', [verifyToken], adminClassController.getAllSubjects)
 
 module.exports = router

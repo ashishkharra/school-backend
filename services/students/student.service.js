@@ -48,10 +48,8 @@ const studentService = {
     },
 
     getAttendanceByClass: async (studentId, options) => {
+        const { month, date, year, page = 1, limit = 10, teacherNameFilter } = options;
         try {
-
-            const { month, date, year, page = 1, limit = 10, teacher } = options;
-
             const pipeline = studentAttendancePipeline({
                 studentId,
                 month,
@@ -59,45 +57,29 @@ const studentService = {
                 year,
                 page,
                 limit,
-                teacher
+                teacherNameFilter
             });
 
-            const totalCountFilter = { "records.student": new mongoose.Types.ObjectId(studentId) };
+            const data = await Attendance.aggregate(pipeline);
+            console.log('data pipeline : ', data)
 
-            // if (year || month) {
-            //     totalCountFilter.$expr = { $and: [] };
-            //     if (year) totalCountFilter.$expr.$and.push({ $eq: [{ $year: "$date" }, parseInt(year, 10)] });
-            //     if (month) totalCountFilter.$expr.$and.push({ $eq: [{ $month: "$date" }, parseInt(month, 10)] });
-            // }
+            // total count for pagination
+            const totalCountQuery = { "records.student": new mongoose.Types.ObjectId(studentId) };
+            if (year) totalCountQuery.date = { ...totalCountQuery.date, $expr: { $eq: [{ $year: "$date" }, year] } };
+            if (month) totalCountQuery.date = { ...totalCountQuery.date, $expr: { $eq: [{ $month: "$date" }, month] } };
 
-            // if (date) {
-            //     const start = new Date(date + "T00:00:00.000Z");
-            //     const end = new Date(date + "T23:59:59.999Z");
-            //     totalCountFilter.date = { $gte: start, $lte: end };
-            // }
-
-            const attendanceData = await Attendance.aggregate(pipeline)
-
-            const jsonData = attendanceData[0]?.docs || [];
-
-            const meta = {
-                studentId,
-                month,
-                date,
-                year,
-                page,
-                limit,
-                totalDocs: attendanceData[0]?.totalDocs,
-                totalPages: attendanceData[0]?.totalPages
-            };
+            const totalDocs = await Attendance.countDocuments(totalCountQuery);
 
             return {
                 success: true,
-                jsonData,
-                meta
-            };
-
-
+                jsonData: data,
+                meta: {
+                    page,
+                    limit,
+                    totalDocs,
+                    totalPages: Math.ceil(totalDocs / limit)
+                }
+            }
         } catch (error) {
             console.error("Error fetching attendance:", error);
             return { success: false, message: "Error fetching attendance" };
@@ -107,7 +89,7 @@ const studentService = {
     requestUpdateProfile: async (studentId, requestedFields) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success : false, message : "STUDENT_ID_NOT_VALID"}
+                return { success: false, message: "STUDENT_ID_NOT_VALID" }
             }
 
             const student = await Student.findById(studentId)
@@ -115,7 +97,7 @@ const studentService = {
                 .lean();
 
             if (!student) {
-                return { success: false, message : 'STUDENT_NOT_FOUND' }
+                return { success: false, message: 'STUDENT_NOT_FOUND' }
             }
 
             const requestedFieldsHtml = Object.entries(requestedFields || {})
@@ -136,16 +118,15 @@ const studentService = {
             const emailSent = await sendEmail('student-profile-update-request', emailData);
 
             if (!emailSent) {
-                return { success : false, message : 'EMAIL_ERROR'}
+                return { success: false, message: 'EMAIL_ERROR' }
             }
 
-            return { success : true, message : 'EMAIL_SUCCESSFULLY_SENT'}
+            return { success: true, message: 'EMAIL_SUCCESSFULLY_SENT' }
         } catch (error) {
             console.error('Error in requestUpdateProfile:', error.message);
-            return { success : false, message : "SERVER_ERROR" }
+            return { success: false, message: "SERVER_ERROR" }
         }
     }
-
 }
 
 module.exports = studentService
