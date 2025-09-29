@@ -257,6 +257,62 @@ const studentProfilePipeline = (studentId) => {
   ];
 };
 
+const assignmentWithClassPipeline = (classId) => [
+  {
+    $match: { class: mongoose.Types.ObjectId(classId) } // filter assignments by class
+  },
+  {
+    $lookup: {
+      from: 'classes',          // Class collection
+      localField: 'class',
+      foreignField: '_id',
+      as: 'classInfo'
+    }
+  },
+  { $unwind: '$classInfo' },    // Convert classInfo array to object
+  {
+    $project: {
+      title: 1,
+      description: 1,
+      dueDate: 1,
+      fileUrl: 1,
+      'classInfo.name': 1,
+      'classInfo.section': 1
+    }
+  }
+];
+
+// const classinstudentPipeline = (classId) => [
+//   {
+//     $match: {
+//       classId: mongoose.Types.ObjectId.isValid(classId)
+//         ? mongoose.Types.ObjectId(classId)
+//         : classId
+//     }
+//   },
+//   {
+//     $lookup: {
+//       from: 'classes',          // Class collection name
+//       localField: 'classId',  
+//       foreignField: '_id',
+//       as: 'classInfo'
+//     }
+//   },
+//   { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } }, // keep even if classInfo missing
+//   {
+//     $project: {
+//       _id: 1,
+//       name: 1,
+//       email: 1,
+//       admissionNo: 1,
+//       classId: 1,
+//       'classInfo.name': 1,
+//       'classInfo.section': 1
+//     }
+//   }
+// ];
+
+
 const teacherProfilePipeline = (teacherId) => {
   return [
     { $match: { _id: new mongoose.Types.ObjectId({ _id: teacherId }) } },
@@ -688,5 +744,12 @@ module.exports = {
   getAllClassesPipeline,
   getStudentWithDetails,
   buildAssignmentPipeline,
-  buildAttendancePipeline
+  buildAttendancePipeline,
+  getAllClassesPipeline,
+  // classinstudentPipeline
+  assignmentWithClassPipeline
 }
+
+
+
+
