@@ -124,7 +124,7 @@ const adminClassService = {
             return {
                 success: true,
                 message: "SUBJECTS_FETCHED_SUCCESSFULLY",
-                data: subjects,
+                docs: subjects,
                 pagination: {
                     page,
                     limit,
