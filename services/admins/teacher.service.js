@@ -6,120 +6,119 @@ const Class = require('../../models/class/class.schema');
 const assignTimeTable= require("../../models/class/teacher.timetable.schema")
 const teacherSchema = require('../../models/teacher/teacher.schema');
 const helper = require('../../helpers/helper');
-
+const teacherTimetableSchema = require('../../models/class/teacher.timetable.schema');
+const mongoose = require("mongoose");
 module.exports = {
   registerTeacher: async (data) => {
-    try {
-      const {
-        name,
-        email,
-        password,
-        phone,
-        dateOfBirth,
-        gender,
-        maritalStatus,
-        spouseName,
-        children,
-        address,
-        bloodGroup,
-        physicalDisability,
-        disabilityDetails,
-        department,
-        designation,
-        qualifications,
-        specialization,
-        experience,
-        dateOfJoining,
-        classes,
-        subjectsHandled,
-        salaryInfo,
-        IDProof,
-        certificates,
-        resume,
-        joiningLetter,
-        emergencyContact
-      } = data;
-      // Validation for required fields
-      if (!name || !email || !password) {
-        throw new Error("Name, email, and password are required");
-      }
+  try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+      dateOfBirth,
+      gender,
+      maritalStatus,
+      spouseName,
+      children,
+      address,
+      bloodGroup,
+      physicalDisability,
+      disabilityDetails,
+      department,
+      designation,
+      qualifications,
+      specialization,
+      experience,
+      dateOfJoining,
+      classes,
+      subjectsHandled,
+      salaryInfo,
+      IDProof,
+      certificates,
+      resume,
+      joiningLetter,
+      emergencyContact
+    } = data;
 
-      // Check if email already exists
-      const existing = await Teacher.findOne({ email });
-      if (existing) {
-        throw new Error("Teacher with this email already exists");
-      }
-
-      // Hash password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-      // Prepare teacher data
-      const newTeacher = {
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        phone,
-        dateOfBirth,
-        gender,
-        maritalStatus,
-        spouseName,
-        children,
-        address,
-        bloodGroup,
-        physicalDisability,
-        disabilityDetails,
-        department,
-        designation,
-        qualifications,
-        specialization,
-        experience,
-        dateOfJoining,
-        classes,
-        subjectsHandled,
-        salaryInfo,
-        IDProof,
-        certificates,
-        resume,
-        joiningLetter,
-        emergencyContact,
-        role: "teacher" //ated automatically by default in schema
-      }
-
-      let result = await teacherSchema.create(newTeacher)
-      if (!result) {
-        return {
-          success: false,
-          message: 'TEACHER_REGISTERED_FAILED'
-        }
-      }
-      tempUser = result.toObject()
-      let dataBody = {
-        email: email.toLowerCase(),
-        PASSWORD: password,
-        EMAIL: email,
-        URL: "https://youtube.com"
-      }
-      const isMailSent = helper.sendEmail("new-teacher-account", dataBody);
-      if (!isMailSent) return {
-        success: false,
-        message: 'EMAIL_NOT_SENT',
-      }
-
-      // Return safe teacher info without password and tokens
-      return {
-        success: true,
-        message: "TEACHER_REGISTERED",
-        result
-      };
-    } catch (error) {
-      console.log('registration failed : ', error.message)
-      return {
-        success: false,
-        message: 'SERVER_ERROR',
-      }
+    // 1. Validation
+    if (!name || !email || !password) {
+      return { success: false, message: "Name, email, and password are required" };
     }
-  },
+
+    // 2. Check duplicate email
+    const existing = await Teacher.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return { success: false, message: "Teacher with this email already exists" };
+    }
+
+    // 3. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 4. Prepare teacher data
+    const newTeacher = {
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      phone,
+      dateOfBirth,
+      gender,
+      maritalStatus,
+      spouseName,
+      children,
+      address,
+      bloodGroup,
+      physicalDisability,
+      disabilityDetails,
+      department,
+      designation,
+      qualifications,
+      specialization,
+      experience,
+      dateOfJoining,
+      classes,
+      subjectsHandled,
+      salaryInfo,
+      IDProof,
+      certificates,
+      resume,
+      joiningLetter,
+      emergencyContact,
+      role: "teacher"
+    };
+
+    // 5. Save teacher
+    let result = await teacherSchema.create(newTeacher);
+
+    // Convert to object and remove sensitive fields
+    let safeResult = result.toObject();
+    delete safeResult.password;
+
+    // 6. Send email (optional, make sure helper.sendEmail is async/await)
+    let dataBody = {
+      email: email.toLowerCase(),
+      PASSWORD: password,
+      EMAIL: email,
+      URL: "https://youtube.com"
+    };
+    const isMailSent = await helper.sendEmail("new-teacher-account", dataBody);
+    if (!isMailSent) {
+      return { success: false, message: "EMAIL_NOT_SENT" };
+    }
+
+    // 7. Return success
+    return {
+      success: true,
+      message: "TEACHER_REGISTERED",
+      data: safeResult
+    };
+
+  } catch (error) {
+    console.log("Registration failed:", error.message);
+    return { success: false, message: error.message || "SERVER_ERROR" };
+  }
+}
+,
   getAllTeachers: async () => {
     // Fetch all teachers excluding sensitive fields like password
     return await Teacher.find().select('-password -token -refreshToken').lean();
@@ -164,18 +163,25 @@ module.exports = {
   //   if (!updatedTeacher) throw new Error("Teacher not found");
   //   return updatedTeacher;
   // }
-  softDeleteTeacher: async (teacherId) => {
-    if (!teacherId) throw new Error("Teacher ID required");
+softDeleteTeacher: async (teacherId) => {
+  // 1️⃣ Validate ObjectId
+  if (!teacherId) throw new Error("Teacher ID required");
+  if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+    return { success: false, message: "TEACHER_ID_NOT_VALID" };
+  }
 
-    const teacher = await Teacher.findByIdAndUpdate(
-      teacherId,
-      { isRemoved: 1 },
-      { new: true }
-    );
+  // 2️⃣ Perform soft delete
+  const teacher = await Teacher.findByIdAndUpdate(
+    teacherId,
+    { isRemoved: 1 },
+    { new: true }
+  );
 
-    if (!teacher) throw new Error("Teacher not found");
-    return teacher;
-  },
+  if (!teacher) throw new Error("Teacher not found");
+
+  return teacher;
+},
+
 
   // fetch history (all teachers with isRemoved = 1)
   getDeletedTeachersHistory: async (keyword) => {

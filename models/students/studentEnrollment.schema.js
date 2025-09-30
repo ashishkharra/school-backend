@@ -6,6 +6,7 @@ const studentEnrollmentSchema = new mongoose.Schema({
   academicYear: { type: String },
   section: { type: String, enum: ["A", "B", "C", "D"]},
   rollNo: { type: String,  required: true },
+  feesStatus: { type : String, enum: ['due', 'paid', 'partial']},
   status: {
     type: String,
     enum: ["Pass", "Fail", "Drop", "Ongoing"],

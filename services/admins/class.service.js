@@ -1,63 +1,135 @@
-const uuidv4 = require('uuidv4')
+const { v4: uuidv4 } = require('uuid');
 
-const { getClassAggregationPipeline } = require('../../helpers/commonAggregationPipeline.js')
+const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
+const Subject = require('../../models/class/subjects.schema.js')
 
 const adminClassService = {
     addClass: async (classData) => {
         try {
-            const { name, subjects, section } = classData;
+            const { name, section } = classData;
 
-            const classIdentifier = uuidv4();
+            let existingClass = await Class.findOne({ name });
+
+            let classIdentifier;
+            if (existingClass) {
+                classIdentifier = existingClass.classIdentifier;
+            } else {
+                classIdentifier = uuidv4();
+            }
 
             const newClass = await Class.create({
                 name,
-                subjects,
                 teacher: null,
                 section,
                 classIdentifier,
                 studentCount: 0,
             });
 
-            if (!newClass) return { success: false, message: "REGISTERATION_FAILED" }
+            if (!newClass)
+                return { success: false, message: "REGISTRATION_FAILED" };
 
-            return {
-                success: true,
-                message: "CLASS_REGISTERED",
-            };
+            return { success: true, message: "CLASS_REGISTERED" };
         } catch (error) {
             console.error("Error adding class:", error);
 
-            return {
-                success: false,
-                message: "REGISTERATION_FAILED",
-            };
+            return { success: false, message: "REGISTRATION_FAILED" };
         }
     },
 
-    getAllClasses: async (classId = null, section = null) => {
+    addSubjects: async (subjectData) => {
         try {
-            let classIdentifier = null;
+            const { name, code, description, credits } = subjectData;
 
-            if (classId && !section) {
-                const cls = await Class.findById(classId);
-                if (!cls) return { success: false, message: "CLASS_NOT_FOUND" };
-                classIdentifier = cls.classIdentifier;
+            const existing = await Subject.findOne({
+                $or: [{ name: name.trim() }, { code: code.trim() }]
+            });
+            if (existing) {
+                return { success: false, message: "SUBJECT_ALREADY_EXISTS" };
             }
 
-            const pipeline = getClassAggregationPipeline(classIdentifier, section);
+            const newSubject = await Subject.create({
+                name: name.trim(),
+                code: code.trim(),
+                description: description?.trim() || "",
+                credits: typeof credits === "number" ? credits : undefined,
+            });
+
+            return {
+                success: true,
+                message: "SUBJECT_REGISTERED_SUCCESSFULLY",
+                data: newSubject,
+            };
+        } catch (error) {
+            console.error("Error while registering subject:", error);
+            return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    getAllClasses: async (classId, section, page = 1, limit = 10) => {
+        try {
+            const pipeline = getAllClassesPipeline(classId, section, page, limit);
+
+            // Run pipeline for paginated data
             const result = await Class.aggregate(pipeline);
 
-            if (!result || result.length === 0) {
-                return { success: false, message: "CLASSES_NOT_FOUND" };
+            // Count total docs for the same filter (without skip/limit)
+            const total = await Class.countDocuments({
+                ...(classId && { classIdentifier: classId }),
+                ...(section && { section })
+            });
+
+            return {
+                success: true,
+                message: "CLASSES_FETCHING_SUCCESSFULLY",
+                data: result,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        } catch (error) {
+            console.error("Error fetching classes:", error);
+            return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    getSubjects: async (page = 1, limit = 10) => {
+        try {
+            page = Math.max(parseInt(page, 10) || 1, 1);
+            limit = Math.max(parseInt(limit, 10) || 10, 1);
+
+            const total = await Subject.countDocuments();
+            console.log('total subjects : ', total)
+
+            const subjects = await Subject.find()
+                .sort({ name: 1 })
+                .skip((page - 1) * limit)
+                .limit(limit);
+
+            if (subjects.length === 0) {
+                return { success: false, message: "NO_SUBJECTS_FOUND", data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
             }
 
-            return { success: true, message: "CLASSES_FETCHED_SUCCESSFULLY", data: result };
+            return {
+                success: true,
+                message: "SUBJECTS_FETCHED_SUCCESSFULLY",
+                data: subjects,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
         } catch (error) {
-            console.error("getAllClasses error:", error);
-            return { success: false, message: "ERROR_WHILE_GETTING_ALL_CLASSES" };
+            console.error("Error while getting subjects:", error);
+            return { success: false, message: "SERVER_ERROR" };
         }
     }
+
 }
 
 module.exports = adminClassService

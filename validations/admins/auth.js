@@ -34,73 +34,137 @@ module.exports.validate = (method) => {
       ]
     }
 
-case "registerTeacher": {
-  return [
-    // Name
- body("name")
-    .notEmpty().withMessage("NAME_EMPTY")
-    .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
-    .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
+    case "registerTeacher": {
+      return [
+        // Name
+        body("name")
+          .notEmpty().withMessage("NAME_EMPTY")
+          .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+          .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
 
-  // Email validations
-  body("email")
-    .notEmpty().withMessage("EMAIL_EMPTY")
-    .isEmail().withMessage("EMAIL_VALID"),
+        // Email validations
+        body("email")
+          .notEmpty().withMessage("EMAIL_EMPTY")
+          .isEmail().withMessage("EMAIL_VALID"),
 
-  // Password validations
-  body("password")
-    .notEmpty().withMessage("PASSWORD_EMPTY")
-    .isLength({ min: 8 }).withMessage("PASSWORD_MIN")
-    .isLength({ max: 30 }).withMessage("PASSWORD_MAX"),
+        // Password validations
+        body("password")
+          .notEmpty().withMessage("PASSWORD_EMPTY")
+          .isLength({ min: 8 }).withMessage("PASSWORD_MIN")
+          .isLength({ max: 30 }).withMessage("PASSWORD_MAX"),
 
-  // Phone validations
-  body("phone")
-    .notEmpty().withMessage("PHONE_EMPTY")
-    .isMobilePhone().withMessage("PHONE_VALID"),
+        // Phone validations
+        body("phone")
+          .notEmpty().withMessage("PHONE_EMPTY")
+          .isMobilePhone().withMessage("PHONE_VALID"),
 
-  // Date of Birth validations (ISO 8601 format)
-  body("dateOfBirth")
-    .notEmpty().withMessage("DOB_EMPTY")
-    .isISO8601().withMessage("DOB_VALID"),
+        // Date of Birth validations (ISO 8601 format)
+        body("dateOfBirth")
+          .notEmpty().withMessage("DOB_EMPTY")
+          .isISO8601().withMessage("DOB_VALID"),
 
-  // Gender validations (case-insensitive)
-  body("gender")
-    .notEmpty().withMessage("GENDER_EMPTY")
-    .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
-    .withMessage("GENDER_INVALID")
-    .bail()
-    .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
+        // Gender validations (case-insensitive)
+        body("gender")
+          .notEmpty().withMessage("GENDER_EMPTY")
+          .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
+          .withMessage("GENDER_INVALID")
+          .bail()
+          .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
 
-  // Address validations
-  body("address")
-    .notEmpty().withMessage("ADDRESS_EMPTY")
-    .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+        // Address validations
+        body("address")
+          .notEmpty().withMessage("ADDRESS_EMPTY")
+          .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
 
-  // Qualifications validations: array of strings, minimum 1
-  body("qualifications")
-    .isArray({ min: 1 }).withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
-    .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
+        // Qualifications validations: array of strings, minimum 1
+        body("qualifications")
+          .isArray({ min: 1 }).withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
 
-  // Classes validations: array of strings, minimum 1
-  body("classes")
-    .isArray({ min: 1 }).withMessage("CLASSES_ARRAY_REQUIRED")
-    .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+        // Classes validations: array of strings, minimum 1
+        body("classes")
+          .isArray({ min: 1 }).withMessage("CLASSES_ARRAY_REQUIRED")
+          .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
 
-  // Emergency Contact validations
-  body("emergencyContact")
-    .notEmpty().withMessage("EMERGENCY_CONTACT_EMPTY")
-    .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
+        // Emergency Contact validations
+        body("emergencyContact")
+          .notEmpty().withMessage("EMERGENCY_CONTACT_EMPTY")
+          .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
 
-  body("emergencyContact.name")
-    .notEmpty().withMessage("EMERGENCY_CONTACT_NAME_EMPTY"),
+        body("emergencyContact.name")
+          .notEmpty().withMessage("EMERGENCY_CONTACT_NAME_EMPTY"),
 
-  body("emergencyContact.phone")
-    .notEmpty().withMessage("EMERGENCY_CONTACT_PHONE_EMPTY")
-    .isMobilePhone().withMessage("EMERGENCY_CONTACT_PHONE_VALID"),
+        body("emergencyContact.phone")
+          .notEmpty().withMessage("EMERGENCY_CONTACT_PHONE_EMPTY")
+          .isMobilePhone().withMessage("EMERGENCY_CONTACT_PHONE_VALID"),
 
-  validatorMiddleware
-  ];
-}
+        validatorMiddleware
+      ];
+    }
+    case "updateTeacher": {
+      return [
+        // Name (optional)
+        body("name")
+          .optional()
+          .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+          .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
+
+        // Email (optional)
+        body("email")
+          .optional()
+          .isEmail().withMessage("EMAIL_VALID"),
+
+        // Phone (optional)
+        body("phone")
+          .optional()
+          .isMobilePhone().withMessage("PHONE_VALID"),
+
+        // Date of Birth (optional)
+        body("dateOfBirth")
+          .optional()
+          .isISO8601().withMessage("DOB_VALID"),
+
+        // Gender (optional)
+        body("gender")
+          .optional()
+          .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
+          .withMessage("GENDER_INVALID")
+          .bail()
+          .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
+
+        // Address (optional)
+        body("address")
+          .optional()
+          .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+
+        // Qualifications (optional)
+        body("qualifications")
+          .optional()
+          .isArray().withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
+
+        // Classes (optional)
+        body("classes")
+          .optional()
+          .isArray().withMessage("CLASSES_ARRAY_REQUIRED")
+          .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+
+        // Emergency Contact (optional)
+        body("emergencyContact")
+          .optional()
+          .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
+
+        body("emergencyContact.name")
+          .optional()
+          .notEmpty().withMessage("EMERGENCY_CONTACT_NAME_EMPTY"),
+
+        body("emergencyContact.phone")
+          .optional()
+          .isMobilePhone().withMessage("EMERGENCY_CONTACT_PHONE_VALID"),
+
+        validatorMiddleware
+      ];
+    }
 
 
     case "registerStudent": {
@@ -211,14 +275,6 @@ case "registerTeacher": {
           .isLength({ min: 3, max: 50 })
           .withMessage("CLASS_NAME_LENGTH"),
 
-        // Subjects must be array of strings
-        body("subjects")
-          .isArray({ min: 1 })
-          .withMessage("SUBJECTS_REQUIRED"),
-        body("subjects.*")
-          .isString()
-          .withMessage("SUBJECT_MUST_BE_STRING"),
-
         body('section')
           .notEmpty()
           .withMessage("CLASS_SECTION_MUST_REQUIRED")
@@ -227,6 +283,40 @@ case "registerTeacher": {
 
         validatorMiddleware,
       ]
+    }
+
+    case "registerSubject": {
+      return [
+        // Subject name
+        body("name")
+          .notEmpty()
+          .withMessage("SUBJECT_NAME_REQUIRED")
+          .isLength({ min: 3, max: 100 })
+          .withMessage("SUBJECT_NAME_LENGTH"),
+
+        // Unique subject code
+        body("code")
+          .notEmpty()
+          .withMessage("SUBJECT_CODE_REQUIRED")
+          .isLength({ min: 2, max: 20 })
+          .withMessage("SUBJECT_CODE_LENGTH"),
+
+        // Optional description
+        body("description")
+          .optional()
+          .isString()
+          .withMessage("DESCRIPTION_MUST_BE_STRING")
+          .isLength({ max: 300 })
+          .withMessage("DESCRIPTION_MAX_300"),
+
+        // Optional numeric credits
+        body("credits")
+          .optional()
+          .isInt({ min: 0, max: 20 })
+          .withMessage("CREDITS_MUST_BE_INT_0_20"),
+
+        validatorMiddleware,
+      ];
     }
 
     case "updateStudent": {
@@ -276,7 +366,144 @@ case "registerTeacher": {
       ];
     }
 
+    case "createFeeStructure": {
+      return [
+        body("className")
+          .notEmpty().withMessage("CLASSNAME_REQUIRED")
+          .isLength({ min: 2, max: 50 }).withMessage("CLASSNAME_LENGTH"),
 
+        body("academicYear")
+          .notEmpty().withMessage("ACADEMIC_YEAR_REQUIRED")
+          .matches(/^\d{4}-\d{2}$/).withMessage("ACADEMIC_YEAR_INVALID"),
+
+        body("feeHeads")
+          .isArray({ min: 1 }).withMessage("FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("FEEHEADS_INVALID"),
+
+        body("totalAmount")
+          .notEmpty().withMessage("TOTAL_AMOUNT_REQUIRED")
+          .isNumeric().withMessage("TOTAL_AMOUNT_INVALID")
+          .custom((value, { req }) => {
+            const sum = req.body.feeHeads.reduce((acc, head) => acc + head.amount, 0);
+            if (value !== sum) return Promise.reject("TOTAL_AMOUNT_MISMATCH");
+            return true;
+          }),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "assignStudentFee": {
+      return [
+        body("studentId")
+          .notEmpty().withMessage("STUDENT_ID_REQUIRED")
+          .isMongoId().withMessage("STUDENT_ID_INVALID"),
+
+        body("feeStructureId")
+          .notEmpty().withMessage("FEE_STRUCTURE_ID_REQUIRED")
+          .isMongoId().withMessage("FEE_STRUCTURE_ID_INVALID")
+          .custom(async (feeStructureId, { req }) => {
+            const feeStruct = await FeeStructure.findById(feeStructureId);
+            if (!feeStruct) return Promise.reject("FEE_STRUCTURE_NOT_FOUND");
+
+            const appliedHeads = req.body.appliedFeeHeads || [];
+            for (let head of appliedHeads) {
+              const matched = feeStruct.feeHeads.find(f => f.type === head.type);
+              if (!matched) return Promise.reject(`INVALID_FEE_HEAD_${head.type}`);
+            }
+
+            feeStruct.feeHeads
+              .filter(f => !f.isOptional)
+              .forEach(f => {
+                if (!appliedHeads.some(a => a.type === f.type)) {
+                  return Promise.reject(`MANDATORY_FEE_HEAD_MISSING_${f.type}`);
+                }
+              });
+
+            return true;
+          }),
+
+        body("appliedFeeHeads")
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        body("payableAmount")
+          .notEmpty().withMessage("PAYABLE_AMOUNT_REQUIRED")
+          .isNumeric().withMessage("PAYABLE_AMOUNT_INVALID"),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "addPayment": {
+      return [
+        body("transactionId")
+          .notEmpty().withMessage("TRANSACTION_ID_REQUIRED"),
+
+        body("amountPaid")
+          .notEmpty().withMessage("AMOUNT_PAID_REQUIRED")
+          .isNumeric().withMessage("AMOUNT_PAID_INVALID")
+          .custom(async (amount, { req }) => {
+            const studentFee = await StudentFee.findById(req.params.id);
+            if (!studentFee) return Promise.reject("STUDENT_FEE_NOT_FOUND");
+
+            const remaining = studentFee.payableAmount - studentFee.paidTillNow;
+
+            if (amount <= 0) return Promise.reject("AMOUNT_MUST_BE_POSITIVE");
+            if (amount > remaining) return Promise.reject("PAYMENT_EXCEEDS_REMAINING");
+
+            return true;
+          }),
+
+        body("mode")
+          .notEmpty().withMessage("PAYMENT_MODE_REQUIRED")
+          .isIn(["Cash", "Card", "UPI", "BankTransfer", "Cheque"]).withMessage("PAYMENT_MODE_INVALID"),
+
+        body("status")
+          .optional()
+          .isIn(["Success", "Failed", "Pending"]).withMessage("PAYMENT_STATUS_INVALID"),
+
+        body("remarks")
+          .optional()
+          .isString().withMessage("REMARKS_MUST_BE_STRING"),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "updateStudentFee": {
+      return [
+        body("appliedFeeHeads")
+          .optional()
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        body("payableAmount")
+          .optional()
+          .isNumeric().withMessage("PAYABLE_AMOUNT_INVALID")
+          .custom((value, { req }) => {
+            const total = req.body.appliedFeeHeads?.reduce((acc, h) => acc + h.amount, 0) || 0;
+            const discounts = req.body.discounts || 0;
+            if (value !== total - discounts) return Promise.reject("PAYABLE_AMOUNT_MISMATCH");
+            return true;
+          }),
+
+        validatorMiddleware,
+      ]
+    }
+
+    // already covered validations
     case 'addFAQ': {
       return [
         body('title').notEmpty().withMessage('TITLE_EMPTY'),

@@ -21,17 +21,23 @@ const adminClassRoutes = require('./routes/admins/class.routes');
 const adminReportRoutes = require('./routes/admins/reports.routes');
 const adminStudentRoutes = require('./routes/admins/student.routes');
 const adminTeacherRoutes = require('./routes/admins/teacher.routes');
+const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js')
+const adminEmailTemplateRouter = require('./routes/admins/emailTemplate.route')
+const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
+const adminFeeRoutes = require('./routes/admins/fees.route.js')
 
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
 
+//import Teacher routes
+const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') ;
+const teacherProfileRoute = require('./routes/teachers/teacher.route.js');
+const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
 
-
-//import student routes
-const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') 
 
 // middlewares
 const corsOption = {
+  origin: 'http://localhost:5173',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };
@@ -59,19 +65,23 @@ app.get('/', (req, res) => {
 app.use('/role/auth', roleLoginRoute);
 
 // Admin routes
+app.use('/api/admins', adminDashboardRoutes)
 app.use('/api/admins/auth', adminAuthRoutes);
 app.use('/api/admins/classes', adminClassRoutes);
 app.use('/api/admins/reports', adminReportRoutes);
 app.use('/api/admins/students', adminStudentRoutes);
 app.use('/api/admins/teachers', adminTeacherRoutes);
+app.use('/api/admins/attendances', adminAttendanceRoutes)
+app.use('/api/admin/email-template', adminEmailTemplateRouter)
+app.use('/api/admin/fees', adminFeeRoutes)
+// app.use('/v1/admin/notification', adminNotificationRouter)
 
 // Student routes
 app.use('/api/student', studentRoutes)
-
-
 //teacher route
-
 app.use("/api/teacher",teacherAttendanceRoute)
+app.use("/api/teacher",teacherProfileRoute)
+app.use("/api/teacher",teacherAssignmentRoute)
 // 404 Handler
 app.use(function (req, res) {
   res.status(404).json({

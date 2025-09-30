@@ -1039,10 +1039,7 @@
     "en": "Description limit reached.",
     "ar": ""
   },
-  "NAME_EMPTY": {
-    "en": "Name is required.",
-    "ar": ""
-  },
+ 
   "NAME_LIMIT_REACHED": {
     "en": "Name must not exceed 100 characters.",
     "ar": ""
@@ -1055,10 +1052,7 @@
     "en": "Duration is required.",
     "ar": ""
   },
-  "PRICE_EMPTY": {
-    "en": "Price is required.",
-    "ar": ""
-  },
+ 
   "MONTHS_EMPTY": {
     "en": "Number of months is required.",
     "ar": ""
@@ -1246,7 +1240,202 @@
   "ERROR_WHILE_GETTING_ALL_CLASSES":{
     "en": "Error while getting classes",
     "ar": ""
+  },  
+  "INVALID_INPUT_DATA": {
+    "en": "Invalid input data provided for attendance",
+    "ar": ""
+  },
+  "INVALID_DATE_FORMAT": {
+    "en": "Invalid date format provided",
+    "ar": ""
+  },
+  "INVALID_SESSION": {
+    "en": "Invalid session value, allowed values are 1 (morning), 2 (afternoon), 3 (evening)",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED_SUCCESSFULLY": {
+    "en": "Attendance marked or updated successfully",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKING_FAILED": {
+    "en": "Attendance marking failed",
+    "ar": ""
+  },
+  "EMAIL_ERROR": {
+    "en": "Email error",
+    "ar": ""
+  },
+  "EMAIL_SUCCESSFULLY_SENT": {
+    "en": "Email successfully sent",
+    "ar": ""
+  },
+  "NO_SUBJECTS_FOUND": {
+    "en": "No subjects found",
+    "ar": ""
+  },
+  "SUBJECTS_FETCHED_SUCCESSFULLY": {
+    "en": "Subjects fetched successfully",
+    "ar": ""
+  },
+  "CLASS_NAME_INVALID_FORMAT": {
+    "en": "Class name is invalid",
+    "ar": ""
+  },
+  "CLASSES_FETCHING_SUCCESSFULLY": {
+    "en": "Class fetched successfully",
+    "ar": ""
+  },
+
+  "FEE_STRUCTURE_CREATION_FAILED": {
+    "en": "Fee structure creation failed",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_CREATED": {
+    "en": "Fee structure created successfully",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_CREATION_ERROR": {
+    "en": "Error occurred while creating fee structure",
+    "ar": ""
+  },
+  "TOTAL_AMOUNT_MISMATCH": {
+    "en": "Total amount does not match sum of fee heads",
+    "ar": ""
+  },
+  "CLASSNAME_REQUIRED": {
+    "en": "Class name is required",
+    "ar": ""
+  },
+  "CLASSNAME_LENGTH": {
+    "en": "Class name length must be between 2 and 50",
+    "ar": ""
+  },
+  "ACADEMIC_YEAR_REQUIRED": {
+    "en": "Academic year is required",
+    "ar": ""
+  },
+  "ACADEMIC_YEAR_INVALID": {
+    "en": "Academic year format is invalid",
+    "ar": ""
+  },
+  "FEEHEADS_ARRAY_REQUIRED": {
+    "en": "Fee heads array is required",
+    "ar": ""
+  },
+  "FEEHEADS_INVALID": {
+    "en": "Fee heads must have type (string) and amount (number)",
+    "ar": ""
+  },
+  "TOTAL_AMOUNT_REQUIRED": {
+    "en": "Total amount is required",
+    "ar": ""
+  },
+  "TOTAL_AMOUNT_INVALID": {
+    "en": "Total amount must be numeric",
+    "ar": ""
+  },
+
+  "STUDENT_ID_INVALID": {
+    "en": "Student ID is invalid",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_ID_REQUIRED": {
+    "en": "Fee structure ID is required",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_ID_INVALID": {
+    "en": "Fee structure ID is invalid",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_NOT_FOUND": {
+    "en": "Fee structure not found",
+    "ar": ""
+  },
+  "APPLIED_FEEHEADS_ARRAY_REQUIRED": {
+    "en": "Applied fee heads array is required",
+    "ar": ""
+  },
+  "APPLIED_FEEHEADS_INVALID": {
+    "en": "Applied fee heads must have type (string) and amount (number)",
+    "ar": ""
+  },
+  "DISCOUNTS_INVALID": {
+    "en": "Discount must be numeric",
+    "ar": ""
+  },
+  "PAYABLE_AMOUNT_REQUIRED": {
+    "en": "Payable amount is required",
+    "ar": ""
+  },
+  "PAYABLE_AMOUNT_INVALID": {
+    "en": "Payable amount must be numeric",
+    "ar": ""
+  },
+  "ASSIGN_FEE_FAILED": {
+    "en": "Assigning fee failed",
+    "ar": ""
+  },
+  "FEE_ASSIGNED_SUCCESSFULLY": {
+    "en": "Fee assigned successfully",
+    "ar": ""
+  },
+  "STUDENT_FEE_NOT_FOUND": {
+    "en": "Student fee not found",
+    "ar": ""
+  },
+  "STUDENT_FEE_UPDATED": {
+    "en": "Student fee updated successfully",
+    "ar": ""
+  },
+  "UPDATE_FEE_ERROR": {
+    "en": "Error occurred while updating student fee",
+    "ar": ""
+  },
+
+  "TRANSACTION_ID_REQUIRED": {
+    "en": "Transaction ID is required",
+    "ar": ""
+  },
+  "AMOUNT_PAID_REQUIRED": {
+    "en": "Amount paid is required",
+    "ar": ""
+  },
+  "AMOUNT_PAID_INVALID": {
+    "en": "Amount paid must be numeric",
+    "ar": ""
+  },
+  "AMOUNT_MUST_BE_POSITIVE": {
+    "en": "Amount must be positive",
+    "ar": ""
+  },
+  "PAYMENT_EXCEEDS_REMAINING": {
+    "en": "Payment amount exceeds remaining balance",
+    "ar": ""
+  },
+  "PAYMENT_MODE_REQUIRED": {
+    "en": "Payment mode is required",
+    "ar": ""
+  },
+  "PAYMENT_MODE_INVALID": {
+    "en": "Payment mode is invalid",
+    "ar": ""
+  },
+  "PAYMENT_STATUS_INVALID": {
+    "en": "Payment status is invalid",
+    "ar": ""
+  },
+  "REMARKS_MUST_BE_STRING": {
+    "en": "Remarks must be a string",
+    "ar": ""
+  },
+  "ADD_PAYMENT_ERROR": {
+    "en": "Error occurred while adding payment",
+    "ar": ""
+  },
+  "PAYMENT_ADDED_SUCCESSFULLY": {
+    "en": "Payment added successfully",
+    "ar": ""
   }
-  
-  
+
 }
+

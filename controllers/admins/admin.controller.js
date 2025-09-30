@@ -11,6 +11,7 @@ module.exports = {
     }
   },
   adminLogin: async (req, res) => {
+    console.log(req.body)
     try {
       await adminService.adminLogin(req, res)
     } catch (err) {
@@ -51,6 +52,7 @@ module.exports = {
     }
   },
   editAdmin: async (req, res) => {
+    console.log('file : ',req.files)
     try {
       await adminService.editAdmin(req, res)
     } catch (err) {

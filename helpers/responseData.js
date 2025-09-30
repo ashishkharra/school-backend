@@ -8,7 +8,7 @@ module.exports = {
     response.success = success
     response.message =
       _(message, language) || _('SOMETHING_WENT_WRONG', language) || result.message
-    response.result = result
+    response.results = result
     console.log('response : ', response)
     return response
   },
@@ -16,13 +16,15 @@ module.exports = {
     return __(message, language)
   },
   generateAuthToken: (user) => {
+    console.log('user-------------', user)
     const token = jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: process.env.TOKEN_LIFE || "15m"
     });
-    const refreshToken = jwt.sign(user, process.env.JWT_SECRET_REFRESH, {
+    const refresh_token = jwt.sign(user, process.env.JWT_SECRET_REFRESH, {
       expiresIn: process.env.REFRESH_TOKEN_LIFE || "7d"
     });
-    return { token, refreshToken };
+    const allData = {...user, token, refresh_token}
+    return allData;
   },
   generateUniqueUserId: () => {
     const randomUserId = Math.floor(Math.random() * 1000000)

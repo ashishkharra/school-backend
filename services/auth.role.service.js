@@ -22,7 +22,7 @@ module.exports = {
       }
       console.log(user)
 
-      if (!user) {
+      if (!user || user.isRemoved === 1) {
         return { success: false, message: "USER_NOT_FOUND", results: {} };
       }
       console.log(user.name,user.email,user,"BEFORE MATVHVH",password, user.password)
@@ -45,7 +45,7 @@ module.exports = {
 
     } catch (err) {
       console.error("Login service error:", err.message);
-      return { success: false, message: "ERROR_OCCUR", results: {} };
+      return { success: false, message: "SERVER_ERROR", results: {}};
     }
   }
 };

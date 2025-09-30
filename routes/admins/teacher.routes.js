@@ -15,9 +15,9 @@ const teacherController = require('../../controllers/admins/teacher.controller.j
 
 router.post('/register',validationRule.validate("registerTeacher") ,teacherController.registerTeacher);
 router.get('/getAllTeacher', teacherController.getAllTeachers);
-router.put('/updateTeachers/:id', validationRule.validate("registerTeacher"),teacherController.updateTeacher);
-router.put('/soft-delete/:id', teacherController.softDeleteTeacher);
-router.get("/history/deleted", teacherController.getDeletedTeachersHistory);
-router.put('/assign-teacher/:classId', teacherController.assignTeacherToClassController);
+router.put('/updateTeachers/:id',[verifyToken], validationRule.validate("updateTeacher"),teacherController.updateTeacher);
+router.put('/soft-delete/:id',[verifyToken], teacherController.softDeleteTeacher);
+router.get("/deletedTeachersHistory",[verifyToken], teacherController.getDeletedTeachersHistory);
+router.put('/assign-teacher',[verifyToken] ,teacherController.assignTeacherToClassController);
 
 module.exports = router

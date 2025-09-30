@@ -81,6 +81,8 @@ const handleTeacherRole = (user, req, res, next) => {
 const handleVerification = async (req, res, next, token) => {
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET)
+    console.log('user in verification : ', user)
+
     if (!user) {
       return res
         .status(401)

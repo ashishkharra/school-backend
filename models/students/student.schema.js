@@ -26,6 +26,10 @@ const studentSchema = new mongoose.Schema({
     country: String
   },
   profilePic: { type: String, default: "default_profile.png" },
+  classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+  },
 
   // 👨‍👩‍👦 Family & Emergency
   parents: [
@@ -151,13 +155,6 @@ const studentSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
-  remarks: [
-    {
-      teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
-      remark: String,
-      date: { type: Date, default: Date.now }
-    }
-  ],
   disciplinaryActions: [
     {
       incident: String,
@@ -182,6 +179,11 @@ const studentSchema = new mongoose.Schema({
       at: { type: Date, default: Date.now }
     }
   ],
+    classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Class",
+    required: true
+  },
 
   // 🔒 Tokens
   token: { type: String },
@@ -189,9 +191,6 @@ const studentSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-
-// Indexes for faster search
-studentSchema.index({ rollNo: 1 });
 studentSchema.index({ admissionNo: 1 });
 studentSchema.index({ email: 1 });
 studentSchema.index({ name: 1 });

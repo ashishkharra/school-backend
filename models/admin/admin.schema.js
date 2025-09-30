@@ -37,8 +37,7 @@ const adminSchema = new mongoose.Schema(
     },
     profilePic: {
       type: String,
-      default: "no_image.png", // fallback
-      get: (image) => process.env.AWS_MEDIA_URL + image,
+      default: "no_image.png",
     },
     forceLogout: {
       type: Boolean,
@@ -47,8 +46,11 @@ const adminSchema = new mongoose.Schema(
     lastLogin: {
       type: Date,
     },
-    token: {type : String},
-    refreshToken: {type : String}
+    permission:{
+      type:Array
+    },
+    token: { type: String },
+    refreshToken: { type: String }
   },
   {
     timestamps: true,
