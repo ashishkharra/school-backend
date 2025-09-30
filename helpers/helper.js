@@ -503,11 +503,11 @@ module.exports = {
       ].map((field) =>
         !['walletAmount'].includes(field)
           ? {
-              [field]: { $regex: keyword, $options: 'i' }
-            }
+            [field]: { $regex: keyword, $options: 'i' }
+          }
           : {
-              [field]: { $eq: parseFloat(keyword) }
-            }
+            [field]: { $eq: parseFloat(keyword) }
+          }
       )
     }
   },
@@ -1042,5 +1042,36 @@ module.exports = {
       console.log('err: ', err)
       console.log('SMS Fails err', err?.message)
     }
+  },
+  formatClassName: (name) => {
+    const trimmed = name.trim();
+
+    if (/^\d+$/.test(trimmed)) {
+      const num = parseInt(trimmed, 10);
+      if (num === 1) return "1st";
+      if (num === 2) return "2nd";
+      if (num === 3) return "3rd";
+      return `${num}th`;
+    }
+
+    const mapping = {
+      prekg: "PreKG",
+      preKg: "PreKG",
+      Prekg: "PreKG",
+      PreKG: "PreKG",
+      PREKG: "PreKG",
+      PrEKg: "PreKG",
+      prEKG: "PreKG",
+
+      kg: "KG",
+      kG: "KG",
+      Kg: "KG",
+      KG: "KG",
+      kG: "KG",
+      kG: "KG",
+    };
+
+
+    return mapping[trimmed.toLowerCase()] || trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
   }
 }

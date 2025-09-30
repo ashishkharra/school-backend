@@ -3,13 +3,20 @@ const { v4: uuidv4 } = require('uuid');
 const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
 const Subject = require('../../models/class/subjects.schema.js')
+const { formatClassName } = require('../../helpers/helper.js')
 
 const adminClassService = {
     addClass: async (classData) => {
         try {
-            const { name, section } = classData;
+            let { name, section ,startTime, endTime } = classData
+            name = formatClassName(name);
+            section = section.toUpperCase();
 
-            let existingClass = await Class.findOne({ name });
+            let existingClass = await Class.findOne({ name, section });
+
+            if (existingClass) {
+                return { success: false, message: "SECTION_ALREADY_EXIST" };
+            }
 
             let classIdentifier;
             if (existingClass) {
@@ -24,6 +31,8 @@ const adminClassService = {
                 section,
                 classIdentifier,
                 studentCount: 0,
+                startTime,
+                endTime,
             });
 
             if (!newClass)
@@ -32,7 +41,6 @@ const adminClassService = {
             return { success: true, message: "CLASS_REGISTERED" };
         } catch (error) {
             console.error("Error adding class:", error);
-
             return { success: false, message: "REGISTRATION_FAILED" };
         }
     },
