@@ -60,22 +60,6 @@ const studentSchema = new mongoose.Schema({
     }
   ],
 
-  examResults: [
-    {
-      examName: String,
-      subject: String,
-      marksObtained: Number,
-      totalMarks: Number,
-      grade: String
-    }
-  ],
-  // grades: [
-  //   {
-  //     subject: { type: String, required: true },
-  //     grade: { type: String, required: true },
-  //     comments: { type: String }
-  //   }
-  // ],
   achievements: [
     {
       title: String,
@@ -119,32 +103,6 @@ const studentSchema = new mongoose.Schema({
     }
   ],
   transferCertificate: { type: String },
-
-  // 💳 Finance & Administration
-  feesStatus: { type: String, enum: ["paid", "due", "partial"], default: "due" },
-  feeDetails: [
-    {
-      amount: Number,
-      dueDate: Date,
-      paidDate: Date,
-      modeOfPayment: String,
-      receiptNo: String
-    }
-  ],
-  scholarship: {
-    type: { type: String },
-    amount: Number,
-    validTill: Date
-  },
-  hostelInfo: {
-    hostelName: String,
-    roomNo: String
-  },
-  transportInfo: {
-    routeNo: String,
-    busNo: String,
-    pickupPoint: String
-  },
 
   // 📲 Communication & Discipline
   notifications: [

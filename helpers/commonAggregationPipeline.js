@@ -423,10 +423,10 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilt
   }
 ];
 
-const getStudentDetailsPipeline = (studentId) => [
+const getStudentWithDetails = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
 
-  // 1. Lookup all enrollments and attach their class info
+  // Lookup student enrollments with class info
   {
     $lookup: {
       from: "enrollments",
@@ -441,29 +441,31 @@ const getStudentDetailsPipeline = (studentId) => [
             as: "classInfo"
           }
         },
-        { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
-        {
-          $project: {
-            _id: 1,
-            section: 1,
-            rollNo: 1,
-            academicYear: 1,
-            status: 1,
-            classInfo: {
-              _id: 1,
-              name: 1,
-              section: 1,
-              subjects: 1,
-              teacher: 1
-            }
-          }
-        }
+        { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } }
       ],
       as: "enrollments"
     }
   },
 
-  // 2. Attendance records
+  // Lookup student fees with fee structure
+  {
+    $lookup: {
+      from: "studentfees",
+      localField: "_id",
+      foreignField: "studentId",
+      as: "feesRecords"
+    }
+  },
+  {
+    $lookup: {
+      from: "feestructures",
+      localField: "feesRecords.feeStructureId",
+      foreignField: "_id",
+      as: "feeStructures"
+    }
+  },
+
+  // Lookup attendance
   {
     $lookup: {
       from: "attendances",
@@ -473,23 +475,19 @@ const getStudentDetailsPipeline = (studentId) => [
     }
   },
 
-  // 3. Fees records
-  {
-    $lookup: {
-      from: "fees",
-      localField: "_id",
-      foreignField: "student",
-      as: "feesRecords"
-    }
-  },
-
-  // 4. Assignment submissions filtered for this student
+  // Lookup assignments
   {
     $lookup: {
       from: "assignments",
       let: { studentId: "$_id" },
       pipeline: [
-        { $match: { $expr: { $in: ["$$studentId", "$submissions.student"] } } },
+        {
+          $match: {
+            $expr: {
+              $in: ["$$studentId", { $ifNull: ["$submissions.student", []] }]
+            }
+          }
+        },
         {
           $project: {
             title: 1,
@@ -508,30 +506,32 @@ const getStudentDetailsPipeline = (studentId) => [
     }
   },
 
-  // 5. Final projection
+  // Flatten root with replaceRoot
+  {
+    $replaceRoot: {
+      newRoot: {
+        $mergeObjects: [
+          "$$ROOT",
+          {
+            enrollmentDetails: "$enrollments",
+            feesDetails: "$feesRecords",
+            feeStructuresDetails: "$feeStructures",
+            attendanceDetails: "$attendanceRecords",
+            assignmentsDetails: "$assignments"
+          }
+        ]
+      }
+    }
+  },
+
+  // Optionally remove redundant nested fields
   {
     $project: {
-      name: 1,
-      email: 1,
-      dob: 1,
-      gender: 1,
-      bloodGroup: 1,
-      phone: 1,
-      address: 1,
-      parents: 1,
-      guardian: 1,
-      emergencyContact: 1,
-      physicalDisability: 1,
-      profilePic: 1,
-      status: 1,
-      isRemoved: 1,
-      removedAt: 1,
-      removedReason: 1,
-      enrollments: 1,          // now an array with classInfo inside each
-      attendanceRecords: 1,
-      feesRecords: 1,
-      assignments: 1,
-      grades: 1
+      enrollments: 0,
+      feesRecords: 0,
+      feeStructures: 0,
+      attendanceRecords: 0,
+      assignments: 0
     }
   }
 ];
@@ -585,52 +585,6 @@ const getAllClassesPipeline = (classIdentifier, section, page = 1, limit = 10) =
 
   return pipeline;
 };
-
-const getStudentWithDetails = async (studentId) => {
-  if (!mongoose.Types.ObjectId.isValid(studentId)) return null;
-
-  const [result] = await Student.aggregate([
-    { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
-
-    // Join with enrollments
-    {
-      $lookup: {
-        from: 'enrollments',
-        localField: '_id',
-        foreignField: 'student',
-        as: 'enrollments'
-      }
-    },
-    { $unwind: { path: '$enrollments', preserveNullAndEmptyArrays: true } },
-
-    // Join with class (from enrollment.class)
-    {
-      $lookup: {
-        from: 'classes',
-        localField: 'enrollments.class',
-        foreignField: '_id',
-        as: 'classInfo'
-      }
-    },
-    { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } },
-
-    // Optionally project only the fields you need
-    {
-      $project: {
-        name: 1,
-        email: 1,
-        status: 1,
-        parents: 1,
-        guardian: 1,
-        'enrollments.rollNo': 1,
-        'enrollments.academicYear': 1,
-        'classInfo.name': 1
-      }
-    }
-  ]);
-
-  return result || null;
-}
 
 const buildAssignmentPipeline = (classId, skip = 0, limit = 10) => {
   return [
@@ -800,6 +754,51 @@ const singleStudentFeeLookup = (enrollmentId) => [
   },
 ];
 
+const getSubmissionWithDetails = (submissionId) => [
+  { $match: { _id: mongoose.Types.ObjectId(submissionId) } },
+  {
+    $lookup: {
+      from: "assignments",
+      localField: "assignment",
+      foreignField: "_id",
+      as: "assignmentDetails"
+    }
+  },
+  { $unwind: "$assignmentDetails" },
+  {
+    $lookup: {
+      from: "students",
+      localField: "student",
+      foreignField: "_id",
+      as: "studentDetails"
+    }
+  },
+  { $unwind: "$studentDetails" },
+  {
+    $lookup: {
+      from: "teachers",
+      localField: "gradedBy",
+      foreignField: "_id",
+      as: "teacherDetails"
+    }
+  },
+  { $unwind: { path: "$teacherDetails", preserveNullAndEmptyArrays: true } },
+  {
+    $project: {
+      _id: 1,
+      submittedAt: 1,
+      files: 1,
+      status: 1,
+      marksObtained: 1,
+      feedback: 1,
+      isLate: 1,
+      resubmissions: 1,
+      assignment: "$assignmentDetails",
+      student: "$studentDetails",
+      gradedBy: "$teacherDetails"
+    }
+  }
+];
 
 
 module.exports = {
@@ -808,7 +807,7 @@ module.exports = {
   studentAssignmentPipeline,
   teacherProfilePipeline,
   getClassWithStudentsPipeline,
-  getStudentDetailsPipeline,
+  // getStudentDetailsPipeline,
   getAllClassesPipeline,
   getStudentWithDetails,
   buildAssignmentPipeline,
@@ -817,7 +816,8 @@ module.exports = {
   // classinstudentPipeline
   assignmentWithClassPipeline,
   studentFeesLookup,
-  singleStudentFeeLookup
+  singleStudentFeeLookup,
+  getSubmissionWithDetails
 }
 
 

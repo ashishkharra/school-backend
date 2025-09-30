@@ -20,6 +20,7 @@ const feeController = {
 
     assignStudentFee: async (req, res) => {
         try {
+            console.log('fee controller ; ', req.body)
             const result = await feeService.assignStudentFee(req.body);
 
             if (!result.success) {
@@ -36,7 +37,9 @@ const feeController = {
     updateStudentFee: async (req, res) => {
         try {
             const studentFeeId = req.params.id;
-            const result = await feeService.updateStudentFee(studentFeeId, req.body);
+            const updateData = req.body;
+
+            const result = await feeService.updateStudentFee(studentFeeId, updateData);
 
             if (!result.success) {
                 return res.status(400).json(responseData(result.message, {}, req, false));
@@ -44,7 +47,7 @@ const feeController = {
 
             return res.status(200).json(responseData(result.message, result.data, req, true));
         } catch (error) {
-            console.log("Update Student Fee Controller Error:", error.message);
+            console.error("Update Student Fee Controller Error:", error);
             return res.status(500).json(responseData("UPDATE_FEE_ERROR", {}, req, false));
         }
     },

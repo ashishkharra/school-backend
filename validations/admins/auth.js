@@ -1,4 +1,6 @@
 const { body, param } = require('express-validator')
+const FeeStructure = require('../../models/fees/feeStructure.schema.js')
+const StudentFee = require('../../models/fees/studentFee.schema.js')
 const { validatorMiddleware } = require('../../helpers/helper')
 
 module.exports.validate = (method) => {
@@ -368,13 +370,14 @@ module.exports.validate = (method) => {
 
     case "createFeeStructure": {
       return [
-        body("className")
-          .notEmpty().withMessage("CLASSNAME_REQUIRED")
-          .isLength({ min: 2, max: 50 }).withMessage("CLASSNAME_LENGTH"),
+        body("classIdentifier")
+          .notEmpty().withMessage("CLASSIDENTIFIER_REQUIRED")
+          .isLength({ min: 2, max: 50 }).withMessage("CLASSIDENTIFIER_LENGTH"),
 
         body("academicYear")
           .notEmpty().withMessage("ACADEMIC_YEAR_REQUIRED")
-          .matches(/^\d{4}-\d{2}$/).withMessage("ACADEMIC_YEAR_INVALID"),
+          .matches(/^\d{4}-\d{4}$/)
+          .withMessage("ACADEMIC_YEAR_FORMAT_INVALID"),
 
         body("feeHeads")
           .isArray({ min: 1 }).withMessage("FEEHEADS_ARRAY_REQUIRED")
@@ -401,25 +404,28 @@ module.exports.validate = (method) => {
           .isMongoId().withMessage("STUDENT_ID_INVALID"),
 
         body("feeStructureId")
-          .notEmpty().withMessage("FEE_STRUCTURE_ID_REQUIRED")
-          .isMongoId().withMessage("FEE_STRUCTURE_ID_INVALID")
+          .notEmpty()
+          .withMessage("FEE_STRUCTURE_ID_REQUIRED")
+          .isMongoId()
+          .withMessage("FEE_STRUCTURE_ID_INVALID")
           .custom(async (feeStructureId, { req }) => {
             const feeStruct = await FeeStructure.findById(feeStructureId);
             if (!feeStruct) return Promise.reject("FEE_STRUCTURE_NOT_FOUND");
 
             const appliedHeads = req.body.appliedFeeHeads || [];
+
+            // Validate that each applied head exists in the fee structure
             for (let head of appliedHeads) {
               const matched = feeStruct.feeHeads.find(f => f.type === head.type);
               if (!matched) return Promise.reject(`INVALID_FEE_HEAD_${head.type}`);
             }
 
-            feeStruct.feeHeads
-              .filter(f => !f.isOptional)
-              .forEach(f => {
-                if (!appliedHeads.some(a => a.type === f.type)) {
-                  return Promise.reject(`MANDATORY_FEE_HEAD_MISSING_${f.type}`);
-                }
-              });
+            // Check that all mandatory heads are included
+            for (let f of feeStruct.feeHeads.filter(f => !f.isOptional)) {
+              if (!appliedHeads.some(a => a.type === f.type)) {
+                return Promise.reject(`MANDATORY_FEE_HEAD_MISSING_${f.type}`);
+              }
+            }
 
             return true;
           }),
@@ -433,12 +439,32 @@ module.exports.validate = (method) => {
           .optional()
           .isNumeric().withMessage("DISCOUNTS_INVALID"),
 
-        body("payableAmount")
-          .notEmpty().withMessage("PAYABLE_AMOUNT_REQUIRED")
-          .isNumeric().withMessage("PAYABLE_AMOUNT_INVALID"),
-
         validatorMiddleware,
       ]
+    }
+
+    case "updateStudentFee": {
+      return [
+        param("id")
+          .notEmpty().withMessage("STUDENT_FEE_ID_REQUIRED")
+          .isMongoId().withMessage("STUDENT_FEE_ID_INVALID"),
+
+        body("appliedFeeHeads")
+          .optional()
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        body("paidTillNow")
+          .optional()
+          .isNumeric().withMessage("PAID_TILL_NOW_INVALID"),
+
+        validatorMiddleware,
+      ];
     }
 
     case "addPayment": {

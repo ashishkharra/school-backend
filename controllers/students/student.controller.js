@@ -117,6 +117,45 @@ const studentController = {
                 .status(500)
                 .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
         }
+    },
+
+    submitAssignment: async (req, res) => {
+        try {
+            const { assignmentId } = req.params;
+            const studentId = req.user._id;
+            const files = req.body.files;
+
+            const result = await studentService.submitAssignment(studentId, assignmentId, files);
+            return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        }
+    },
+
+    gradeSubmission: async (req, res) => {
+        try {
+            const { submissionId } = req.params;
+            const teacherId = req.user._id;
+            const { marks, feedback } = req.body;
+
+            const result = await studentService.gradeSubmission(submissionId, teacherId, marks, feedback);
+            return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        }
+    },
+
+    getSubmissionDetails: async (req, res) => {
+        try {
+            const { submissionId } = req.params;
+            const result = await studentService.getSubmissionDetails(submissionId);
+            return res.status(result.success ? 200 : 404).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        }
     }
 
 }

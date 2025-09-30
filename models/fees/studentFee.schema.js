@@ -17,7 +17,8 @@ const studentFeeSchema = new mongoose.Schema({
   appliedFeeHeads: [
     {
       type: { type: String, required: true },
-      amount: { type: Number, required: true }
+      amount: { type: Number, required: true },
+      paidTillNow: { type: Number, default: 0 }
     }
   ],
 

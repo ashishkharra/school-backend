@@ -1,4 +1,3 @@
-// models/FeeStructure.js
 const mongoose = require("mongoose");
 
 const feeHeadSchema = new mongoose.Schema({
@@ -8,7 +7,7 @@ const feeHeadSchema = new mongoose.Schema({
 });
 
 const feeStructureSchema = new mongoose.Schema({
-  className: { type: String, required: true },
+  classIdentifier: { type: String, required: true },
   academicYear: { type: String, required: true },
   feeHeads: [feeHeadSchema],
   totalAmount: { type: Number, required: true }

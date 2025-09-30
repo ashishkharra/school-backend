@@ -10,7 +10,7 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
 
-const { getClassWithStudentsPipeline, getStudentDetailsPipeline, getStudentWithDetails } = require('../../helpers/commonAggregationPipeline.js')
+const { getClassWithStudentsPipeline, getStudentWithDetails } = require('../../helpers/commonAggregationPipeline.js')
 
 
 const adminStudent = {
@@ -28,33 +28,43 @@ const adminStudent = {
                 parents,
                 guardian,
                 emergencyContact,
-                classId,        // must be the specific class (e.g. 11A)
+                classId,        // must be the specific class (e.g. 11A, PreKG)
                 academicYear,
                 physicalDisability,
                 disabilityDetails
             } = studentData;
 
-            // 1️⃣ require a valid classId
+            // 1 require a valid classId
             if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
                 return { success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
             }
 
-            // 2️⃣ duplicate check
+            // 2 duplicate check
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
             if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
 
-            // 3️⃣ fetch class
+            // 3 fetch class
             const classObj = await Class.findById(classId);
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
-            // 4️⃣ hash password
+            // 4 hash password
             const hashedPassword = await bcrypt.hash(password, 12);
 
-            // 5️⃣ section comes directly from the class (no balancing!)
+            // 5 section comes directly from the class (no balancing!)
             const assignedSection = classObj.section;   // e.g. "A"
 
-            // 6️⃣ generate next roll number
-            const classNumber = classObj.name.replace(/\D/g, "");
+            // 6 generate next roll number
+            let classCode;
+            const numericPart = classObj.name.replace(/\D/g, ""); // extract digits
+
+            if (numericPart) {
+                // Case: Numeric classes like "1", "10A"
+                classCode = numericPart;
+            } else {
+                // Case: Non-numeric classes like "PreKG", "KG"
+                classCode = classObj.name.toUpperCase().replace(/\s+/g, "");
+            }
+
             const lastEnrollment = await Enrollment
                 .findOne({ class: classId, academicYear })
                 .sort({ rollNo: -1 })
@@ -65,9 +75,11 @@ const adminStudent = {
                 const match = lastEnrollment.rollNo.match(/-(\d+)$/);
                 if (match) serial = parseInt(match[1], 10) + 1;
             }
-            const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
 
-            // 7️⃣ create student
+            // Example: PREKG-A-001 or 1-A-001
+            const rollNo = `${classCode}${assignedSection ? '-' + assignedSection : ''}-${String(serial).padStart(3, "0")}`;
+
+            // 7 create student
             const admissionNo = "ADM-" + Date.now().toString().slice(-6);
             const student = await Student.create({
                 admissionNo,
@@ -89,7 +101,7 @@ const adminStudent = {
                 disabilityDetails: disabilityDetails || null,
             });
 
-            // 8️⃣ create enrollment
+            // 8 create enrollment
             await Enrollment.create({
                 student: student._id,
                 class: classId,
@@ -98,7 +110,7 @@ const adminStudent = {
                 rollNo
             });
 
-            // 9️⃣ increment class count
+            // 9 increment class count
             classObj.studentCount += 1;
             await classObj.save();
 
@@ -531,7 +543,7 @@ const adminStudent = {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { success: false, message: "STUDENT_ID_NOT_VALID" }
             }
-            const result = await Student.aggregate(getStudentDetailsPipeline(studentId));
+            const result = await Student.aggregate(getStudentWithDetails(studentId));
 
             console.log('result of student : ', result)
 

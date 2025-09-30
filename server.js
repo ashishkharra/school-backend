@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const http = require('http');
 const session = require('express-session');
+const compression = require("compression");
 
 const app = express();
 const server = http.createServer(app);
@@ -51,6 +52,7 @@ app.use(
     saveUninitialized: false,
   })
 );
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -72,8 +74,8 @@ app.use('/api/admins/reports', adminReportRoutes);
 app.use('/api/admins/students', adminStudentRoutes);
 app.use('/api/admins/teachers', adminTeacherRoutes);
 app.use('/api/admins/attendances', adminAttendanceRoutes)
-app.use('/api/admin/email-template', adminEmailTemplateRouter)
-app.use('/api/admin/fees', adminFeeRoutes)
+app.use('/api/admins/email-template', adminEmailTemplateRouter)
+app.use('/api/admins/fees', adminFeeRoutes)
 // app.use('/v1/admin/notification', adminNotificationRouter)
 
 // Student routes

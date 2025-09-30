@@ -5,25 +5,30 @@ const Class = require('../../models/class/class.schema.js')
 const Subject = require('../../models/class/subjects.schema.js')
 const { formatClassName } = require('../../helpers/helper.js')
 
+const VALID_SECTIONS = ["A", "B", "C", "D"]
+
 const adminClassService = {
+
     addClass: async (classData) => {
         try {
-            let { name, section ,startTime, endTime } = classData
+            let { name, section, startTime, endTime } = classData;
             name = formatClassName(name);
             section = section.toUpperCase();
 
-            let existingClass = await Class.findOne({ name, section });
+            if (!VALID_SECTIONS.includes(section)) {
+                return { success: false, message: "SECTION_INVALID" };
+            }
 
+            let existingClass = await Class.findOne({ name, section });
             if (existingClass) {
                 return { success: false, message: "SECTION_ALREADY_EXIST" };
             }
 
-            let classIdentifier;
-            if (existingClass) {
-                classIdentifier = existingClass.classIdentifier;
-            } else {
-                classIdentifier = uuidv4();
-            }
+            let classGroup = await Class.findOne({ name });
+
+            let classIdentifier = classGroup
+                ? classGroup.classIdentifier
+                : new mongoose.Types.ObjectId();
 
             const newClass = await Class.create({
                 name,
@@ -35,8 +40,9 @@ const adminClassService = {
                 endTime,
             });
 
-            if (!newClass)
+            if (!newClass) {
                 return { success: false, message: "REGISTRATION_FAILED" };
+            }
 
             return { success: true, message: "CLASS_REGISTERED" };
         } catch (error) {
@@ -44,6 +50,7 @@ const adminClassService = {
             return { success: false, message: "REGISTRATION_FAILED" };
         }
     },
+
 
     addSubjects: async (subjectData) => {
         try {

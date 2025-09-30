@@ -1,6 +1,8 @@
 const Student = require('../../models/students/student.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Attendance = require('../../models/students/attendance.schema.js')
+const Submission = require('../../models/assignment/submission.schema.js')
+const _ = require('lodash');
 const { sendEmail } = require('../../helpers/helper.js')
 
 const mongoose = require('mongoose')
@@ -8,7 +10,7 @@ const path = require("path");
 const fs = require("fs");
 
 
-const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline } = require('../../helpers/commonAggregationPipeline.js')
+const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline, getSubmissionWithDetails } = require('../../helpers/commonAggregationPipeline.js')
 
 const studentService = {
     downloadAssignmentService: async (studentId, assignmentId) => {
@@ -93,7 +95,7 @@ const studentService = {
             }
 
             const student = await Student.findById(studentId)
-                .populate('class')
+                .populate('classId')
                 .lean();
 
             if (!student) {
@@ -123,8 +125,83 @@ const studentService = {
 
             return { success: true, message: 'EMAIL_SUCCESSFULLY_SENT' }
         } catch (error) {
-            console.error('Error in requestUpdateProfile:', error.message);
+            console.error('Error in requestUpdateProfile:', error);
             return { success: false, message: "SERVER_ERROR" }
+        }
+    },
+
+    submitAssignment: async (studentId, assignmentId, files) => {
+        try {
+            const assignment = await Assignment.findById(assignmentId);
+            if (!assignment) return { success: false, message: "ASSIGNMENT_NOT_FOUND" };
+
+            const now = new Date();
+            const isLate = now > assignment.dueDate;
+
+            let submission = await Submission.findOne({ student: studentId, assignment: assignmentId });
+
+            if (submission) {
+                // Add as resubmission
+                submission.resubmissions.push({
+                    files,
+                    submittedAt: now,
+                    isLate
+                });
+                submission.status = "Submitted";
+                submission.isLate = isLate;
+            } else {
+                // Create new submission
+                submission = await Submission.create({
+                    assignment: assignmentId,
+                    student: studentId,
+                    files,
+                    status: "Submitted",
+                    isLate
+                });
+            }
+
+            await submission.save();
+
+            const [populated] = await Submission.aggregate(getSubmissionWithDetails(submission._id));
+
+            return { success: true, message: "SUBMISSION_SUCCESSFUL", data: populated };
+        } catch (err) {
+            console.error("Submit Assignment Service Error:", err.message);
+            return { success: false, message: "SUBMISSION_FAILED" };
+        }
+    },
+
+    // Teacher grades a submission
+    gradeSubmission: async (submissionId, teacherId, marks, feedback) => {
+        try {
+            const submission = await Submission.findById(submissionId);
+            if (!submission) return { success: false, message: "SUBMISSION_NOT_FOUND" };
+
+            submission.marksObtained = marks;
+            submission.feedback = feedback;
+            submission.gradedBy = teacherId;
+            submission.status = "Graded";
+
+            await submission.save();
+
+            const [populated] = await Submission.aggregate(getSubmissionWithDetails(submission._id));
+
+            return { success: true, message: "SUBMISSION_GRADED", data: populated };
+        } catch (err) {
+            console.error("Grade Submission Service Error:", err.message);
+            return { success: false, message: "GRADING_FAILED" };
+        }
+    },
+
+    // Get submission details
+    getSubmissionDetails: async (submissionId) => {
+        try {
+            const [populated] = await Submission.aggregate(getSubmissionWithDetails(submissionId));
+            if (!populated) return { success: false, message: "SUBMISSION_NOT_FOUND" };
+            return { success: true, data: populated };
+        } catch (err) {
+            console.error("Get Submission Details Error:", err.message);
+            return { success: false, message: "FETCH_FAILED" };
         }
     }
 }

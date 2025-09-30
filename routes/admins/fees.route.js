@@ -2,12 +2,13 @@ const router = require('express').Router()
 const feeController = require('../../controllers/admins/fee.controller.js')
 const validationRule = require('../../validations/admins/auth')
 
-// Create Fee Structure
+
 router.post(
     "/structure",
     validationRule.validate("createFeeStructure"),
     feeController.createFeeStructure
 )
+
 
 .post(
     "/student",
@@ -15,15 +16,13 @@ router.post(
     feeController.assignStudentFee
 )
 
-
 .put(
     "/student/:id",
     validationRule.validate("updateStudentFee"),
     feeController.updateStudentFee
 )
 
-
-.post(
+.put(
     "/student/:id/payment",
     validationRule.validate("addPayment"),
     feeController.addPayment
