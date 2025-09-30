@@ -1,5 +1,6 @@
 const uuidv4 = require('uuidv4')
 
+const { getClassAggregationPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
 
 const adminClassService = {
@@ -18,7 +19,7 @@ const adminClassService = {
                 studentCount: 0,
             });
 
-            if (!newClass) return { success : false, message : "REGISTERATION_FAILED"}
+            if (!newClass) return { success: false, message: "REGISTERATION_FAILED" }
 
             return {
                 success: true,
@@ -34,20 +35,27 @@ const adminClassService = {
         }
     },
 
-    getAllClasses: async () => {
+    getAllClasses: async (classId = null, section = null) => {
         try {
-            const result = await 
-            return {
-                success: true,
-                message: "CLASSES_FETCHING_SUCCESSFULLY",
-                data: newClass,
-            };
+            let classIdentifier = null;
+
+            if (classId && !section) {
+                const cls = await Class.findById(classId);
+                if (!cls) return { success: false, message: "CLASS_NOT_FOUND" };
+                classIdentifier = cls.classIdentifier;
+            }
+
+            const pipeline = getClassAggregationPipeline(classIdentifier, section);
+            const result = await Class.aggregate(pipeline);
+
+            if (!result || result.length === 0) {
+                return { success: false, message: "CLASSES_NOT_FOUND" };
+            }
+
+            return { success: true, message: "CLASSES_FETCHED_SUCCESSFULLY", data: result };
         } catch (error) {
-            console.error("Error fetching classes:", error);
-            return {
-                success: false,
-                message: "ERROR_WHILE_GETTING_ALL_CLASSES",
-            };
+            console.error("getAllClasses error:", error);
+            return { success: false, message: "ERROR_WHILE_GETTING_ALL_CLASSES" };
         }
     }
 }

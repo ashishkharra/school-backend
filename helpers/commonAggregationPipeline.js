@@ -289,7 +289,6 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilt
   }
 ];
 
-
 const getStudentDetailsPipeline = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
 
@@ -402,10 +401,47 @@ const getStudentDetailsPipeline = (studentId) => [
   }
 ];
 
+const getClassAggregationPipeline = (classIdentifier = null, section = null) => {
+  const matchStage = {};
+
+  if (classIdentifier) {
+    matchStage.classIdentifier = classIdentifier;
+  }
+
+  if (section) {
+    matchStage.section = section;
+  }
+
+  return [
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "teacher",
+        foreignField: "_id",
+        as: "teacherInfo"
+      }
+    },
+    { $unwind: { path: "$teacherInfo", preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        name: 1,
+        section: 1,
+        subjects: 1,
+        studentCount: 1,
+        startTime: 1,
+        endTime: 1,
+        teacher: "$teacherInfo.name",
+      }
+    }
+  ];
+};
+
 module.exports = {
   studentAttendancePipeline,
   studentProfilePipeline,
   studentAssignmentPipeline,
   getClassWithStudentsPipeline,
-  getStudentDetailsPipeline
+  getStudentDetailsPipeline,
+  getClassAggregationPipeline
 }
