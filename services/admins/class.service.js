@@ -56,6 +56,8 @@ const adminClassService = {
         try {
             if (!mongoose.Types.ObjectId.isValid(classId)) return { success: false, message: 'CLASS_ID_NOT_VALID' }
 
+            classData.name = formatClassName(classData.name)
+
             const update = {};
             if (classData.name) update.name = classData.name;
             if (classData.section) update.section = classData.section;

@@ -20,7 +20,7 @@ const adminClassController = {
 
     updateClass: async (req, res) => {
         try {
-            const data = req.body;
+            let data = req.body;
             const { classId } = req.params
             const result = await adminClassService.updateClass(data, classId);
             if (!result.success) {
