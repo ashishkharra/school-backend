@@ -3,14 +3,11 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const { buildAttendancePipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 const adminAttendanceService = {
-    getAttendances: async (classId, page = 1, pageSize = 10) => {
+    getAttendances: async (classId, skip, limit) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(classId)) {
                 return { success: false, message: 'CLASS_ID_NOT_VALID' };
             }
-
-            const skip = (parseInt(page) - 1) * parseInt(pageSize);
-            const limit = parseInt(pageSize);
 
             const pipeline = buildAttendancePipeline(classId, skip, limit);
             console.log('pipeline data : ', pipeline)
@@ -32,8 +29,6 @@ const adminAttendanceService = {
                 message: 'ATTENDANCE_FETCH_SUCCESS',
                 data,
                 pagination: {
-                    page: parseInt(page),
-                    pageSize: limit,
                     total,
                     totalPages: Math.ceil(total / limit)
                 }

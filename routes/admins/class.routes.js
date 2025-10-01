@@ -5,6 +5,7 @@ const adminClassController = require('../../controllers/admins/class.controller.
 
 router
     .post('/reg', [verifyToken], validationRule.validate('registerClass'), adminClassController.addClass)
+    .put('/update/class/:classId', [verifyToken], validationRule.validate('updateClass'), adminClassController.updateClass)
     .post('/subjects/reg', [verifyToken], adminClassController.addSubjects)
 
     .get('/get/all/:classId?/:section?', [verifyToken], adminClassController.getAllClasses)

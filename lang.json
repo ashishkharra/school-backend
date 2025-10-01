@@ -1299,6 +1299,10 @@
   "CLASSES_FETCHING_SUCCESSFULLY": {
     "en": "Class fetched successfully",
     "ar": ""
+  },
+  "CLASS_UPDATE_FAILED": {
+    "en": "Class update failed",
+    "ar": ""
   }
 }
 

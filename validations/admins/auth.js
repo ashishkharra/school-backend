@@ -285,6 +285,22 @@ module.exports.validate = (method) => {
       ]
     }
 
+    case "updateClass": {
+      return [
+        body("name")
+          .optional()
+          .isLength({ min: 3, max: 50 })
+          .withMessage("CLASS_NAME_LENGTH"),
+
+        body("section")
+          .optional()
+          .isLength({ min: 1, max: 3 })
+          .withMessage("CLASS_SECTION_LENGTH"),
+
+        validatorMiddleware,
+      ];
+    }
+
     case "registerSubject": {
       return [
         // Subject name

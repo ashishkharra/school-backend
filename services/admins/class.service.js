@@ -2,7 +2,8 @@ const { v4: uuidv4 } = require('uuid');
 
 const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
-const Subject = require('../../models/class/subjects.schema.js')
+const Subject = require('../../models/class/subjects.schema.js');
+const { getPaginationArray } = require('../../helpers/helper.js');
 
 const adminClassService = {
     addClass: async (classData) => {
@@ -31,6 +32,37 @@ const adminClassService = {
             return {
                 success: false,
                 message: "REGISTERATION_FAILED",
+            };
+        }
+    },
+
+    updateClass: async (classData, classId) => {
+        try {
+            // Build an update object only with provided fields
+            const update = {};
+            if (classData.name) update.name = classData.name;
+            if (classData.section) update.section = classData.section;
+
+            const result = await Class.findOneAndUpdate(
+                { _id: classId },    // filter: which class to update
+                { $set: update },    // update: what to change
+                { new: true }        // options: return the updated document
+            );
+
+            if (!result) {
+                return { success: false, message: "CLASS_NOT_FOUND" };
+            }
+
+            return {
+                success: true,
+                message: "CLASS_UPDATED",
+                data: result
+            };
+        } catch (error) {
+            console.error("Error updating class:", error);
+            return {
+                success: false,
+                message: "REGISTRATION_FAILED"
             };
         }
     },
@@ -71,23 +103,23 @@ const adminClassService = {
             // Run pipeline for paginated data
             const result = await Class.aggregate(pipeline);
 
-            // Count total docs for the same filter (without skip/limit)
-            const total = await Class.countDocuments({
-                ...(classId && { classIdentifier: classId }),
-                ...(section && { section })
-            });
-
-            return {
-                success: true,
-                message: "CLASSES_FETCHING_SUCCESSFULLY",
-                data: result,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
-            };
+            // // Count total docs for the same filter (without skip/limit)
+            // const total = await Class.countDocuments({
+            //     ...(classId && { classIdentifier: classId }),
+            //     ...(section && { section })
+            // });
+            return result
+            // return {
+            //     success: true,
+            //     message: "CLASSES_FETCHING_SUCCESSFULLY",
+            //     data: result,
+            //     pagination: {
+            //         page,
+            //         limit,
+            //         total,
+            //         totalPages: Math.ceil(total / limit)
+            //     }
+            // };
         } catch (error) {
             console.error("Error fetching classes:", error);
             return { success: false, message: "SERVER_ERROR" };
@@ -105,27 +137,17 @@ const adminClassService = {
             console.log('total subjects : ', total)
 
             // Fetch paginated subjects, sorted by name
-            const subjects = await Subject.find()
-                .sort({ name: 1 })
-                .skip((page - 1) * limit)
-                .limit(limit);
+            const subjects = await Subject.aggregate(
+                [
+                    ...getPaginationArray(page, limit)
+                ]
+            )
 
             if (subjects.length === 0) {
-                return { success: false, message: "NO_SUBJECTS_FOUND", data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
+                return { success: false, message: "NO_SUBJECTS_FOUND", docs: [], pagination: { page, limit, total: 0, totalPages: 0 } };
             }
-
-            return {
-                success: true,
-                message: "SUBJECTS_FETCHED_SUCCESSFULLY",
-                data: subjects,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
-            };
-        } catch (error) {
+            return subjects
+         } catch (error) {
             console.error("Error while getting subjects:", error);
             return { success: false, message: "SERVER_ERROR" };
         }

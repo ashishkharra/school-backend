@@ -575,12 +575,14 @@ const getAllClassesPipeline = (classIdentifier, section, page = 1, limit = 10) =
         classIdentifier: 1,
         section: 1,
         studentCount: 1,
-        classTeacher: 1
+        classTeacher: 1,
+        createdAt:1
       }
     },
     { $sort: { createdAt: -1 } },           // newest first
-    { $skip: (page - 1) * limit },
-    { $limit: limit }
+    ...getPaginationArray(page, limit)
+    // { $skip: (page - 1) * limit },
+    // { $limit: limit }
   ];
 
   return pipeline;

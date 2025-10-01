@@ -69,9 +69,9 @@ module.exports = {
   udpateStudentSection: async (req, res) => {
     try {
       console.log('req body : ', req.body)
-      const { classId,studentId,  section } = req.params;
+      const { classId, studentId, section } = req.params;
 
-      const result = await adminStudent.updateStudentSection(classId ,studentId, section);
+      const result = await adminStudent.updateStudentSection(classId, studentId, section);
 
       if (!result.success) {
         return res
@@ -121,27 +121,33 @@ module.exports = {
       const { classId } = req.params;
       const { page = 1, limit = 10, ...filters } = req.query; // filters from query params
 
-      console.log('page : ', 1, 'class id : ', classId, "filteres : ", filters)
-
-      console.log('page : ', 1, 'class id : ', classId, "filteres : ", filters)
       // Convert page & limit to numbers
       const pageNumber = parseInt(page, 10);
       const limitNumber = parseInt(limit, 10);
 
       // Call service to get students
-      const result = await adminStudent.getStudentAccordingClass(
+      const queryResult = await adminStudent.getStudentAccordingClass(
         classId,
         filters,
         pageNumber,
         limitNumber
       );
 
-      if (!result.class) {
+      if (!queryResult.success) {
         return res.status(400).json(responseData(result?.message, null, req, result?.success || false));
       }
 
       // Return response
-      return res.status(200).json(responseData(result?.message, result, req, result?.success || true));
+      return res.json(
+        responseData(
+          'GET_LIST',
+          queryResult.length > 0
+            ? queryResult[0]
+            : constant.staticResponseForEmptyResult,
+          req,
+          true
+        )
+      )
     } catch (error) {
       console.error("getStudentAccordingClass controller error:", error);
       return res.status(500).json(responseData(result?.message, null, req, result?.success || false));
