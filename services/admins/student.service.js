@@ -10,7 +10,7 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
 
-const { getClassWithStudentsPipeline, getStudentDetailsPipeline, getStudentWithDetails } = require('../../helpers/commonAggregationPipeline.js')
+const { getAllStudentsPipeline, getClassWithStudentsPipeline, getStudentWithDetails, getStudentsByClassNamePipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 
 const adminStudent = {
@@ -28,33 +28,43 @@ const adminStudent = {
                 parents,
                 guardian,
                 emergencyContact,
-                classId,        // must be the specific class (e.g. 11A)
+                classId,        // must be the specific class (e.g. 11A, PreKG)
                 academicYear,
                 physicalDisability,
                 disabilityDetails
             } = studentData;
 
-            // 1️⃣ require a valid classId
+            // 1 require a valid classId
             if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
                 return { success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
             }
 
-            // 2️⃣ duplicate check
+            // 2 duplicate check
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
             if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
 
-            // 3️⃣ fetch class
+            // 3 fetch class
             const classObj = await Class.findById(classId);
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
-            // 4️⃣ hash password
+            // 4 hash password
             const hashedPassword = await bcrypt.hash(password, 12);
 
-            // 5️⃣ section comes directly from the class (no balancing!)
+            // 5 section comes directly from the class (no balancing!)
             const assignedSection = classObj.section;   // e.g. "A"
 
-            // 6️⃣ generate next roll number
-            const classNumber = classObj.name.replace(/\D/g, "");
+            // 6 generate next roll number
+            let classCode;
+            const numericPart = classObj.name.replace(/\D/g, ""); // extract digits
+
+            if (numericPart) {
+                // Case: Numeric classes like "1", "10A"
+                classCode = numericPart;
+            } else {
+                // Case: Non-numeric classes like "PreKG", "KG"
+                classCode = classObj.name.toUpperCase().replace(/\s+/g, "");
+            }
+
             const lastEnrollment = await Enrollment
                 .findOne({ class: classId, academicYear })
                 .sort({ rollNo: -1 })
@@ -65,9 +75,11 @@ const adminStudent = {
                 const match = lastEnrollment.rollNo.match(/-(\d+)$/);
                 if (match) serial = parseInt(match[1], 10) + 1;
             }
-            const rollNo = `${classNumber}${assignedSection}-${String(serial).padStart(3, "0")}`;
 
-            // 7️⃣ create student
+            // Example: PREKG-A-001 or 1-A-001
+            const rollNo = `${classCode}${assignedSection ? '-' + assignedSection : ''}-${String(serial).padStart(3, "0")}`;
+
+            // 7 create student
             const admissionNo = "ADM-" + Date.now().toString().slice(-6);
             const student = await Student.create({
                 admissionNo,
@@ -89,7 +101,7 @@ const adminStudent = {
                 disabilityDetails: disabilityDetails || null,
             });
 
-            // 8️⃣ create enrollment
+            // 8 create enrollment
             await Enrollment.create({
                 student: student._id,
                 class: classId,
@@ -98,7 +110,7 @@ const adminStudent = {
                 rollNo
             });
 
-            // 9️⃣ increment class count
+            // 9 increment class count
             classObj.studentCount += 1;
             await classObj.save();
 
@@ -137,11 +149,18 @@ const adminStudent = {
                 section,
                 academicYear,
                 physicalDisability,
-                disabilityDetails
+                disabilityDetails,
+
+                IDProof,
+                marksheets,
+                certificates,
+                medicalRecords,
+                transferCertificate,
+                disciplinaryActions
             } = studentData;
 
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success: false, message: "STUDENT_ID_NOT_VALID" }
+                return { success: false, message: "STUDENT_ID_NOT_VALID" };
             }
 
             // 1. Find existing student
@@ -172,7 +191,15 @@ const adminStudent = {
                 updateData.password = await bcrypt.hash(password, 12);
             }
 
-            // 3. Update enrollment (section or academic year changes)
+            // 3. New fields (documents & records)
+            if (IDProof) updateData.IDProof = IDProof;
+            if (marksheets) updateData.marksheets = marksheets; // full array replacement
+            if (certificates) updateData.certificates = certificates;
+            if (medicalRecords) updateData.medicalRecords = medicalRecords;
+            if (transferCertificate) updateData.transferCertificate = transferCertificate;
+            if (disciplinaryActions) updateData.disciplinaryActions = disciplinaryActions;
+
+            // 4. Update enrollment (section or academic year changes)
             if (section || academicYear) {
                 const enrollment = await Enrollment.findOne({ student: studentId });
                 if (!enrollment) {
@@ -211,11 +238,12 @@ const adminStudent = {
                 await enrollment.save();
             }
 
-            // 4. Update student
+            // 5. Update student
             const updatedStudent = await Student.findByIdAndUpdate(studentId, updateData, {
                 new: true
             });
 
+            // 6. Send notification email
             const mail = await sendEmail("profile-updated-notification", {
                 email: updatedStudent.email,
                 FirstName: updatedStudent.name,
@@ -223,7 +251,7 @@ const adminStudent = {
                 MOBILE: updatedStudent.phone
             });
 
-            console.log(mail)
+            console.log(mail);
 
             return {
                 success: true,
@@ -473,51 +501,96 @@ const adminStudent = {
         }
     },
 
-    // Get All Students
     getStudentAccordingClass: async (classId, filters = {}, page = 1, limit = 10) => {
         try {
             const skip = (page - 1) * limit;
-
-            // ---- Build dynamic filter for aggregation ----
             const studentFilter = {};
-            if (filters.academicYear)
-                studentFilter["enrollments.academicYear"] = filters.academicYear;
-            if (filters.section)
-                studentFilter["enrollments.section"] = filters.section;
-            if (filters.rollNo)
-                studentFilter["enrollments.rollNo"] = { $regex: filters.rollNo, $options: "i" };
-            if (filters.name)
-                studentFilter["student.name"] = { $regex: filters.name, $options: "i" };
-            if (filters.gender)
-                studentFilter["student.gender"] = filters.gender;
-            // Add more filters as needed …
 
-            const pipeline = getClassWithStudentsPipeline(
-                classId,
-                skip,
-                limit,
-                studentFilter
-            );
+            if (filters.academicYear) studentFilter.academicYear = filters.academicYear;
+            if (filters.section) studentFilter.section = filters.section;
+            if (filters.rollNo) studentFilter.rollNo = { $regex: filters.rollNo, $options: "i" };
 
-            const data = await Class.aggregate(pipeline);
+            const matchStudent = {};
+            if (filters.name) matchStudent["student.name"] = { $regex: filters.name, $options: "i" };
+            if (filters.gender) matchStudent["student.gender"] = filters.gender;
 
-            // Total count for pagination
-            const totalStudents = await Enrollment.countDocuments({
-                class: new mongoose.Types.ObjectId(classId),
-                ...(filters.academicYear && { academicYear: filters.academicYear }),
-                ...(filters.section && { section: filters.section })
-            });
+            let pipeline, totalStudents;
+
+            if (classId) {
+                pipeline = getClassWithStudentsPipeline(classId, skip, limit, { ...studentFilter, ...matchStudent });
+
+                totalStudents = await Enrollment.aggregate([
+                    { $match: { class: new mongoose.Types.ObjectId(classId), ...studentFilter } },
+                    {
+                        $lookup: {
+                            from: "students",
+                            localField: "student",
+                            foreignField: "_id",
+                            as: "student"
+                        }
+                    },
+                    { $unwind: "$student" },
+                    { $match: { "student.isRemoved": 0, ...matchStudent } },
+                    { $count: "total" }
+                ]);
+            } else if (filters.className) {
+                pipeline = getStudentsByClassNamePipeline(filters.className, skip, limit, { ...studentFilter, ...matchStudent });
+
+                totalStudents = await Enrollment.aggregate([
+                    { $match: { ...studentFilter } },
+                    {
+                        $lookup: {
+                            from: "classes",
+                            localField: "class",
+                            foreignField: "_id",
+                            as: "classInfo"
+                        }
+                    },
+                    { $unwind: "$classInfo" },
+                    { $match: { "classInfo.name": filters.className } },
+                    {
+                        $lookup: {
+                            from: "students",
+                            localField: "student",
+                            foreignField: "_id",
+                            as: "student"
+                        }
+                    },
+                    { $unwind: "$student" },
+                    { $match: { "student.isRemoved": 0, ...matchStudent } },
+                    { $count: "total" }
+                ]);
+            } else {
+                pipeline = getAllStudentsPipeline(skip, limit, { ...studentFilter, ...matchStudent });
+
+                totalStudents = await Enrollment.aggregate([
+                    { $match: { ...studentFilter } },
+                    {
+                        $lookup: {
+                            from: "students",
+                            localField: "student",
+                            foreignField: "_id",
+                            as: "student"
+                        }
+                    },
+                    { $unwind: "$student" },
+                    { $match: { "student.isRemoved": 0, ...matchStudent } },
+                    { $count: "total" }
+                ]);
+            }
+
+            const data = classId
+                ? await Class.aggregate(pipeline)
+                : await Enrollment.aggregate(pipeline);
 
             return {
                 success: true,
                 message: "STUDENT_FETCHED_SUCCESSFULLY",
-                class: data,
-                pagination: {
-                    page,
-                    limit,
-                    totalStudents,
-                    totalPages: Math.ceil(totalStudents / limit)
-                }
+                docs: data,
+                page,
+                limit,
+                totalStudents: totalStudents.length > 0 ? totalStudents[0].total : 0,
+                totalPages: totalStudents.length > 0 ? Math.ceil(totalStudents[0].total / limit) : 0
             };
         } catch (error) {
             console.error("getStudentAccordingClass service error:", error);
@@ -525,13 +598,12 @@ const adminStudent = {
         }
     },
 
-    // Get Student by ID
     getStudentById: async (studentId) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { success: false, message: "STUDENT_ID_NOT_VALID" }
             }
-            const result = await Student.aggregate(getStudentDetailsPipeline(studentId));
+            const result = await Student.aggregate(getStudentWithDetails(studentId));
 
             console.log('result of student : ', result)
 

@@ -117,40 +117,32 @@ module.exports = {
 
   getStudentAccordingClass: async (req, res) => {
     try {
+      const { page = 1, limit = 10, classId, ...filters } = req.query; // extract classId separately
 
-      const { classId } = req.params;
-      const { page = 1, limit = 10, ...filters } = req.query; // filters from query params
-
-      // Convert page & limit to numbers
       const pageNumber = parseInt(page, 10);
       const limitNumber = parseInt(limit, 10);
 
-      // Call service to get students
+      // Call service correctly
       const queryResult = await adminStudent.getStudentAccordingClass(
-        classId,
+        classId || null, // ✅ pass classId
         filters,
         pageNumber,
         limitNumber
       );
 
       if (!queryResult.success) {
-        return res.status(400).json(responseData(result?.message, null, req, result?.success || false));
+        return res
+          .status(400)
+          .json(responseData(queryResult.message, {}, req, false));
       }
 
-      // Return response
-      return res.json(
-        responseData(
-          'GET_LIST',
-          queryResult.length > 0
-            ? queryResult[0]
-            : constant.staticResponseForEmptyResult,
-          req,
-          true
-        )
-      )
+      // Return full object (with students + pagination)
+      return res.json(responseData("GET_LIST", queryResult, req, true));
     } catch (error) {
       console.error("getStudentAccordingClass controller error:", error);
-      return res.status(500).json(responseData(result?.message, null, req, result?.success || false));
+      return res
+        .status(500)
+        .json(responseData("ERROR_WHILE_GETTING_STUDENTS", {}, req, false));
     }
   },
 

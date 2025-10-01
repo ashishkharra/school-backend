@@ -1,9 +1,35 @@
 const mongoose = require('mongoose')
 const studentService = require('../../services/students/student.service.js')
 const { responseData } = require('../../helpers/responseData.js')
-const { sendEmail } = require('../../helpers/helper.js')
 
 const studentController = {
+    studentForgotPassword: async (req, res) => {
+        try {
+            await studentService.studentForgotPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
+    studentResetPassword: async (req, res) => {
+        try {
+            await studentService.studentResetPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
+    changePassword: async (req, res) => {
+        try {
+            await studentService.changePassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
     downloadAssignment: async (req, res) => {
         try {
             const { studentId, assignmentId } = req.params;
@@ -116,6 +142,45 @@ const studentController = {
             return res
                 .status(500)
                 .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+        }
+    },
+
+    submitAssignment: async (req, res) => {
+        try {
+            const { assignmentId } = req.params;
+            const studentId = req.user._id;
+            const files = req.body.files;
+
+            const result = await studentService.submitAssignment(studentId, assignmentId, files);
+            return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        }
+    },
+
+    gradeSubmission: async (req, res) => {
+        try {
+            const { submissionId } = req.params;
+            const teacherId = req.user._id;
+            const { marks, feedback } = req.body;
+
+            const result = await studentService.gradeSubmission(submissionId, teacherId, marks, feedback);
+            return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        }
+    },
+
+    getSubmissionDetails: async (req, res) => {
+        try {
+            const { submissionId } = req.params;
+            const result = await studentService.getSubmissionDetails(submissionId);
+            return res.status(result.success ? 200 : 404).json(responseData(result.message, result.data, req, result.success));
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
         }
     }
 

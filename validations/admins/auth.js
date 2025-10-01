@@ -1,4 +1,6 @@
 const { body, param } = require('express-validator')
+const FeeStructure = require('../../models/fees/feeStructure.schema.js')
+const StudentFee = require('../../models/fees/studentFee.schema.js')
 const { validatorMiddleware } = require('../../helpers/helper')
 
 module.exports.validate = (method) => {
@@ -335,6 +337,48 @@ module.exports.validate = (method) => {
       ];
     }
 
+    case "updateSubject": {
+      return [
+        // At least one field should be present
+        body().custom((value, { req }) => {
+          if (
+            !req.body.name &&
+            !req.body.code &&
+            !req.body.description &&
+            !req.body.credits
+          ) {
+            throw new Error("AT_LEAST_ONE_FIELD_REQUIRED");
+          }
+          return true;
+        }),
+
+        body("name")
+          .optional()
+          .isLength({ min: 3, max: 100 })
+          .withMessage("SUBJECT_NAME_LENGTH"),
+
+        body("code")
+          .optional()
+          .customSanitizer((value) => value.toUpperCase()) // 🔑 auto-uppercase
+          .isLength({ min: 3, max: 10 })
+          .withMessage("SUBJECT_CODE_LENGTH")
+          .matches(/^[A-Z0-9]+$/)
+          .withMessage("SUBJECT_CODE_FORMAT"),
+
+        body("description")
+          .optional()
+          .isLength({ min: 10, max: 500 })
+          .withMessage("SUBJECT_DESCRIPTION_LENGTH"),
+
+        body("credits")
+          .optional()
+          .isInt({ min: 3, max: 20 })
+          .withMessage("SUBJECT_CREDITS_RANGE"),
+
+        validatorMiddleware,
+      ];
+    }
+
     case "updateStudent": {
       return [
         body("name").optional().isString().isLength({ min: 2 }).withMessage("NAME_TOO_SHORT"),
@@ -382,7 +426,168 @@ module.exports.validate = (method) => {
       ];
     }
 
+    case "createFeeStructure": {
+      return [
+        body("classIdentifier")
+          .notEmpty().withMessage("CLASSIDENTIFIER_REQUIRED")
+          .isLength({ min: 2, max: 50 }).withMessage("CLASSIDENTIFIER_LENGTH"),
 
+        body("academicYear")
+          .notEmpty().withMessage("ACADEMIC_YEAR_REQUIRED")
+          .matches(/^\d{4}-\d{4}$/)
+          .withMessage("ACADEMIC_YEAR_FORMAT_INVALID"),
+
+        body("feeHeads")
+          .isArray({ min: 1 }).withMessage("FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("FEEHEADS_INVALID"),
+
+        body("totalAmount")
+          .notEmpty().withMessage("TOTAL_AMOUNT_REQUIRED")
+          .isNumeric().withMessage("TOTAL_AMOUNT_INVALID")
+          .custom((value, { req }) => {
+            const sum = req.body.feeHeads.reduce((acc, head) => acc + head.amount, 0);
+            if (value !== sum) return Promise.reject("TOTAL_AMOUNT_MISMATCH");
+            return true;
+          }),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "assignStudentFee": {
+      return [
+        body("studentId")
+          .notEmpty().withMessage("STUDENT_ID_REQUIRED")
+          .isMongoId().withMessage("STUDENT_ID_INVALID"),
+
+        body("feeStructureId")
+          .notEmpty()
+          .withMessage("FEE_STRUCTURE_ID_REQUIRED")
+          .isMongoId()
+          .withMessage("FEE_STRUCTURE_ID_INVALID")
+          .custom(async (feeStructureId, { req }) => {
+            const feeStruct = await FeeStructure.findById(feeStructureId);
+            if (!feeStruct) return Promise.reject("FEE_STRUCTURE_NOT_FOUND");
+
+            const appliedHeads = req.body.appliedFeeHeads || [];
+
+            // Validate that each applied head exists in the fee structure
+            for (let head of appliedHeads) {
+              const matched = feeStruct.feeHeads.find(f => f.type === head.type);
+              if (!matched) return Promise.reject(`INVALID_FEE_HEAD_${head.type}`);
+            }
+
+            // Check that all mandatory heads are included
+            for (let f of feeStruct.feeHeads.filter(f => !f.isOptional)) {
+              if (!appliedHeads.some(a => a.type === f.type)) {
+                return Promise.reject(`MANDATORY_FEE_HEAD_MISSING_${f.type}`);
+              }
+            }
+
+            return true;
+          }),
+
+        body("appliedFeeHeads")
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "updateStudentFee": {
+      return [
+        param("id")
+          .notEmpty().withMessage("STUDENT_FEE_ID_REQUIRED")
+          .isMongoId().withMessage("STUDENT_FEE_ID_INVALID"),
+
+        body("appliedFeeHeads")
+          .optional()
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        body("paidTillNow")
+          .optional()
+          .isNumeric().withMessage("PAID_TILL_NOW_INVALID"),
+
+        validatorMiddleware,
+      ];
+    }
+
+    case "addPayment": {
+      return [
+        body("transactionId")
+          .notEmpty().withMessage("TRANSACTION_ID_REQUIRED"),
+
+        body("amountPaid")
+          .notEmpty().withMessage("AMOUNT_PAID_REQUIRED")
+          .isNumeric().withMessage("AMOUNT_PAID_INVALID")
+          .custom(async (amount, { req }) => {
+            const studentFee = await StudentFee.findById(req.params.id);
+            if (!studentFee) return Promise.reject("STUDENT_FEE_NOT_FOUND");
+
+            const remaining = studentFee.payableAmount - studentFee.paidTillNow;
+
+            if (amount <= 0) return Promise.reject("AMOUNT_MUST_BE_POSITIVE");
+            if (amount > remaining) return Promise.reject("PAYMENT_EXCEEDS_REMAINING");
+
+            return true;
+          }),
+
+        body("mode")
+          .notEmpty().withMessage("PAYMENT_MODE_REQUIRED")
+          .isIn(["Cash", "Card", "UPI", "BankTransfer", "Cheque"]).withMessage("PAYMENT_MODE_INVALID"),
+
+        body("status")
+          .optional()
+          .isIn(["Success", "Failed", "Pending"]).withMessage("PAYMENT_STATUS_INVALID"),
+
+        body("remarks")
+          .optional()
+          .isString().withMessage("REMARKS_MUST_BE_STRING"),
+
+        validatorMiddleware,
+      ]
+    }
+
+    case "updateStudentFee": {
+      return [
+        body("appliedFeeHeads")
+          .optional()
+          .isArray({ min: 1 }).withMessage("APPLIED_FEEHEADS_ARRAY_REQUIRED")
+          .custom(arr => arr.every(f => f.type && typeof f.type === "string" && typeof f.amount === "number"))
+          .withMessage("APPLIED_FEEHEADS_INVALID"),
+
+        body("discounts")
+          .optional()
+          .isNumeric().withMessage("DISCOUNTS_INVALID"),
+
+        body("payableAmount")
+          .optional()
+          .isNumeric().withMessage("PAYABLE_AMOUNT_INVALID")
+          .custom((value, { req }) => {
+            const total = req.body.appliedFeeHeads?.reduce((acc, h) => acc + h.amount, 0) || 0;
+            const discounts = req.body.discounts || 0;
+            if (value !== total - discounts) return Promise.reject("PAYABLE_AMOUNT_MISMATCH");
+            return true;
+          }),
+
+        validatorMiddleware,
+      ]
+    }
+
+    // already covered validations
     case 'addFAQ': {
       return [
         body('title').notEmpty().withMessage('TITLE_EMPTY'),

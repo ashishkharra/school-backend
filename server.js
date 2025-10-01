@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const path = require('path');
 const http = require('http');
 const session = require('express-session');
+const compression = require("compression");
 
 const app = express();
 const server = http.createServer(app);
@@ -24,11 +25,10 @@ const adminTeacherRoutes = require('./routes/admins/teacher.routes');
 const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js')
 const adminEmailTemplateRouter = require('./routes/admins/emailTemplate.route')
 const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
+const adminFeeRoutes = require('./routes/admins/fees.route.js')
 
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
-
-
 
 //import Teacher routes
 const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') ;
@@ -52,6 +52,7 @@ app.use(
     saveUninitialized: false,
   })
 );
+app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -73,7 +74,8 @@ app.use('/api/admins/reports', adminReportRoutes);
 app.use('/api/admins/students', adminStudentRoutes);
 app.use('/api/admins/teachers', adminTeacherRoutes);
 app.use('/api/admins/attendances', adminAttendanceRoutes)
-app.use('/admin/email-template', adminEmailTemplateRouter)
+app.use('/api/admins/email-template', adminEmailTemplateRouter)
+app.use('/api/admins/fees', adminFeeRoutes)
 // app.use('/v1/admin/notification', adminNotificationRouter)
 
 // Student routes
