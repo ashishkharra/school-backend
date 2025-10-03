@@ -4,7 +4,7 @@ const classSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     subjects: [{ type: mongoose.Schema.Types.ObjectId }],
-    teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+    teacherId: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
     assignments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Assignment" }],
     classIdentifier: { type: String, required: true },
     section: { type : String , enum : ["A", "B", "C", "D"]},

@@ -3,36 +3,33 @@ const attendanceService = require('../../services/teachers/attendance.service');
 const { responseData } = require('../../helpers/responseData'); // Assume you have this utility for consistent responses
 
 module.exports = {
-  // getStudentsByClass: async (req, res) => {
-  //   try {
-  //     const classId = req.params.classId;
-  //     console.log("classid", classId);
-  //     const students = await attendanceService.getStudentsByClass(classId);
-  //     console.log("styy", students);
-  //     res.json(responseData('STUDENTS_FETCHED', students, req, true));
-  //   } catch (error) {
-  //     res.status(500).json(responseData('ERROR_OCCUR', error.message, req, false));
-  //   }
-  // },
-
+ 
 getStudentsByClass: async (req, res) => {
-  try {
-    const classId = req.params.classId;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    try {
+      const classId = req.params.classId;
+      const {  page = 1, limit = 10 } = req.query 
 
-    
-    console.log("classid", classId, "page", page, "limit", limit);
-
-    // Pass page and limit directly (not skip)
-    const students = await attendanceService.getStudentsByClass(classId, page, limit);
-
-    console.log("styy", students);
-    res.json(responseData('STUDENTS_FETCHED', students, req, true));
-  } catch (error) {
-    res.status(500).json(responseData('ERROR_OCCUR', error.message, req, false));
+         const queryResult = await attendanceService.getStudentsByClass(
+              classId,
+              parseInt(page),
+              parseInt(limit)
+            )
+           
+return res.json(
+        responseData(
+          'GET_LIST',
+          queryResult.length > 0
+            ? queryResult[0]
+            : constant.staticResponseForEmptyResult,
+          req,
+          true
+        )
+      )
+     } catch (error) {
+      console.error("Controller Error:", error.message);
+      res.status(500).json(responseData("SERVER_ERROR", [], req, false));
+    }
   }
-}
 ,
 markAttendance: async (req, res) => {
   try {

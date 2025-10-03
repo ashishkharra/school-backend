@@ -1299,6 +1299,68 @@
   "CLASSES_FETCHING_SUCCESSFULLY": {
     "en": "Class fetched successfully",
     "ar": ""
-  }
+  },
+   "TEACHER_ASSIGNED_TO_CLASS": {
+    "en": "Teacher assigned to class successfully",
+    "ar": ""
+  },
+  "ASSIGN_TEACHER_FAILED": {
+    "en": "Failed to assign teacher to class",
+    "ar": ""
+  },
+
+  "ASSIGNMENT_UPLOAD_FAILED": {
+    "en": "Failed to upload assignment",
+    "ar": ""
+  },
+  "ASSIGNMENT_UPLOADED_SUCCESSFULLY": {
+    "en": "Assignment uploaded successfully",
+    "ar": ""
+  },
+  "GET_ASSIGNMENT_FAILED": {
+    "en": "Failed to fetch assignments",
+    "ar": ""
+  },
+  "GET_ASSIGNMENT_SUCCESSFULLY": {
+    "en": "Assignments fetched successfully",
+    "ar": ""
+  },
+  
+  "DELETE_ASSIGNMENT_FAILED": {
+    "en": "Failed to delete assignment",
+    "ar": ""
+  },
+  "ASSIGNMENT_DELETED_SUCCESSFULLY": {
+    "en": "Assignment deleted successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_REQUIRED": {
+  "en": "Assignment ID is required",
+  "ar": ""
+},
+"ASSIGNMENT_UPDATED_SUCCESSFULLY": {
+  "en": "Assignment updated successfully",
+  "ar": ""
+},
+"ASSIGNMENT_UPDATE_FAILED": {
+  "en": "Failed to update assignment",
+  "ar": ""
+},
+"UPDATE_TEACHER_FAILED": {
+  "en": "Failed to update teacher assignment",
+  "ar": ""
+},
+"DELETE_TEACHER_FAILED": {
+  "en": "Failed to delete teacher",
+  "ar": ""
+},
+"GET_TEACHER_ASSIGNMENTS_FAILED": {
+  "en": "Failed to fetch teacher assignments",
+  "ar": ""
 }
+}
+
+
+
+
 

@@ -82,6 +82,7 @@ const storage = multer.diskStorage({
     cb(null, uploadPath); // Make sure this folder exists
   },
   filename: function (req, file, cb) {
+    // console.log("FILE-----",req,file)
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(
       null,
@@ -102,7 +103,6 @@ const uploadAssignmanet = multer({
   fileFilter,
   limits: { fileSize: constant.maxFileSizeLimit }
 })
-
 module.exports = {
   uploadAssignmanet
 }

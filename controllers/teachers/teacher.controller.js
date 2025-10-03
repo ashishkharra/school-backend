@@ -19,6 +19,7 @@ const { teacherId } = req.params
         .json(responseData("FETCH_PROFILE_FAILED", { error: error.message }, req, false));
     }
   },
+  
     requestProfileUpdate: async (req, res) => {
     try {
    const { teacherId } = req.params
@@ -35,5 +36,32 @@ const { teacherId } = req.params
         .json(responseData("PROFILE_UPDATE_REQUEST_FAILED", { error: error.message }, req, false));
     }
   },
+
+     studentForgotPassword: async (req, res) => {
+        try {
+            await teacherService.studentForgotPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+ 
+    studentResetPassword: async (req, res) => {
+        try {
+            await teacherService.studentResetPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+ 
+    changePassword: async (req, res) => {
+        try {
+            await teacherService.changePassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
 }
 

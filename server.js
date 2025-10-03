@@ -15,6 +15,10 @@ const connectDB = require('./configs/db');
 // Role login import
 const roleLoginRoute = require('./routes/auth.role.route.js');
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 // Import Admin routes
 const adminAuthRoutes = require('./routes/admins/admins.route');
 const adminClassRoutes = require('./routes/admins/class.routes');
@@ -52,10 +56,6 @@ app.use(
     saveUninitialized: false,
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Root route
 app.get('/', (req, res) => {
@@ -91,9 +91,11 @@ app.use(function (req, res) {
   });
 });
 
+const PORT = 5678
+
 connectDB();
-server.listen(process.env.PORT, () => {
-  console.log('✅ Server is running at PORT', process.env.PORT);
+server.listen( PORT, () => {
+  console.log('✅ Server is running at PORT', PORT);
 });
 
 

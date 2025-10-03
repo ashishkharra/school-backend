@@ -14,10 +14,17 @@ const teacherController = require('../../controllers/admins/teacher.controller.j
 
 
 router.post('/register',validationRule.validate("registerTeacher") ,teacherController.registerTeacher);
-router.get('/getAllTeacher', teacherController.getAllTeachers);
-router.put('/updateTeachers/:id',[verifyToken], validationRule.validate("updateTeacher"),teacherController.updateTeacher);
-router.put('/soft-delete/:id',[verifyToken], teacherController.softDeleteTeacher);
-router.get("/deletedTeachersHistory",[verifyToken], teacherController.getDeletedTeachersHistory);
-router.put('/assign-teacher',[verifyToken] ,teacherController.assignTeacherToClassController);
+router.put('/updateTeachers/:id',[verifyToken] ,validationRule.validate("updateTeacher"),teacherController.updateTeacher);
+router.get('/getAllTeacher',teacherController.getAllTeachers);
+router.put('/soft-delete/:id', teacherController.softDeleteTeacher);
+router.get("/deletedTeachersHistory", teacherController.getDeletedTeachersHistory);
 
+router.put('/class-teacherOf', teacherController.assignClassTeacher);
+
+
+
+router.put('/assign-teacher' ,teacherController.assignTeacherToClassController);
+router.put('/update-assign-teacher/:assignmentId' ,teacherController.updateTeacherAssignmentController);
+router.delete('/delete-assign-teacher/:assignmentId' ,teacherController.deleteTeacherAssignmentController);
+router.get("/get-teacher-assignments", teacherController.getTeacherAssignmentsController);
 module.exports = router

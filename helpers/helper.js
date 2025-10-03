@@ -604,6 +604,47 @@ module.exports = {
       }
     ]
   },
+
+  getPaginationArrayJs: function (page, limit) {
+  return [
+    {
+      $facet: {
+        paginatedResults: [
+          { $skip: (page - 1) * limit },
+          { $limit: limit }
+        ],
+        totalCount: [
+          { $count: 'value' }
+        ]
+      }
+    },
+    {
+      $unwind: {
+        path: '$totalCount',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $addFields: {
+        docs: '$paginatedResults',
+        totalDocs: { $ifNull: ['$totalCount.value', 0] },
+        limit,
+        page,
+        totalPages: {
+          $ceil: {
+            $divide: [{ $ifNull: ['$totalCount.value', 0] }, limit]
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        paginatedResults: 0,
+        totalCount: 0
+      }
+    }
+  ]
+},
   getEmailTemplateDynamically: async (emailSlug) => {
     const emailTemplateRecord = await EmailTemplate.find({ slug: emailSlug })
     return emailTemplateRecord[0]

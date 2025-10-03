@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const assignmentController = require('../../controllers/teachers/assignment.controller')
-const attendanceController = require('../../controllers/teachers/assignment.controller')
+// const attendanceController = require('../../controllers/teachers/assignment.controller')
 const { uploadAssignmanet } = require('../../middlewares/multerFile')
 // const { uploadAssignment: uploadAssignmentMiddleware } = require('../../middlewares/multerFile')
 
@@ -17,8 +17,10 @@ const { uploadAssignmanet } = require('../../middlewares/multerFile')
 
 router.post(
   '/upload-assignment',
-  uploadAssignmanet.single('file'),
-  assignmentController.uploadAssignmentController
-)
+  uploadAssignmanet.single('file'),assignmentController.uploadAssignmentController)
+router.get("/get-assignment", assignmentController.getAssignmentsController);
+router.delete("/delete-assignment/:assignmentId", assignmentController.deleteAssignmentController);
+router.put('/update-assignment/:id',uploadAssignmanet.single('file'), assignmentController. updateAssignmentController );
+
 
 module.exports = router

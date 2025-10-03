@@ -10,8 +10,6 @@ const attendanceController = require('../../controllers/teachers/attendance.cont
 
 //get student by class
 router.get('/students/class/:classId',attendanceController.getStudentsByClass);
-
-// // POST request route jahan teacher attendance submit karega
 router.post('/mark-attendance', attendanceController.markAttendance);
 
 
