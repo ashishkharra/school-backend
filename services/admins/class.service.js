@@ -119,14 +119,11 @@ const adminClassService = {
 
     getAllClasses: async (className, page = 1, limit = 10) => {
         try {
-            // filters for counting
             const match = {};
             if (className) match.name = { $regex: className, $options: "i" };
 
-            // total count
             const total = await Class.countDocuments(match);
 
-            // pipeline
             const pipeline = getAllClassesPipeline(className, page, limit);
 
             const result = await Class.aggregate(pipeline);
@@ -151,21 +148,17 @@ const adminClassService = {
             page = Math.max(parseInt(page, 10) || 1, 1);
             limit = Math.max(parseInt(limit, 10) || 10, 1);
 
-            // Build filter
             const filter = {};
             if (name) {
-                filter.name = { $regex: name, $options: "i" }; // case-insensitive match
+                filter.name = { $regex: name, $options: "i" };
             }
 
             const total = await Subject.countDocuments(filter);
-            console.log('total subjects : ', total);
 
             const subjects = await Subject.find(filter)
                 .sort({ name: 1 })
                 .skip((page - 1) * limit)
                 .limit(limit);
-
-            console.log('subjects : ', subjects);
 
             return {
                 success: true,

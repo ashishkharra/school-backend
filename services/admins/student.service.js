@@ -16,54 +16,24 @@ const { getAllStudentsPipeline, getClassWithStudentsPipeline, getStudentWithDeta
 const adminStudent = {
     addStudent: async (studentData) => {
         try {
-            const {
-                name,
-                dob,
-                gender,
-                bloodGroup,
-                email,
-                password,
-                phone,
-                address,
-                parents,
-                guardian,
-                emergencyContact,
-                classId,        // must be the specific class (e.g. 11A, PreKG)
-                academicYear,
-                physicalDisability,
-                disabilityDetails
-            } = studentData;
+            const { email, phone, password, classId, academicYear } = studentData;
 
-            // 1 require a valid classId
             if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
                 return { success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
             }
 
-            // 2 duplicate check
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
             if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
 
-            // 3 fetch class
             const classObj = await Class.findById(classId);
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
-            // 4 hash password
             const hashedPassword = await bcrypt.hash(password, 12);
+            const assignedSection = classObj.section;
 
-            // 5 section comes directly from the class (no balancing!)
-            const assignedSection = classObj.section;   // e.g. "A"
-
-            // 6 generate next roll number
             let classCode;
-            const numericPart = classObj.name.replace(/\D/g, ""); // extract digits
-
-            if (numericPart) {
-                // Case: Numeric classes like "1", "10A"
-                classCode = numericPart;
-            } else {
-                // Case: Non-numeric classes like "PreKG", "KG"
-                classCode = classObj.name.toUpperCase().replace(/\s+/g, "");
-            }
+            const numericPart = classObj.name.replace(/\D/g, "");
+            classCode = numericPart ? numericPart : classObj.name.toUpperCase().replace(/\s+/g, "");
 
             const lastEnrollment = await Enrollment
                 .findOne({ class: classId, academicYear })
@@ -76,32 +46,17 @@ const adminStudent = {
                 if (match) serial = parseInt(match[1], 10) + 1;
             }
 
-            // Example: PREKG-A-001 or 1-A-001
             const rollNo = `${classCode}${assignedSection ? '-' + assignedSection : ''}-${String(serial).padStart(3, "0")}`;
-
-            // 7 create student
             const admissionNo = "ADM-" + Date.now().toString().slice(-6);
+
             const student = await Student.create({
                 admissionNo,
                 admissionDate: new Date(),
-                name,
-                dob,
-                gender,
-                bloodGroup,
-                email,
+                ...studentData,
                 password: hashedPassword,
-                phone: phone || null,
-                address,
-                parents,
-                guardian,
-                emergencyContact,
-                status: "active",
                 classId,
-                physicalDisability: physicalDisability || false,
-                disabilityDetails: disabilityDetails || null,
+                status: "active"
             });
-
-            // 8 create enrollment
             await Enrollment.create({
                 student: student._id,
                 class: classId,
@@ -110,21 +65,15 @@ const adminStudent = {
                 rollNo
             });
 
-            // 9 increment class count
             classObj.studentCount += 1;
             await classObj.save();
 
             return {
                 success: true,
                 message: "STUDENT_REGISTERED_SUCCESSFULLY",
-                data: {
-                    studentId: student._id,
-                    admissionNo,
-                    rollNo,
-                    section: assignedSection,
-                    class: classObj.name
-                }
+                data: { studentId: student._id, admissionNo, rollNo, section: assignedSection, class: classObj.name }
             };
+
         } catch (err) {
             console.error("Student register error:", err);
             return { success: false, message: "REGISTRATION_FAILED" };

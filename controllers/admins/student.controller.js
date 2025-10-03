@@ -2,20 +2,72 @@
 const adminStudent = require("../../services/admins/student.service.js");
 const { responseData } = require("../../helpers/responseData.js");
 const { result } = require("lodash");
+const path = require('path')
 
 module.exports = {
   // Add Student
   regStudent: async (req, res) => {
     try {
-      const data = req.body
-      const result = await adminStudent.addStudent(data)
-      if (!result?.success) {
-        return res.status(400).json(responseData(result?.message, {}, req, result?.success || false));
+      const data = req.body;
+      const files = req.files;
+
+      if (data.parents && typeof data.parents === 'string') data.parents = JSON.parse(data.parents);
+      if (data.siblings && typeof data.siblings === 'string') data.siblings = JSON.parse(data.siblings);
+      if (data.achievements && typeof data.achievements === 'string') data.achievements = JSON.parse(data.achievements);
+      if (data.extraCurricular && typeof data.extraCurricular === 'string') data.extraCurricular = JSON.parse(data.extraCurricular);
+
+      if (files) {
+        const baseUploadPath = path.join(__dirname, '../uploads'); 
+        const getRelativePath = (filePath) => filePath.replace(baseUploadPath, '').replace(/\\/g, '/');
+
+        if (files.profilePic && files.profilePic[0])
+          data.profilePic = getRelativePath(files.profilePic[0].path);
+
+        if (files.aadharFront && files.aadharFront[0])
+          data.aadharFront = getRelativePath(files.aadharFront[0].path);
+
+        if (files.aadharBack && files.aadharBack[0])
+          data.aadharBack = getRelativePath(files.aadharBack[0].path);
+
+        if (files.marksheets && files.marksheets.length) {
+          data.marksheets = files.marksheets.map(f => ({
+            exam: f.originalname,
+            fileUrl: getRelativePath(f.path)
+          }));
+        }
+
+        if (files.certificates && files.certificates.length) {
+          data.certificates = files.certificates.map(f => ({
+            name: f.originalname,
+            issuedBy: req.body.certificatesIssuedBy || null,
+            issueDate: req.body.certificatesIssueDate ? new Date(req.body.certificatesIssueDate) : null,
+            fileUrl: getRelativePath(f.path)
+          }));
+        }
+
+        if (files.medicalRecords && files.medicalRecords.length) {
+          data.medicalRecords = files.medicalRecords.map(f => ({
+            condition: req.body.medicalCondition || "",
+            doctorNote: req.body.doctorNote || "",
+            date: req.body.medicalDate ? new Date(req.body.medicalDate) : new Date(),
+            fileUrl: getRelativePath(f.path)
+          }));
+        }
+
+        if (files.transferCertificate && files.transferCertificate[0])
+          data.transferCertificate = getRelativePath(files.transferCertificate[0].path);
       }
-      return res.status(201).json(responseData(result?.message, result, req, result?.success || true));
-    } catch (error) {
-      console.log('Student register error : ', error.message)
-      return res.status(500).json(responseData(result?.message, {}, req, result?.success || false));
+
+
+      const result = await adminStudent.addStudent(data);
+
+      if (!result.success) {
+        return res.status(400).json(responseData(result.message, {}, req, false));
+      }
+      return res.status(201).json(responseData(result.message, result.data, req, true));
+    } catch (err) {
+      console.error('Student register error:', err);
+      return res.status(500).json(responseData('REGISTRATION_FAILED', {}, req, false));
     }
   },
 

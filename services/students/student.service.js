@@ -133,24 +133,28 @@ const studentService = {
         try {
             const student = await Student.findById(studentId);
             if (!student) return { success: false, message: "Student not found" };
-
+            // console.log(studentAssignmentPipeline)
             const data = await Assignment.aggregate(studentAssignmentPipeline(assignmentId));
-            if (!data || data.length === 0) return { success: false, message: "Assignment not found" };
+            console.log('assignment data : ', data)
+            if (data.length < 1) {
+                return { success: false, message: "Assignment not found" };
+            }
 
             const assignment = data[0];
 
-            const enrolledClassIds = student.enrollments.map(e => e.class.toString());
-            if (!enrolledClassIds.includes(assignment.classInfo._id.toString())) {
-                return { success: false, message: "You are not enrolled in this class" };
-            }
+            // const enrolledClassIds = student.enrollments.map(e => e.class.toString());
+            // if (!enrolledClassIds.includes(assignment.classInfo._id.toString())) {
+            //     return { success: false, message: "UNAUTHORIZED_CLASS" };
+            // }
 
-            const filePath = path.join(__dirname, "../uploads/assignments", assignment.fileUrl);
-            if (!fs.existsSync(filePath)) return { success: false, message: "File not found on server" };
+            const filePath = path.join(__dirname, "../..", assignment.fileUrl);
+            console.log("filePath----", filePath)
+            if (!fs.existsSync(filePath)) return { success: false, message: "FILE_NOT_FOUND" };
 
-            return { success: true, filePath, fileName: assignment.fileUrl, assignment };
+            return { status: 200, success: true, filePath, message: "ASSIGNMENT_DOWNLOADED_SUCCESSFULLY", fileName: assignment.fileUrl, assignment };
         } catch (error) {
-            console.error("Service error:", error);
-            return { success: false, message: "Something went wrong" };
+            console.error("Error while downloading assignment : ", error);
+            return { success: false, message: "SEVER_ERROR" };
         }
     },
 
@@ -256,33 +260,48 @@ const studentService = {
 
             let submission = await Submission.findOne({ student: studentId, assignment: assignmentId });
 
+            const formattedFiles = files.map(f => ({
+                fileUrl: f.path,
+                fileName: f.originalname,
+                fileType: f.mimetype,
+                uploadedAt: new Date()
+            }));
+
             if (submission) {
-                // Add as resubmission
-                submission.resubmissions.push({
-                    files,
-                    submittedAt: now,
-                    isLate
-                });
+                if (submission.files.length > 0) {
+                    submission.resubmissions.push({
+                        files: submission.files,
+                        submittedAt: submission.submittedAt,
+                        isLate: submission.isLate
+                    });
+                }
+
+                submission.files = formattedFiles;
+                submission.submittedAt = now;
                 submission.status = "Submitted";
                 submission.isLate = isLate;
+
+                await submission.save();
             } else {
-                // Create new submission
                 submission = await Submission.create({
                     assignment: assignmentId,
                     student: studentId,
-                    files,
+                    files: formattedFiles,
+                    submittedAt: now,
                     status: "Submitted",
                     isLate
                 });
             }
 
-            await submission.save();
-
-            const [populated] = await Submission.aggregate(getSubmissionWithDetails(submission._id));
+            const populated = await Submission.findById(submission._id)
+                .populate("assignment")
+                .populate("student")
+                .populate("gradedBy")
+                .lean();
 
             return { success: true, message: "SUBMISSION_SUCCESSFUL", data: populated };
         } catch (err) {
-            console.error("Submit Assignment Service Error:", err.message);
+            console.error("Submit Assignment Service Error:", err);
             return { success: false, message: "SUBMISSION_FAILED" };
         }
     },

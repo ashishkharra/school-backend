@@ -1470,5 +1470,58 @@
   "FETCH_FAILED": {
     "en": "Email fetch failed",
     "ar": ""
+  },
+  "SUBMISSIONS_FETCHED_SUCCESSFULLY": {
+    "en": "Submissions fetching failed",
+    "ar": ""
+  },
+  "CLASS_ID_NOT_PROVIDED": {
+    "en": "Please specify classId when filtering by studentId",
+    "ar": ""
+  },
+  "SUBMISSION_FAILED": {
+    "en": "Upload submission failed",
+    "ar": ""
+  },
+  "SUBMISSION_SUCCESSFUL": {
+    "en": "Submission uploaded successfully",
+    "ar": ""
+  },
+  "UNAUTHORIZED_CLASS": {
+    "en": "You are not enrolled in this class",
+    "ar": ""
+  },
+  "FILE_NOT_FOUND": {
+    "en": "File not found on server",
+    "ar": ""
+  },
+  "ASSIGNMENT_DOWNLOADED_SUCCESSFULLY": {
+    "en": "Assignment downloaded successfully",
+    "ar": ""
+  },
+  "GUARDIAN_PHONE_INVALID": {
+    "en": "Guradian phone is invalid",
+    "ar": ""
+  },
+  "INVALID_FILE_TYPE": {
+    "en": "Invalid file type. jpg|jpeg|png|gif|pdf|doc|docx types are valid",
+    "ar": ""
+  },
+  "NO_FILES_UPLOADED": {
+    "en": "No files uploaded",
+    "ar": ""
+  },
+  "DISABILITY_DETAILS_INVALID": {
+    "en": "disablity info must be valid",
+    "ar": ""
+  },
+  "STUDENT_REGISTERED_SUCCESSFULLY": {
+    "en": "Student registered successfully",
+    "ar": ""
+  },
+  "CLASS_ID_REQUIRED_OR_INVALID": {
+    "en": "Class id is required or provided id is invalid",
+    "ar": ""
   }
+
 }

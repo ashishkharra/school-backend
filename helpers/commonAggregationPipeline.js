@@ -1,44 +1,52 @@
 const { default: mongoose } = require("mongoose")
-const { getPaginationArray } = require('./helper')
+const { getPaginationArray } = require('./helper.js')
 const Student = require('../models/students/student.schema.js')
 
-const studentAssignmentPipeline = (assignmentId) => [
-  { $match: { _id: new mongoose.Types.ObjectId(assignmentId) } },
-
-  {
-    $lookup: {
-      from: "classes",
-      localField: "class",
-      foreignField: "_id",
-      as: "classInfo",
+const studentAssignmentPipeline = (assignmentId) => {
+  return [
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(assignmentId)
+      }
     },
-  },
-  { $unwind: "$classInfo" },
-
-  {
-    $lookup: {
-      from: "teachers",
-      localField: "uploadedBy",
-      foreignField: "_id",
-      as: "teacherInfo",
+    {
+      $lookup: {
+        from: "classes",
+        localField: "classId",
+        foreignField: "_id",
+        as: "classInfo"
+      }
     },
-  },
-  { $unwind: "$teacherInfo" },
-
-  {
-    $project: {
-      title: 1,
-      fileUrl: 1,
-      instructions: 1,
-      description: 1,
-      "classInfo._id": 1,
-      "classInfo.name": 1,
-      "classInfo.subject": 1,
-      "teacherInfo._id": 1,
-      "teacherInfo.name": 1,
+    {
+      $unwind: {
+        path: "$classInfo"
+      }
     },
-  },
-];
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "uploadedBy",
+        foreignField: "_id",
+        as: "teacherInfo"
+      }
+    },
+    {
+      $unwind: {
+        path: "$teacherInfo"
+      }
+    },
+    {
+      $project: {
+        title: 1,
+        fileUrl: 1,
+        description: 1,
+        "classInfo.name": 1,
+        "classInfo.section": 1,
+        "teacherInfo.name": 1
+      }
+    }
+  ];
+};
 
 const studentAttendancePipeline = ({
   studentId,
@@ -111,8 +119,7 @@ const studentAttendancePipeline = ({
     },
 
     { $sort: { date: -1, session: 1 } },
-    { $skip: (page - 1) * limit },
-    { $limit: limit }
+    ...getPaginationArray(page, limit)
   ];
 
   return pipeline;
@@ -607,7 +614,6 @@ const getStudentsPipeline = (filters = {}, skip = 0, limit = 10) => {
   ];
 };
 
-
 // pipeline for getting student detail
 const getStudentWithDetails = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
@@ -783,6 +789,7 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
     {
       $project: {
         name: 1,
+        section: 1,
         studentCount: 1,
         classTeacher: 1,
         createdAt: 1,
@@ -1014,6 +1021,84 @@ const getSubmissionWithDetails = (submissionId) => [
   }
 ];
 
+// admin get submissions pipeline
+const getSubmissionsPipeline = (classId, studentId, page = 1, limit = 10) => {
+  const match = {};
+
+  if (classId && studentId) {
+    match.student = new mongoose.Types.ObjectId(studentId);
+  }
+
+  const pipeline = [
+    ...(classId && studentId ? [{ $match: match }] : []),
+
+    {
+      $lookup: {
+        from: "assignments",
+        localField: "assignment",
+        foreignField: "_id",
+        as: "assignment",
+      },
+    },
+    { $unwind: { path: "$assignment", preserveNullAndEmptyArrays: true } },
+
+    ...(classId
+      ? [{ $match: { "assignment.class": new mongoose.Types.ObjectId(classId) } }]
+      : []),
+
+    {
+      $lookup: {
+        from: "students",
+        localField: "student",
+        foreignField: "_id",
+        as: "student",
+      },
+    },
+    { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "gradedBy",
+        foreignField: "_id",
+        as: "gradedBy",
+      },
+    },
+    { $unwind: { path: "$gradedBy", preserveNullAndEmptyArrays: true } },
+
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            "$$ROOT",
+            {
+              assignmentId: "$assignment._id",
+              assignmentTitle: "$assignment.title",
+              assignmentDescription: "$assignment.description",
+              assignmentDueDate: "$assignment.dueDate",
+              assignmentSubject: "$assignment.subject",
+              assignmentClass: "$assignment.class",
+
+              studentId: "$student._id",
+              studentName: "$student.name",
+              studentEmail: "$student.email",
+
+              gradedById: "$gradedBy._id",
+              gradedByName: "$gradedBy.name",
+            },
+          ],
+        },
+      },
+    },
+
+    { $project: { assignment: 0, student: 0, gradedBy: 0 } },
+    { $sort: { submittedAt: -1 } },
+    ...getPaginationArray(page, limit)
+  ];
+
+  return pipeline;
+};
+
 
 module.exports = {
   studentAttendancePipeline,
@@ -1034,7 +1119,8 @@ module.exports = {
   getSubmissionWithDetails,
   getStudentsByClassNamePipeline,
   getClassWithStudentsPipeline,
-  getStudentsPipeline
+  getStudentsPipeline,
+  getSubmissionsPipeline
 }
 
 

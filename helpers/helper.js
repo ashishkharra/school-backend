@@ -1090,5 +1090,22 @@ module.exports = {
 
 
     return mapping[trimmed.toLowerCase()] || trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
-  }
+  },
+
+  parseMultipartJSONFields: (fields) => (req, res, next) => {
+    fields.forEach(field => {
+      if (req.body[field] && typeof req.body[field] === 'string') {
+        try {
+          req.body[field] = JSON.parse(req.body[field]);
+        } catch (err) {
+          return res.status(400).json({
+            success: false,
+            message: `${field.toUpperCase()}_INVALID_JSON`
+          });
+        }
+      }
+    });
+    next();
+  },
+
 }

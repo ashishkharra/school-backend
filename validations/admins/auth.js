@@ -173,96 +173,64 @@ module.exports.validate = (method) => {
       return [
         // Name
         body("name")
-          .notEmpty()
-          .withMessage("NAME_EMPTY")
-          .isLength({ min: 2 })
-          .withMessage("NAME_LENGTH_MIN")
-          .isLength({ max: 50 })
-          .withMessage("NAME_LENGTH_MAX"),
+          .notEmpty().withMessage("NAME_EMPTY")
+          .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+          .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
 
         // DOB
         body("dob")
-          .notEmpty()
-          .withMessage("DOB_EMPTY")
-          .isISO8601()
-          .withMessage("DOB_INVALID"),
+          .notEmpty().withMessage("DOB_EMPTY")
+          .isISO8601().withMessage("DOB_INVALID"),
 
         // Gender
         body("gender")
-          .notEmpty()
-          .withMessage("GENDER_EMPTY")
-          .isIn(["Male", "Female", "Other"])
-          .withMessage("GENDER_INVALID"),
+          .notEmpty().withMessage("GENDER_EMPTY")
+          .isIn(["Male", "Female", "Other"]).withMessage("GENDER_INVALID"),
 
-        // Parent Info
-        body("parents")
-          .isArray({ min: 1 })
-          .withMessage("PARENT_REQUIRED"),
-        body("parents.*.name")
-          .notEmpty()
-          .withMessage("PARENT_NAME_EMPTY"),
-        body("parents.*.occupation")
-          .optional()
-          .isString()
-          .withMessage("PARENT_OCCUPATION_INVALID"),
+        // Blood Group
+        body("bloodGroup")
+          .optional().isString().withMessage("BLOODGROUP_INVALID"),
+
+        // Parents
+        body("parents").isArray({ min: 1 }).withMessage("PARENT_REQUIRED"),
+        body("parents.*.name").notEmpty().withMessage("PARENT_NAME_EMPTY"),
+        body("parents.*.occupation").optional().isString().withMessage("PARENT_OCCUPATION_INVALID"),
+        body("parents.*.phone").optional().isMobilePhone("any").withMessage("PARENT_PHONE_INVALID"),
+        body("parents.*.email").optional().isEmail().withMessage("PARENT_EMAIL_INVALID"),
 
         // Guardian
-        body("guardian")
-          .optional()
-          .isObject()
-          .withMessage("GUARDIAN_INVALID"),
-        body("guardian.name")
-          .optional()
-          .isString()
-          .withMessage("GUARDIAN_NAME_INVALID"),
-        body("guardian.phone")
-          .optional()
-          .isMobilePhone("any")
-          .withMessage("GUARDIAN_PHONE_INVALID"),
+        body("guardian").optional().isObject().withMessage("GUARDIAN_INVALID"),
+        body("guardian.name").optional().isString().withMessage("GUARDIAN_NAME_INVALID"),
+        body("guardian.relation").optional().isString().withMessage("GUARDIAN_RELATION_INVALID"),
+        body("guardian.phone").optional().isMobilePhone("any").withMessage("GUARDIAN_PHONE_INVALID"),
+        body("guardian.occupation").optional().isString().withMessage("GUARDIAN_OCCUPATION_INVALID"),
 
         // Emergency Contact
-        body("emergencyContact")
-          .optional()
-          .isObject()
-          .withMessage("EMERGENCY_CONTACT_INVALID"),
-        body("emergencyContact.name")
-          .optional()
-          .isString()
-          .withMessage("EMERGENCY_NAME_INVALID"),
-        body("emergencyContact.relationship")
-          .optional()
-          .isString()
-          .withMessage("EMERGENCY_RELATION_INVALID"),
-        body("emergencyContact.phone")
-          .optional()
-          .isMobilePhone("any")
-          .withMessage("EMERGENCY_PHONE_INVALID"),
+        body("emergencyContact").optional().isObject().withMessage("EMERGENCY_CONTACT_INVALID"),
+        body("emergencyContact.name").optional().isString().withMessage("EMERGENCY_NAME_INVALID"),
+        body("emergencyContact.relation").optional().isString().withMessage("EMERGENCY_RELATION_INVALID"),
+        body("emergencyContact.phone").optional().isMobilePhone("any").withMessage("EMERGENCY_PHONE_INVALID"),
+        body("emergencyContact.address").optional().isString().withMessage("EMERGENCY_ADDRESS_INVALID"),
 
         // Address
-        body("address.street").optional().isString().withMessage("STREET_STRING"),
-        body("address.city").optional().isString().withMessage("CITY_STRING"),
-        body("address.state").optional().isString().withMessage("STATE_STRING"),
-        body("address.zip").optional().isString().withMessage("ZIP_STRING"),
-        body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
+        body("address.street").optional().isString().withMessage("STREET_INVALID"),
+        body("address.city").optional().isString().withMessage("CITY_INVALID"),
+        body("address.state").optional().isString().withMessage("STATE_INVALID"),
+        body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
+        body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
 
-        // Email & Phone
-        body("email").optional().isEmail().withMessage("EMAIL_VALID"),
-        body("phone").optional().isMobilePhone("any").withMessage("PHONE_VALID"),
+        // Contact
+        body("email").optional().isEmail().withMessage("EMAIL_INVALID"),
+        body("phone").optional().isMobilePhone("any").withMessage("PHONE_INVALID"),
 
-        // Class & Section
-        body("classId").optional().isMongoId().withMessage("CLASS_ID_INVALID"),
-        body("year")
-          .optional()
-          .isInt({ min: 2000, max: new Date().getFullYear() + 1 })
-          .withMessage("INVALID_YEAR"),
-        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("INVALID_SECTION"),
+        // Class & Academic Year
+        body("classId").notEmpty().isMongoId().withMessage("CLASS_ID_INVALID"),
+        body("academicYear").notEmpty().isString().withMessage("ACADEMIC_YEAR_INVALID"),
+        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("SECTION_INVALID"),
 
         // Physical Disability
         body("physicalDisability").optional().isBoolean().withMessage("INVALID_DISABILITY"),
-        body("disabilityDetails")
-          .optional()
-          .isString()
-          .withMessage("DISABILITY_DETAILS_INVALID"),
+        body("disabilityDetails").optional().isString().withMessage("DISABILITY_DETAILS_INVALID"),
 
         validatorMiddleware,
       ];

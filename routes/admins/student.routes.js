@@ -1,12 +1,29 @@
 const router = require('express').Router();
 const validationRule = require('../../validations/admins/auth')
 const { verifyToken } = require('../../middlewares/verifyToken')
+const { studentDocFields } = require('../../middlewares/multer.setup.js')
+const { parseMultipartJSONFields } = require('../../helpers/helper.js')
 const adminStudentController = require('../../controllers/admins/student.controller.js')
 
-router
-    .post('/reg', [verifyToken], validationRule.validate('registerStudent'), adminStudentController.regStudent)
+const jsonFieldsForStudent = [
+  'parents',        
+  'guardian',
+  'emergencyContact',
+  'siblings',       
+  'achievements',   
+  'extraCurricular',
+  'certificates',   
+  'marksheets',     
+  'medicalRecords', 
+  'address', 
+  'IDProof', 
+  'transferCertificate'
+];
 
-    .put('/update/:studentId?', [verifyToken], validationRule.validate('updateStudent'), adminStudentController.updateStudent)
+router
+    .post('/reg',verifyToken, parseMultipartJSONFields(jsonFieldsForStudent), studentDocFields,adminStudentController.regStudent)
+
+    .put('/update/:studentId?', [verifyToken], validationRule.validate('updateStudent'),studentDocFields, adminStudentController.updateStudent)
 
     .put('/update/:classId/:studentId?', [verifyToken], adminStudentController.updateStudentClass)
 
