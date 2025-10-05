@@ -315,13 +315,13 @@ const assignmentWithClassPipeline = (classId) => [
 
 const teacherProfilePipeline = (teacherId) => {
   return [
-    { $match: { _id: new mongoose.Types.ObjectId({ _id: teacherId }) } },
+    { $match: { _id: new mongoose.Types.ObjectId(teacherId) } },
 
     {
       $lookup: {
         from: 'classes',
         localField: '_id',
-        foreignField: 'teacher',
+        foreignField: 'teacher',  // assuming Class has a "teacher" field
         as: 'classData'
       }
     },
@@ -366,9 +366,8 @@ const teacherProfilePipeline = (teacherId) => {
         "classData.section": 1
       }
     }
-
   ];
-}
+};
 
 const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilter = {}) => [
   // Match the specific class

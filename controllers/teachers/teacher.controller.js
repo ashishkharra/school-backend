@@ -6,8 +6,8 @@ module.exports = {
 
   getProfile: async (req, res) => {
     try {
-    //   const teacherId = req.user._id
-const { teacherId } = req.params
+      //   const teacherId = req.user._id
+      const { teacherId } = req.params
       const profile = await teacherService.getProfile(teacherId);
 
       return res
@@ -19,9 +19,9 @@ const { teacherId } = req.params
         .json(responseData("FETCH_PROFILE_FAILED", { error: error.message }, req, false));
     }
   },
-    requestProfileUpdate: async (req, res) => {
+  requestProfileUpdate: async (req, res) => {
     try {
-   const { teacherId } = req.params
+      const { teacherId } = req.params
       const updateData = req.body;   // e.g. { phone, address }
 
       const result = await teacherService.requestProfileUpdate(teacherId, updateData);

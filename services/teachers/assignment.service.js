@@ -67,7 +67,7 @@ module.exports = {
 
       return {
         success: true,
-        message: { en: 'Assignment uploaded successfully' },
+        message: "ASSIGNMENT_CREATED_SUCCESSFULLY",
         results: assignment
       };
     } catch (err) {
@@ -76,8 +76,7 @@ module.exports = {
 
       return {
         success: false,
-        message: { en: 'Server error' },
-        results: err.message
+        message: 'SERVER_ERROR',
       };
     }
   }
