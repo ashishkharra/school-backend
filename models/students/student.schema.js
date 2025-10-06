@@ -76,11 +76,8 @@ const studentSchema = new mongoose.Schema({
   ],
 
   // 📑 Documents & Records
-  IDProof: {
-    type: { type: String },
-    number: String,
-    fileUrl: String
-  },
+  aadharFront: {type : String},
+  aadharBack: {type : String},
   marksheets: [
     {
       exam: String,

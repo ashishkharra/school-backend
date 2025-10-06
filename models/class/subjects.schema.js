@@ -6,6 +6,7 @@ const subjectSchema = new mongoose.Schema(
     code: { type: String, required: true, unique: true },
     description: String,
     credits: Number,
+    status: { type : String , enum: ['active', 'inactive'], default : 'active'}
   },
   { timestamps: true }
 );

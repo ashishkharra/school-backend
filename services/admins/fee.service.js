@@ -233,7 +233,7 @@ module.exports = {
             };
 
             const emailSent = await sendEmail("student-payment-notification", emailData);
-            if (!emailSent) console.warn("⚠️ Payment email failed to send");
+            if (!emailSent) console.warn("Payment email failed to send");
 
             return { success: true, message: "PAYMENT_ADDED_SUCCESSFULLY", data: populated[0] };
         } catch (error) {

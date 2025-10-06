@@ -1,40 +1,51 @@
 const multer = require('multer');
-const path   = require('path');
-const fs     = require('fs');
+const path = require('path');
+const fs = require('fs');
 
-const baseDir = path.join(__dirname, '../uploads/profilePics');
+const baseDir = path.join(__dirname, '../uploads');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const role = req.user?.role || 'other';
-    console.log('role : ', role)
-    const uploadPath = path.join(baseDir, role);
-
-    fs.mkdirSync(uploadPath, { recursive: true });
-
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    console.log('extension : ', ext)
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    console.log('unique name ; ', uniqueName)
-    cb(null, uniqueName);
-  }
-});
-
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed!'), false);
+// Ensure folder exists
+const ensureFolderExists = (folderPath) => {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
   }
 };
 
-const uploadProfilePic = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 3 * 1024 * 1024 } // 3 MB
-});
+const createUploader = ({ folderName, subFolder = null, allowedMime = [], maxSize = 5 * 1024 * 1024 }) => {
 
-module.exports = { uploadProfilePic };
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      let folder = folderName;
+
+      // Allow dynamic subfolder per request
+      if (subFolder && typeof subFolder === 'function') {
+        folder = path.join(folderName, subFolder(req, file));
+      }
+
+      const uploadPath = path.join(baseDir, folder);
+      ensureFolderExists(uploadPath);
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+      cb(null, uniqueName);
+    }
+  });
+
+  const fileFilter = (req, file, cb) => {
+    if (allowedMime.length === 0 || allowedMime.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Invalid file type: ${file.mimetype}`), false);
+    }
+  };
+
+  return multer({
+    storage,
+    fileFilter,
+    limits: { fileSize: maxSize }
+  });
+};
+
+module.exports = { createUploader };

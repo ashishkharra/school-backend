@@ -6,7 +6,7 @@ const classSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: [
-        "PreKG", "KG", 
+        "Prep", "PreKG", "KG",
         "1st", "2nd", "3rd", "4th", "5th",
         "6th", "7th", "8th", "9th", "10th",
         "11th", "12th"
@@ -42,7 +42,8 @@ const classSchema = new mongoose.Schema(
     endTime: {
       type: String,
       match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i,
-    }
+    },
+    status: { type : String, enum: ['active', 'inactive'], default : 'active'}
   },
   { timestamps: true }
 );

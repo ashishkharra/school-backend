@@ -12,6 +12,7 @@ const sendNotification = require('../helpers/firebase-admin')
 const fs = require('fs')
 const ejs = require('ejs')
 const dayjs = require('dayjs')
+require('dotenv').config()
 // const EmailTemplate = require('../models/emailTemplate')
 // const Faq = require('../models/faq.model')
 // const Country = require('../models/countries.model')
@@ -390,7 +391,6 @@ module.exports = {
   //   }
   // }
   sendEmail: async (slug, dataBody) => {
-    console.log('sludg>>>>>>>11111 ', slug)
     let emailTempRecord = await EmailTemplate.findOne({ slug })
     console.log('template : ', emailTempRecord)
     if (!_.isEmpty(emailTempRecord)) {
@@ -1043,6 +1043,7 @@ module.exports = {
       console.log('SMS Fails err', err?.message)
     }
   },
+
   formatClassName: (name) => {
     const trimmed = name.trim();
 
@@ -1055,6 +1056,24 @@ module.exports = {
     }
 
     const mapping = {
+      prep: "Prep",
+      preP: "Prep",
+      prEp: "Prep",
+      prEP: "Prep",
+      pRep: "Prep",
+      pReP: "Prep",
+      pREp: "Prep",
+      pREP: "Prep",
+      Prep: "Prep",
+      PreP: "Prep",
+      PrEp: "Prep",
+      PrEP: "Prep",
+      PRep: "Prep",
+      PReP: "Prep",
+      PREp: "Prep",
+      PREP: "Prep",
+
+
       prekg: "PreKG",
       preKg: "PreKG",
       Prekg: "PreKG",
@@ -1073,5 +1092,64 @@ module.exports = {
 
 
     return mapping[trimmed.toLowerCase()] || trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
+  },
+
+  parseMultipartJSONFields: (fields) => (req, res, next) => {
+    fields.forEach(field => {
+      if (req.body[field] && typeof req.body[field] === 'string') {
+        try {
+          req.body[field] = JSON.parse(req.body[field]);
+        } catch (err) {
+          return res.status(400).json({
+            success: false,
+            message: `${field.toUpperCase()}_INVALID_JSON`
+          });
+        }
+      }
+    });
+    next();
+  },
+
+  generateZoomToken: async () => {
+    try {
+      const res = await axios.post(process.env.ZOOM_TOKEN_URI, null, {
+        params: {
+          grant_type: process.env.ZOOM_GRANT_TYPE,
+          account_id: process.env.ZOOM_ACC_ID,
+        },
+        auth: {
+          username: process.env.ZOOM_ACC_USERNAME,
+          password: process.env.ZOOM_ACC_PASSWORD,
+        },
+      });
+
+      return { success: true, message: 'ZOOM_TOKEN_GENERATED_SUCCESSFULLY', zoom_token: res.data.access_token };
+    } catch (error) {
+      console.error('Failed to get Zoom token:', error)
+      return { success: false, message: 'ZOOM_TOKEN_GENERATION_FAILED' }
+    }
+  },
+
+  createZoomMeeting: async ({ topic, start_time }) => {
+    const token = await generateZoomToken();
+    const zoomRes = await axios.post(
+      process.env.ZOOM_MAIN_URI,
+      {
+        topic,
+        type: 2,
+        start_time,
+        duration: 30,
+        timezone: 'UTC',
+        settings: {
+          join_before_host: true,
+          waiting_room: false,
+          host_video: true,
+          participant_video: true,
+        },
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return zoomRes.data;
   }
+
 }

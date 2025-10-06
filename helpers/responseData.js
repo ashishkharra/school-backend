@@ -9,7 +9,6 @@ module.exports = {
     response.message =
       _(message, language) || _('SOMETHING_WENT_WRONG', language) || result.message
     response.results = result
-    console.log('response : ', response)
     return response
   },
   setMessage: (message, language) => {

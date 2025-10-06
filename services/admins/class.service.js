@@ -3,7 +3,8 @@ const { v4: uuidv4 } = require('uuid');
 const { getAllClassesPipeline } = require('../../helpers/commonAggregationPipeline.js')
 const Class = require('../../models/class/class.schema.js')
 const Subject = require('../../models/class/subjects.schema.js')
-const { formatClassName } = require('../../helpers/helper.js')
+const { formatClassName } = require('../../helpers/helper.js');
+const { default: mongoose } = require('mongoose');
 
 const VALID_SECTIONS = ["A", "B", "C", "D"]
 
@@ -51,6 +52,41 @@ const adminClassService = {
         }
     },
 
+    updateClass: async (classData, classId) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(classId)) return { success: false, message: 'CLASS_ID_NOT_VALID' }
+
+            classData.name = formatClassName(classData.name)
+
+            const update = {};
+            if (classData.name) update.name = classData.name;
+            if (classData.section) update.section = classData.section;
+            if (classData.startTime) update.startTime = classData.startTime;
+            if (classData.endTime) update.endTime = classData.endTime;
+
+            const result = await Class.findOneAndUpdate(
+                { _id: classId },
+                { $set: update },
+                { new: true }
+            );
+
+            if (!result) {
+                return { success: false, message: "CLASS_NOT_FOUND" };
+            }
+
+            return {
+                success: true,
+                message: "CLASS_UPDATED",
+                data: result
+            };
+        } catch (error) {
+            console.error("Error updating class:", error);
+            return {
+                success: false,
+                message: "REGISTRATION_FAILED"
+            };
+        }
+    },
 
     addSubjects: async (subjectData) => {
         try {
@@ -81,29 +117,57 @@ const adminClassService = {
         }
     },
 
-    getAllClasses: async (classId, section, page = 1, limit = 10) => {
+    toggleSubjectStatus: async (id) => {
         try {
-            const pipeline = getAllClassesPipeline(classId, section, page, limit);
+            if (!mongoose.Types.ObjectId.isValid(id)) return { success : false, message : 'SUBJECT_ID_NOT_VALID'}
+            const subject = await Subject.findById(id);
+            if (!subject) return { success: false, message: "SUBJECT_NOT_FOUND" };
 
-            // Run pipeline for paginated data
+            subject.status = subject.status === "active" ? "inactive" : "active";
+            await subject.save();
+
+            return { success: true, message: `SUBJECT_STATUS_UPDATED_TO_${subject.status.toUpperCase()}`, subject };
+        } catch (err) {
+            console.error("toggleSubjectStatus error:", err);
+            return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    toggleClassStatus: async (id) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(id)) return { success : false, message : "CLASS_ID_NOT_VALID"}
+            const classObj = await Class.findById(id);
+            if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
+            classObj.status = classObj.status === "active" ? "inactive" : "active";
+            await classObj.save();
+
+            return { success: true, message: `CLASS_STATUS_UPDATED_TO_${classObj.status.toUpperCase()}`, class: classObj };
+        } catch (err) {
+            console.error("toggleClassStatus error:", err);
+            return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    getAllClasses: async (className, page = 1, limit = 10) => {
+        try {
+            const match = {};
+            if (className) match.name = { $regex: className, $options: "i" };
+
+            const total = await Class.countDocuments(match);
+
+            const pipeline = getAllClassesPipeline(className, page, limit);
+
             const result = await Class.aggregate(pipeline);
-
-            // Count total docs for the same filter (without skip/limit)
-            const total = await Class.countDocuments({
-                ...(classId && { classIdentifier: classId }),
-                ...(section && { section })
-            });
 
             return {
                 success: true,
                 message: "CLASSES_FETCHING_SUCCESSFULLY",
-                data: result,
-                pagination: {
-                    page,
-                    limit,
-                    total,
-                    totalPages: Math.ceil(total / limit)
-                }
+                docs: result,
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
             };
         } catch (error) {
             console.error("Error fetching classes:", error);
@@ -111,27 +175,27 @@ const adminClassService = {
         }
     },
 
-    getSubjects: async (page = 1, limit = 10) => {
+    getSubjects: async (page = 1, limit = 10, name = "") => {
         try {
             page = Math.max(parseInt(page, 10) || 1, 1);
             limit = Math.max(parseInt(limit, 10) || 10, 1);
 
-            const total = await Subject.countDocuments();
-            console.log('total subjects : ', total)
+            const filter = { status: "active" }; // Only active subjects
+            if (name) {
+                filter.name = { $regex: name, $options: "i" };
+            }
 
-            const subjects = await Subject.find()
+            const total = await Subject.countDocuments(filter);
+
+            const subjects = await Subject.find(filter)
                 .sort({ name: 1 })
                 .skip((page - 1) * limit)
                 .limit(limit);
 
-            if (subjects.length === 0) {
-                return { success: false, message: "NO_SUBJECTS_FOUND", data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
-            }
-
             return {
                 success: true,
                 message: "SUBJECTS_FETCHED_SUCCESSFULLY",
-                docs: subjects,
+                subjects,
                 pagination: {
                     page,
                     limit,
@@ -142,6 +206,55 @@ const adminClassService = {
         } catch (error) {
             console.error("Error while getting subjects:", error);
             return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    updateSubject: async (subjectData, _id) => {
+        console.log('subject data : ', subjectData)
+        try {
+            if (!mongoose.Types.ObjectId.isValid(_id)) return { success: false, message: "SUBJECT_ID_NOT_VALID" };
+            const update = {};
+            if (subjectData.name) update.name = subjectData.name;
+            if (subjectData.code) update.code = subjectData.code;
+            if (subjectData.description) update.description = subjectData.description;
+            if (subjectData.credits) update.credits = subjectData.credits;
+
+            const result = await Subject.findOneAndUpdate(
+                { _id },
+                { $set: update },
+                { new: true }
+            );
+            console.log('result : ', result)
+
+            if (!result) {
+                return { success: false, message: "SUBJECT_NOT_FOUND" };
+            }
+
+            return {
+                success: true,
+                message: "SUBJECT_UPDATED",
+                data: result
+            };
+        } catch (error) {
+            console.error("Error updating subject:", error);
+            return {
+                success: false,
+                message: "SUBJECT_UPDATION_FAILED"
+            };
+        }
+    },
+
+    deleteSubject: async (_id) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(_id)) return { success: false, message: "SUBJECT_ID_NOT_VALID" };
+
+            const result = await Subject.findByIdAndDelete(_id)
+            if (!result) return { success: false, message: "SUBJECT_NOT_FOUND" };
+
+            return { success: true, message: "SUBJECT_DELETED_SUCCESSFULLY" }
+        } catch (error) {
+            console.log('error while deleting subject : ', error.message);
+            return { succes: false, message: "SUBJECT_DELETION_FAILED" }
         }
     }
 

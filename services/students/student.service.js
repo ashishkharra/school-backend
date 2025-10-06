@@ -4,37 +4,157 @@ const Attendance = require('../../models/students/attendance.schema.js')
 const Submission = require('../../models/assignment/submission.schema.js')
 const _ = require('lodash');
 const { sendEmail } = require('../../helpers/helper.js')
+const { responseData } = require('../../helpers/responseData.js')
 
 const mongoose = require('mongoose')
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
+const { v4 } = require("uuid");
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 
 const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline, getSubmissionWithDetails } = require('../../helpers/commonAggregationPipeline.js')
 
 const studentService = {
+    studentForgotPassword: async (req, res) => {
+        try {
+            const email = req.body.email.toLowerCase();
+            const student = await Student.findOne({ email });
+
+            if (student) {
+                const resetToken = jwt.sign(
+                    { id: student._id, email: student.email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "15m" }
+                );
+                await Student.findOneAndUpdate(
+                    { email },
+                    { token: resetToken }
+                );
+
+                const link = `${process.env.RESET_PASSWORD_LINK}/${resetToken}`;
+
+                const dataBody = {
+                    email: email,
+                    EMAIL: email,
+                    LINK: link,
+                    STUDENT_NAME: student.name
+                };
+
+                try {
+                    await sendEmail("student-forgot-password", dataBody);
+                    return res.json(responseData("EMAIL_SENT", {}, req, true));
+                } catch (emailErr) {
+                    console.error("Email sending failed:", emailErr.message);
+                    return res.json(responseData("EMAIL_SEND_FAILED", {}, req, false));
+                }
+            } else {
+                return res.json(responseData("STUDENT_EMAIL_NOT_FOUND", {}, req, false));
+            }
+        } catch (err) {
+            console.error("Error:", err.message);
+            return res.json(responseData("ERROR_OCCUR", {}, req, false));
+        }
+    },
+
+    studentResetPassword: async (req, res) => {
+        try {
+            const { password } = req.body
+            const token = req.params.token
+
+            const resetToken = await Student.findOne({ token })
+            const passwordMatch = await bcrypt.compare(password, resetToken?.password)
+            if (passwordMatch) {
+                return res.json(responseData('PASSWORD_SAME_ERORR', {}, req, false))
+            }
+            if (!isEmpty(resetToken)) {
+                let salt = await genSalt(10)
+                let hash = await genHash(password, salt)
+                if (!isEmpty(hash)) {
+                    await Student.findOneAndUpdate(
+                        { _id: resetToken._id },
+                        { password: hash, token: null, forceLogout: true }
+                    )
+                    return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
+                } else {
+                    return res.json(responseData('ERROR_OCCUR', {}, req, false))
+                }
+            } else {
+                return res.json(responseData('LINK_INVALID', {}, req, false))
+            }
+        } catch (err) {
+            console.log('Error', err.message)
+            return res.json(responseData('ERROR_OCCUR', {}, req, false))
+        }
+    },
+
+    changePassword: async (req, res) => {
+        try {
+            const { oldPassword, newPassword } = req.body
+            const { _id } = req.user
+
+            const student = await Student.findOne({ _id })
+            const isPasswordMatch = await bcrypt.compare(oldPassword, student.password)
+
+            if (!isPasswordMatch) {
+                return res.json(responseData('INVALID_OLD_PASSWORD', {}, req, false))
+            }
+
+            if (oldPassword === newPassword) {
+                return res.json(responseData('PASSWORD_SAME_ERROR', {}, req, false))
+            }
+
+            const salt = await bcrypt.genSalt(10)
+            const hash = await bcrypt.hash(newPassword, salt)
+
+            if (!hash) {
+                return res.json(responseData('ERROR_OCCUR', {}, req, false))
+            }
+
+            await Student.findOneAndUpdate(
+                { _id },
+                {
+                    password: hash,
+                    isPasswordSet: true,
+                    forceLogout: true
+                }
+            )
+
+            return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
+        } catch (err) {
+            console.log('Error', err.message)
+            return res.json(responseData('ERROR_OCCUR', {}, req, false))
+        }
+    },
+
     downloadAssignmentService: async (studentId, assignmentId) => {
         try {
             const student = await Student.findById(studentId);
             if (!student) return { success: false, message: "Student not found" };
-
+            // console.log(studentAssignmentPipeline)
             const data = await Assignment.aggregate(studentAssignmentPipeline(assignmentId));
-            if (!data || data.length === 0) return { success: false, message: "Assignment not found" };
+            console.log('assignment data : ', data)
+            if (data.length < 1) {
+                return { success: false, message: "Assignment not found" };
+            }
 
             const assignment = data[0];
 
-            const enrolledClassIds = student.enrollments.map(e => e.class.toString());
-            if (!enrolledClassIds.includes(assignment.classInfo._id.toString())) {
-                return { success: false, message: "You are not enrolled in this class" };
-            }
+            // const enrolledClassIds = student.enrollments.map(e => e.class.toString());
+            // if (!enrolledClassIds.includes(assignment.classInfo._id.toString())) {
+            //     return { success: false, message: "UNAUTHORIZED_CLASS" };
+            // }
 
-            const filePath = path.join(__dirname, "../uploads/assignments", assignment.fileUrl);
-            if (!fs.existsSync(filePath)) return { success: false, message: "File not found on server" };
+            const filePath = path.join(__dirname, "../..", assignment.fileUrl);
+            console.log("filePath----", filePath)
+            if (!fs.existsSync(filePath)) return { success: false, message: "FILE_NOT_FOUND" };
 
-            return { success: true, filePath, fileName: assignment.fileUrl, assignment };
+            return { status: 200, success: true, filePath, message: "ASSIGNMENT_DOWNLOADED_SUCCESSFULLY", fileName: assignment.fileUrl, assignment };
         } catch (error) {
-            console.error("Service error:", error);
-            return { success: false, message: "Something went wrong" };
+            console.error("Error while downloading assignment : ", error);
+            return { success: false, message: "SEVER_ERROR" };
         }
     },
 
@@ -140,33 +260,48 @@ const studentService = {
 
             let submission = await Submission.findOne({ student: studentId, assignment: assignmentId });
 
+            const formattedFiles = files.map(f => ({
+                fileUrl: f.path,
+                fileName: f.originalname,
+                fileType: f.mimetype,
+                uploadedAt: new Date()
+            }));
+
             if (submission) {
-                // Add as resubmission
-                submission.resubmissions.push({
-                    files,
-                    submittedAt: now,
-                    isLate
-                });
+                if (submission.files.length > 0) {
+                    submission.resubmissions.push({
+                        files: submission.files,
+                        submittedAt: submission.submittedAt,
+                        isLate: submission.isLate
+                    });
+                }
+
+                submission.files = formattedFiles;
+                submission.submittedAt = now;
                 submission.status = "Submitted";
                 submission.isLate = isLate;
+
+                await submission.save();
             } else {
-                // Create new submission
                 submission = await Submission.create({
                     assignment: assignmentId,
                     student: studentId,
-                    files,
+                    files: formattedFiles,
+                    submittedAt: now,
                     status: "Submitted",
                     isLate
                 });
             }
 
-            await submission.save();
-
-            const [populated] = await Submission.aggregate(getSubmissionWithDetails(submission._id));
+            const populated = await Submission.findById(submission._id)
+                .populate("assignment")
+                .populate("student")
+                .populate("gradedBy")
+                .lean();
 
             return { success: true, message: "SUBMISSION_SUCCESSFUL", data: populated };
         } catch (err) {
-            console.error("Submit Assignment Service Error:", err.message);
+            console.error("Submit Assignment Service Error:", err);
             return { success: false, message: "SUBMISSION_FAILED" };
         }
     },

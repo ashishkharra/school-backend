@@ -1,9 +1,35 @@
 const mongoose = require('mongoose')
 const studentService = require('../../services/students/student.service.js')
 const { responseData } = require('../../helpers/responseData.js')
-const { sendEmail } = require('../../helpers/helper.js')
 
 const studentController = {
+    studentForgotPassword: async (req, res) => {
+        try {
+            await studentService.studentForgotPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
+    studentResetPassword: async (req, res) => {
+        try {
+            await studentService.studentResetPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
+    changePassword: async (req, res) => {
+        try {
+            await studentService.changePassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+
     downloadAssignment: async (req, res) => {
         try {
             const { studentId, assignmentId } = req.params;
@@ -21,14 +47,12 @@ const studentController = {
             }
 
             const result = await studentService.downloadAssignmentService(studentId, assignmentId);
-
+            console.log("result----", result)
             if (!result.success) {
-                return res.status(
-                    result.message.includes("not found") ? 404 : 403
-                ).json(responseData('ASSIGNMENT_NOT_FOUND', {}, req));
+                return res.status(result.message.includes("not found") ? 404 : 403).json(responseData('ASSIGNMENT_NOT_FOUND', {}, req, false));
             }
 
-            res.download(result.filePath, result.fileName);
+            res.status(200).json({ status: result?.status, message: result?.message }).download(result.filePath, result.fileName);
 
         } catch (error) {
             console.error("Controller error:", error);
@@ -121,12 +145,22 @@ const studentController = {
 
     submitAssignment: async (req, res) => {
         try {
-            const { assignmentId } = req.params;
-            const studentId = req.user._id;
-            const files = req.body.files;
+            const { assignmentId, studentId } = req.params;
+            // const studentId = req.user._id;
+
+            const files = [];
+            if (req.file) files.push(req.file);
+            if (req.files && req.files.length > 0) files.push(...req.files);
+
+            if (!files.length) {
+                return res.status(400).json(responseData("NO_FILES_UPLOADED", {}, req, false));
+            }
 
             const result = await studentService.submitAssignment(studentId, assignmentId, files);
-            return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
+
+            return res.status(result.success ? 200 : 400).json(
+                responseData(result.message, result.data || {}, req, result.success)
+            );
         } catch (err) {
             console.error(err);
             return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));

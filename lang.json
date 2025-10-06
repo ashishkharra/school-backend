@@ -1039,7 +1039,6 @@
     "en": "Description limit reached.",
     "ar": ""
   },
- 
   "NAME_LIMIT_REACHED": {
     "en": "Name must not exceed 100 characters.",
     "ar": ""
@@ -1052,7 +1051,6 @@
     "en": "Duration is required.",
     "ar": ""
   },
- 
   "MONTHS_EMPTY": {
     "en": "Number of months is required.",
     "ar": ""
@@ -1125,20 +1123,18 @@
     "en": "Class section must have minimum length",
     "ar": ""
   },
-  "TEACHERS_FETCHED":{
-    "en":"All Teacher are fetched",
-    "ar":""
+  "TEACHERS_FETCHED": {
+    "en": "All Teacher are fetched",
+    "ar": ""
   },
   "__undefined__": {
     "en": "undefined",
     "ar": ""
   },
-  
-  "TEACHER_UPDATED":{
-         "en":"Teacher profile is update",
-    "ar":""
+  "TEACHER_UPDATED": {
+    "en": "Teacher profile is update",
+    "ar": ""
   },
-
   "STUDENT_ALREADY_EXISTS": {
     "en": "Student already exists",
     "ar": ""
@@ -1195,10 +1191,9 @@
     "en": "Student id is not valid",
     "ar": ""
   },
-
-  "FAILED_TO_FETCH_TEACHERS":{
-        "en":"Failed to fetched all teachers",
-    "ar":""
+  "FAILED_TO_FETCH_TEACHERS": {
+    "en": "Failed to fetched all teachers",
+    "ar": ""
   },
   "ADMIN_ID_NOT_VALID": {
     "en": "Admin id is not valid",
@@ -1236,11 +1231,10 @@
     "en": "Class id is not valid",
     "ar": ""
   },
-
-  "ERROR_WHILE_GETTING_ALL_CLASSES":{
+  "ERROR_WHILE_GETTING_ALL_CLASSES": {
     "en": "Error while getting classes",
     "ar": ""
-  },  
+  },
   "INVALID_INPUT_DATA": {
     "en": "Invalid input data provided for attendance",
     "ar": ""
@@ -1285,7 +1279,6 @@
     "en": "Class fetched successfully",
     "ar": ""
   },
-
   "FEE_STRUCTURE_CREATION_FAILED": {
     "en": "Fee structure creation failed",
     "ar": ""
@@ -1334,7 +1327,6 @@
     "en": "Total amount must be numeric",
     "ar": ""
   },
-
   "STUDENT_ID_INVALID": {
     "en": "Student ID is invalid",
     "ar": ""
@@ -1391,7 +1383,6 @@
     "en": "Error occurred while updating student fee",
     "ar": ""
   },
-
   "TRANSACTION_ID_REQUIRED": {
     "en": "Transaction ID is required",
     "ar": ""
@@ -1435,7 +1426,122 @@
   "PAYMENT_ADDED_SUCCESSFULLY": {
     "en": "Payment added successfully",
     "ar": ""
+  },
+  "SUBJECT_ID_NOT_VALID": {
+    "en": "Subject id is not valid",
+    "ar": ""
+  },
+  "SUBJECT_NOT_FOUND": {
+    "en": "Subject not found",
+    "ar": ""
+  },
+  "SUBJECT_DELETED_SUCCESSFULLY": {
+    "en": "Subject deleted successfully",
+    "ar": ""
+  },
+  "SUBJECT_DELETION_FAILED": {
+    "en": "Subject deletion failed",
+    "ar": ""
+  },
+  "SUBJECT_UPDATED": {
+    "en": "Subject updated successfully",
+    "ar": ""
+  },
+  "SUBJECT_UPDATION_FAILED": {
+    "en": "Subject updation failed",
+    "ar": ""
+  },
+  "STUDENT_EMAIL_NOT_FOUND": {
+    "en": "Student email not found",
+    "ar": ""
+  },
+  "EMAIL_SEND_FAILED": {
+    "en": "Unable to send reset email. Please try again later.",
+    "ar": ""
+  },
+  "SUBJECT_CREDITS_RANGE": {
+    "en": "Subject credits range must be 3 to 20",
+    "ar": ""
+  },
+  "SUBJECT_CODE_LENGTH": {
+    "en": "Invalid subject code",
+    "ar": ""
+  },
+  "FETCH_FAILED": {
+    "en": "Email fetch failed",
+    "ar": ""
+  },
+  "SUBMISSIONS_FETCHED_SUCCESSFULLY": {
+    "en": "Submissions fetching failed",
+    "ar": ""
+  },
+  "CLASS_ID_NOT_PROVIDED": {
+    "en": "Please specify classId when filtering by studentId",
+    "ar": ""
+  },
+  "SUBMISSION_FAILED": {
+    "en": "Upload submission failed",
+    "ar": ""
+  },
+  "SUBMISSION_SUCCESSFUL": {
+    "en": "Submission uploaded successfully",
+    "ar": ""
+  },
+  "UNAUTHORIZED_CLASS": {
+    "en": "You are not enrolled in this class",
+    "ar": ""
+  },
+  "FILE_NOT_FOUND": {
+    "en": "File not found on server",
+    "ar": ""
+  },
+  "ASSIGNMENT_DOWNLOADED_SUCCESSFULLY": {
+    "en": "Assignment downloaded successfully",
+    "ar": ""
+  },
+  "GUARDIAN_PHONE_INVALID": {
+    "en": "Guradian phone is invalid",
+    "ar": ""
+  },
+  "INVALID_FILE_TYPE": {
+    "en": "Invalid file type. jpg|jpeg|png|gif|pdf|doc|docx types are valid",
+    "ar": ""
+  },
+  "NO_FILES_UPLOADED": {
+    "en": "No files uploaded",
+    "ar": ""
+  },
+  "DISABILITY_DETAILS_INVALID": {
+    "en": "disablity info must be valid",
+    "ar": ""
+  },
+  "STUDENT_REGISTERED_SUCCESSFULLY": {
+    "en": "Student registered successfully",
+    "ar": ""
+  },
+  "CLASS_ID_REQUIRED_OR_INVALID": {
+    "en": "Class id is required or provided id is invalid",
+    "ar": ""
+  },
+  "ZOOM_TOKEN_GENERATION_FAILED": {
+    "en": "Zoom token generation failed",
+    "ar": ""
+  },
+  "HOST_NOT_FOUND": {
+    "en": "Meeting host not found",
+    "ar": ""
+  },
+  "PARENT_NOT_FOUND": {
+    "en": "Parent not found",
+    "ar": ""
+  },
+  "GURDIAN_NOT_FOUND": {
+    "en": "Guadian not found",
+    "ar": ""
+  },
+  "CONTACT_NOT_FOUND": {
+    "en": "Receiver not found",
+    "ar": ""
   }
 
 }
-

@@ -173,96 +173,64 @@ module.exports.validate = (method) => {
       return [
         // Name
         body("name")
-          .notEmpty()
-          .withMessage("NAME_EMPTY")
-          .isLength({ min: 2 })
-          .withMessage("NAME_LENGTH_MIN")
-          .isLength({ max: 50 })
-          .withMessage("NAME_LENGTH_MAX"),
+          .notEmpty().withMessage("NAME_EMPTY")
+          .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
+          .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
 
         // DOB
         body("dob")
-          .notEmpty()
-          .withMessage("DOB_EMPTY")
-          .isISO8601()
-          .withMessage("DOB_INVALID"),
+          .notEmpty().withMessage("DOB_EMPTY")
+          .isISO8601().withMessage("DOB_INVALID"),
 
         // Gender
         body("gender")
-          .notEmpty()
-          .withMessage("GENDER_EMPTY")
-          .isIn(["Male", "Female", "Other"])
-          .withMessage("GENDER_INVALID"),
+          .notEmpty().withMessage("GENDER_EMPTY")
+          .isIn(["Male", "Female", "Other"]).withMessage("GENDER_INVALID"),
 
-        // Parent Info
-        body("parents")
-          .isArray({ min: 1 })
-          .withMessage("PARENT_REQUIRED"),
-        body("parents.*.name")
-          .notEmpty()
-          .withMessage("PARENT_NAME_EMPTY"),
-        body("parents.*.occupation")
-          .optional()
-          .isString()
-          .withMessage("PARENT_OCCUPATION_INVALID"),
+        // Blood Group
+        body("bloodGroup")
+          .optional().isString().withMessage("BLOODGROUP_INVALID"),
+
+        // Parents
+        body("parents").isArray({ min: 1 }).withMessage("PARENT_REQUIRED"),
+        body("parents.*.name").notEmpty().withMessage("PARENT_NAME_EMPTY"),
+        body("parents.*.occupation").optional().isString().withMessage("PARENT_OCCUPATION_INVALID"),
+        body("parents.*.phone").optional().isMobilePhone("any").withMessage("PARENT_PHONE_INVALID"),
+        body("parents.*.email").optional().isEmail().withMessage("PARENT_EMAIL_INVALID"),
 
         // Guardian
-        body("guardian")
-          .optional()
-          .isObject()
-          .withMessage("GUARDIAN_INVALID"),
-        body("guardian.name")
-          .optional()
-          .isString()
-          .withMessage("GUARDIAN_NAME_INVALID"),
-        body("guardian.phone")
-          .optional()
-          .isMobilePhone("any")
-          .withMessage("GUARDIAN_PHONE_INVALID"),
+        body("guardian").optional().isObject().withMessage("GUARDIAN_INVALID"),
+        body("guardian.name").optional().isString().withMessage("GUARDIAN_NAME_INVALID"),
+        body("guardian.relation").optional().isString().withMessage("GUARDIAN_RELATION_INVALID"),
+        body("guardian.phone").optional().isMobilePhone("any").withMessage("GUARDIAN_PHONE_INVALID"),
+        body("guardian.occupation").optional().isString().withMessage("GUARDIAN_OCCUPATION_INVALID"),
 
         // Emergency Contact
-        body("emergencyContact")
-          .optional()
-          .isObject()
-          .withMessage("EMERGENCY_CONTACT_INVALID"),
-        body("emergencyContact.name")
-          .optional()
-          .isString()
-          .withMessage("EMERGENCY_NAME_INVALID"),
-        body("emergencyContact.relationship")
-          .optional()
-          .isString()
-          .withMessage("EMERGENCY_RELATION_INVALID"),
-        body("emergencyContact.phone")
-          .optional()
-          .isMobilePhone("any")
-          .withMessage("EMERGENCY_PHONE_INVALID"),
+        body("emergencyContact").optional().isObject().withMessage("EMERGENCY_CONTACT_INVALID"),
+        body("emergencyContact.name").optional().isString().withMessage("EMERGENCY_NAME_INVALID"),
+        body("emergencyContact.relation").optional().isString().withMessage("EMERGENCY_RELATION_INVALID"),
+        body("emergencyContact.phone").optional().isMobilePhone("any").withMessage("EMERGENCY_PHONE_INVALID"),
+        body("emergencyContact.address").optional().isString().withMessage("EMERGENCY_ADDRESS_INVALID"),
 
         // Address
-        body("address.street").optional().isString().withMessage("STREET_STRING"),
-        body("address.city").optional().isString().withMessage("CITY_STRING"),
-        body("address.state").optional().isString().withMessage("STATE_STRING"),
-        body("address.zip").optional().isString().withMessage("ZIP_STRING"),
-        body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
+        body("address.street").optional().isString().withMessage("STREET_INVALID"),
+        body("address.city").optional().isString().withMessage("CITY_INVALID"),
+        body("address.state").optional().isString().withMessage("STATE_INVALID"),
+        body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
+        body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
 
-        // Email & Phone
-        body("email").optional().isEmail().withMessage("EMAIL_VALID"),
-        body("phone").optional().isMobilePhone("any").withMessage("PHONE_VALID"),
+        // Contact
+        body("email").optional().isEmail().withMessage("EMAIL_INVALID"),
+        body("phone").optional().isMobilePhone("any").withMessage("PHONE_INVALID"),
 
-        // Class & Section
-        body("classId").optional().isMongoId().withMessage("CLASS_ID_INVALID"),
-        body("year")
-          .optional()
-          .isInt({ min: 2000, max: new Date().getFullYear() + 1 })
-          .withMessage("INVALID_YEAR"),
-        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("INVALID_SECTION"),
+        // Class & Academic Year
+        body("classId").notEmpty().isMongoId().withMessage("CLASS_ID_INVALID"),
+        body("academicYear").notEmpty().isString().withMessage("ACADEMIC_YEAR_INVALID"),
+        body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("SECTION_INVALID"),
 
         // Physical Disability
         body("physicalDisability").optional().isBoolean().withMessage("INVALID_DISABILITY"),
-        body("disabilityDetails")
-          .optional()
-          .isString()
-          .withMessage("DISABILITY_DETAILS_INVALID"),
+        body("disabilityDetails").optional().isString().withMessage("DISABILITY_DETAILS_INVALID"),
 
         validatorMiddleware,
       ];
@@ -285,6 +253,22 @@ module.exports.validate = (method) => {
 
         validatorMiddleware,
       ]
+    }
+
+    case "updateClass": {
+      return [
+        body("name")
+          .optional()
+          .isLength({ min: 3, max: 50 })
+          .withMessage("CLASS_NAME_LENGTH"),
+
+        body("section")
+          .optional()
+          .isLength({ min: 1, max: 3 })
+          .withMessage("CLASS_SECTION_LENGTH"),
+
+        validatorMiddleware,
+      ];
     }
 
     case "registerSubject": {
@@ -316,6 +300,48 @@ module.exports.validate = (method) => {
           .optional()
           .isInt({ min: 0, max: 20 })
           .withMessage("CREDITS_MUST_BE_INT_0_20"),
+
+        validatorMiddleware,
+      ];
+    }
+
+    case "updateSubject": {
+      return [
+        // At least one field should be present
+        body().custom((value, { req }) => {
+          if (
+            !req.body.name &&
+            !req.body.code &&
+            !req.body.description &&
+            !req.body.credits
+          ) {
+            throw new Error("AT_LEAST_ONE_FIELD_REQUIRED");
+          }
+          return true;
+        }),
+
+        body("name")
+          .optional()
+          .isLength({ min: 3, max: 100 })
+          .withMessage("SUBJECT_NAME_LENGTH"),
+
+        body("code")
+          .optional()
+          .customSanitizer((value) => value.toUpperCase()) // 🔑 auto-uppercase
+          .isLength({ min: 3, max: 10 })
+          .withMessage("SUBJECT_CODE_LENGTH")
+          .matches(/^[A-Z0-9]+$/)
+          .withMessage("SUBJECT_CODE_FORMAT"),
+
+        body("description")
+          .optional()
+          .isLength({ min: 10, max: 500 })
+          .withMessage("SUBJECT_DESCRIPTION_LENGTH"),
+
+        body("credits")
+          .optional()
+          .isInt({ min: 3, max: 20 })
+          .withMessage("SUBJECT_CREDITS_RANGE"),
 
         validatorMiddleware,
       ];
@@ -526,6 +552,72 @@ module.exports.validate = (method) => {
           }),
 
         validatorMiddleware,
+      ]
+    }
+
+    case 'meetingSchedule': {
+      return [
+        body('studentId')
+          .notEmpty().withMessage('STUDENT_ID_REQUIRED')
+          .isMongoId().withMessage('STUDENT_ID_INVALID'),
+
+        body('meetingDate')
+          .notEmpty().withMessage('MEETING_DATE_REQUIRED')
+          .isISO8601().withMessage('MEETING_DATE_INVALID'),
+
+        body('reason')
+          .notEmpty().withMessage('MEETING_REASON_REQUIRED')
+          .isString().withMessage('MEETING_REASON_INVALID'),
+
+        body('notes')
+          .optional()
+          .isString().withMessage('NOTES_INVALID'),
+
+        body('hostId')
+          .notEmpty().withMessage('HOST_ID_REQUIRED')
+          .isMongoId().withMessage('HOST_ID_INVALID'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'updateMeeting': {
+      return [
+        param('meetingId')
+          .notEmpty().withMessage('MEETING_ID_REQUIRED')
+          .isMongoId().withMessage('MEETING_ID_INVALID'),
+
+        body('meetingDate')
+          .optional()
+          .isISO8601().withMessage('MEETING_DATE_INVALID'),
+
+        body('reason')
+          .optional()
+          .isString().withMessage('MEETING_REASON_INVALID'),
+
+        body('notes')
+          .optional()
+          .isString().withMessage('NOTES_INVALID'),
+
+        body('hostId')
+          .notEmpty().withMessage('HOST_ID_REQUIRED')
+          .isMongoId().withMessage('HOST_ID_INVALID'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'removeMeeting': {
+      return [
+        param('meetingId')
+          .notEmpty().withMessage('MEETING_ID_REQUIRED')
+          .isMongoId().withMessage('MEETING_ID_INVALID'),
+
+        body('status')
+          .notEmpty().withMessage('STATUS_REQUIRED')
+          .isIn(['cancelled']).withMessage('STATUS_INVALID'),
+
+        validatorMiddleware
       ]
     }
 
