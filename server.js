@@ -9,10 +9,7 @@ const session = require('express-session');
 const app = express();
 const server = http.createServer(app);
 
-// DB connection
 const connectDB = require('./configs/db');
-
-// Role login import
 const roleLoginRoute = require('./routes/auth.role.route.js');
 
 app.use(express.json());
@@ -104,7 +101,7 @@ server.listen( PORT, () => {
 // require('dotenv').config();
 // const express = require('express');
 // const cors = require('cors');
-// const morgan = 'morgan';
+//  const morgan = 'morgan';
 // const path = require('path');
 // const http = require('http');
 // const session = require('express-session');

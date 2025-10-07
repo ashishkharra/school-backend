@@ -1,23 +1,19 @@
-// controllers/teachers/assignment.controller.js
 const assignmentService = require('../../services/teachers/assignment.service')
 const { responseData } = require('../../helpers/responseData')
 const constant = require('../../helpers/constant')
 
 module.exports = {
   uploadAssignmentController: async (req, res) => {
-    console.log('req , body : ', req.body)
     try {
       const { teacherId, classId, subjectId, title, description, dueDate } =
         req.body
       const file = req.file ? req.file.filename : ''
-      // ✅ Basic validation
       if (!teacherId || !classId || !subjectId || !title || !dueDate) {
         return res
           .status(400)
           .json(responseData('INVALID_INPUT_DATA', {}, req, false))
       }
 
-      // ✅ Date validation
       const parsedDueDate = new Date(dueDate)
       if (isNaN(parsedDueDate.getTime())) {
         return res
@@ -25,7 +21,6 @@ module.exports = {
           .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
       }
 
-      // ✅ Call service
       const response = await assignmentService.uploadAssignment(
         teacherId,
         classId,
@@ -35,50 +30,33 @@ module.exports = {
         parsedDueDate,
         file
       )
+ const message = typeof response.message === 'object' ? response.message.en : response.message;
 
-      if (!response.success) {
-        return res
-          .status(400)
-          .json(responseData(response.message, {}, req, false))
-      }
-
+    if (!response.success) {
+      const statusCode = message === 'ASSIGNMENT_ALREADY_EXISTS' ? 409 : 400;
       return res
-        .status(200)
-        .json(
-          responseData(
-            'ASSIGNMENT_UPLOADED_SUCCESSFULLY',
-            response.results,
-            req,
-            true
-          )
-        )
-    } catch (error) {
-      console.error('Controller error:', error)
-      return res
-        .status(500)
-        .json(
-          responseData(
-            'ASSIGNMENT_UPLOAD_FAILED',
-            { error: error.message },
-            req,
-            false
-          )
-        )
+        .status(statusCode)
+        .json(responseData(message, response.results || {}, req, false));
     }
-  },
+    return res
+      .status(200)
+      .json(responseData(message, response.results, req, true));
 
-
-
-
+  } catch (error) {
+    return res
+      .status(500)
+      .json(responseData('ASSIGNMENT_UPLOAD_FAILED', { error: error.message }, req, false));
+  }
+},
 
   getAssignmentsController: async (req, res) => {
     try {
-      const { classId, subject, uploadedBy } = req.body
+      const { classId, subjectId, uploadedBy } = req.body
       const { page = 1, limit = 10 } = req.query
 
       const queryResult = await assignmentService.getAssignments(
         classId,
-        subject,
+        subjectId,
         uploadedBy,
         parseInt(page),
         parseInt(limit)
@@ -95,7 +73,6 @@ module.exports = {
       )
     );
     } catch (error) {
-      console.error('Get assignments controller error:', error)
       return res
         .status(500)
         .json(
@@ -109,34 +86,22 @@ module.exports = {
     }
   },
 
-
-
-
-
-
-
  updateAssignmentController: async (req, res) => {
   try {
-    const { id } = req.params; // Assignment ID
+    const { id } = req.params; 
     const { title, description } = req.body;
-    const file = req.file ? req.file.filename : null; // handle optional new file
-     console.log('fil---',file)
-
-    // ✅ Validate input
+    const file = req.file ? req.file.filename : null; 
     if (!id) {
       return res
         .status(400)
         .json(responseData('ASSIGNMENT_ID_REQUIRED', {}, req, false));
     }
-
-    // ✅ Call service
     const response = await assignmentService.updateAssignment(
       id,
       title,
       description,
       file
     );
-    console.log("response---",response)
 
     if (!response.success) {
       return res
@@ -155,26 +120,16 @@ module.exports = {
         )
       );
   } catch (err) {
-    console.error('Update Assignment Controller Error:', err);
     return res
       .status(500)
       .json(responseData('ASSIGNMENT_UPDATE_FAILED', { error: err.message }, req, false));
   }
 },
 
-
-
-
-
-
-
-
   deleteAssignmentController: async (req, res) => {
     try {
       const { assignmentId } = req.params
-
       const response = await assignmentService.deleteAssignment(assignmentId)
-
       return res
         .status(response.success ? 200 : 400)
         .json(
@@ -188,7 +143,6 @@ module.exports = {
           )
         )
     } catch (error) {
-      console.error('Delete assignment controller error:', error)
       return res
         .status(500)
         .json(

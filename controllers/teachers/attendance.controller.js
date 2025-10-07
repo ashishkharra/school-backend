@@ -1,88 +1,139 @@
 
 const attendanceService = require('../../services/teachers/attendance.service');
 const { responseData } = require('../../helpers/responseData'); // Assume you have this utility for consistent responses
+const Attendance = require('../../models/students/attendance.schema');
+const e = require('express');
 
 module.exports = {
  
-getStudentsByClass: async (req, res) => {
-    try {
-      const classId = req.params.classId;
-      const {  page = 1, limit = 10 } = req.query 
 
-         const queryResult = await attendanceService.getStudentsByClass(
-              classId,
-              parseInt(page),
-              parseInt(limit)
-            )
-           
-return res.json(
-        responseData(
-          'GET_LIST',
-          queryResult.length > 0
-            ? queryResult[0]
-            : constant.staticResponseForEmptyResult,
-          req,
-          true
-        )
-      )
-     } catch (error) {
-      console.error("Controller Error:", error.message);
-      res.status(500).json(responseData("SERVER_ERROR", [], req, false));
-    }
-  }
-,
-markAttendance: async (req, res) => {
+
+  markOrUpdateAttendance:async (req, res) => {
   try {
-    // Use consistent field names matching schema
-    const { class: classId, date, session, records, takenBy } = req.body;
-    console.log("Received request body:", req.body);
-
-    // Basic validation
-    if (!classId || !date || !session || !records || !Array.isArray(records) || records.length === 0 || !takenBy) {
-      console.log("Validation failed: Missing or invalid fields");
+    const { classId,date, session, takenBy, records } = req.body;
+    console.log('req.body;',req.body)
+      if (!classId || !session || !date || !takenBy || !records) {
       return res
         .status(400)
-        .json(responseData("INVALID_INPUT_DATA", { error: "Invalid input data" }, req, false));
+        .json(responseData('MISSING_REQUIRED_FIELDS', {}, req, false));
     }
-
-    // Date validation
-    const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) {
-      console.log("Invalid date format detected");
+   if (!Array.isArray(records)) {
       return res
         .status(400)
-        .json(responseData("INVALID_DATE_FORMAT", { error: "Invalid date format" }, req, false));
+        .json(responseData('RECORDS_MUST_BE_ARRAY', {}, req, false));
     }
-
-    // Session validation (only allow 1, 2, or 3)
-    if (![1, 2, 3].includes(session)) {
+    const result = await attendanceService.markOrUpdateAttendance({ classId, session, date, takenBy, records });
+    console.log('result-----',result)
+ if (!result.success) {
       return res
         .status(400)
-        .json(responseData("INVALID_SESSION", { error: "Invalid session value" }, req, false));
+        .json(responseData(result.message || 'ATTENDANCE_UPDATE_FAILED', {}, req, false));
     }
+    return res
+      .status(200)
+      .json(responseData('ATTENDANCE_FETCHED_OR_UPDATED', result.results, req, true));
+  } catch (error) {
+    return res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
 
-    // Save / update attendance
-    const savedRecord = await attendanceService.markOrUpdateAttendance(
+updateAttendanceController: async (req, res) => {
+  try {
+    const { classId, date, session, records } = req.body;
+    if (!classId || !session || !date || !records) {
+      return res
+        .status(400)
+        .json(responseData('MISSING_REQUIRED_FIELDS', {}, req, false));
+    }
+    if (!Array.isArray(records)) {
+      return res
+        .status(400)
+        .json(responseData('RECORDS_MUST_BE_ARRAY', {}, req, false));
+    }
+    const updatedAttendance = await attendanceService.updateAttendance({
       classId,
-      parsedDate,
+      date,
       session,
       records,
-      takenBy
-    );
+    });
 
-    console.log("Saved attendance record:", savedRecord);
+    if (!updatedAttendance) {
+      return res
+        .status(404)
+        .json(responseData('ATTENDANCE_RECORD_NOT_FOUND', {}, req, false));
+    }
+    return res
+      .status(200)
+      .json(
+        responseData('ATTENDANCE_UPDATED_SUCCESSFULLY', updatedAttendance, req, true)
+      );
+  } catch (error) {
+    return res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
+
+getAttendance: async (req, res) => {
+  const { date } = req.query;
+  try {
+    const attendanceRecords = await attendanceService.getAttendanceData(date);
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return res
+        .status(404)
+        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
+    }
 
     return res
       .status(200)
-      .json(responseData("ATTENDANCE_MARKED_SUCCESSFULLY", savedRecord, req, true));
+      .json(responseData('ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY', attendanceRecords, req, true));
+  } catch (error) {
+    if (error.message === 'Invalid date format') {
+      return res
+        .status(400)
+        .json(responseData('INVALID_DATE_FORMAT', {}, req, false));
+    }
+    res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
+deleteAttendance: async (req, res) => {
+  try {
+    const { classId, date, session } = req.body;
+    if (!classId || !date || !session) {
+      return res
+        .status(400)
+        .json(responseData("INVALID_INPUT_DATA", {}, req, false));
+    }
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res
+        .status(400)
+        .json(responseData("INVALID_DATE_FORMAT", {}, req, false));
+    }
+
+    if (![1, 2, 3].includes(session)) {
+      return res
+        .status(400)
+        .json(responseData("INVALID_SESSION", {}, req, false));
+    }
+
+    const result = await attendanceService.deleteAttendance(classId, parsedDate, session);
+
+    return res
+      .status(result.success ? 200 : 400)
+      .json(responseData(result.message, result.data, req, result.success));
 
   } catch (error) {
-    console.error("Error while marking/updating attendance:", error);
     return res
       .status(500)
-      .json(responseData("ATTENDANCE_MARKING_FAILED", { error: error.message }, req, false));
+      .json(responseData("SERVER_ERROR", { error: error.message }, req, false));
   }
-}
+},
 
 
 }

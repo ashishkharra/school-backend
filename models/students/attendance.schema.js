@@ -8,15 +8,12 @@ const attendanceSchema = new mongoose.Schema(
       required: true 
     },
 
-    date: { 
-      type: Date, 
-      required: true 
-    },
+    date: { type: String, required: true },
 
     session: { 
       type: Number, 
       required: true, 
-      enum: [1, 2, 3], // 1 = morning, 2 = afternoon, 3 = evening
+      enum: [1, 2, 3], 
     },
 
     records: [
@@ -28,7 +25,7 @@ const attendanceSchema = new mongoose.Schema(
         },
         status: { 
           type: String, 
-          enum: ["Present", "Absent", "Late", "Excused"], 
+          enum: ["Present", "Absent", "Late", "Excused","Pending"], 
           default: "Present" 
         },
         remarks: { 
@@ -56,3 +53,6 @@ attendanceSchema.index({ "records.student": 1, class: 1 });
 attendanceSchema.index({ date: 1 });
 
 module.exports = mongoose.model("Attendance", attendanceSchema);
+
+// const Attendance = model.export("Attendance", attendanceSchema)
+// module.exports = Attendance

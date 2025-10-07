@@ -2,6 +2,7 @@ const Teacher = require('../../models/teacher/teacher.schema')
 // const ProfileUpdateRequest = require('../../models/teacher/profileUpdateRequest.schema');
 const { sendEmail } = require('../../helpers/helper')
 const { default: mongoose } = require('mongoose')
+const responseData = require('../../helpers/responseData')
 module.exports = {
 
   
@@ -10,23 +11,18 @@ module.exports = {
       if (!mongoose.Types.ObjectId.isValid(teacherId)) {
         return { success: false, message: 'TEACHER_ID_NOT_VALID' }
       }
-
-      // Fetch teacher info for email
       const teacher = await Teacher.findById(teacherId)
       if (!teacher) return { success: false, message: 'TEACHER_NOT_FOUND' }
-
-      // Prepare email data
       const updatedFieldsStr = Object.entries(updateData)
         .map(([key, value]) => `${key}: ${value}`)
-        .join('\n') // or '<br/>' for HTML
+        .join('\n')
 
       const dataBody = {
-        email: 'dhanka801@gmail.com', // admin receives the email
+        email: 'dhanka801@gmail.com', 
         TEACHER_NAME: teacher.name,
-        UPDATED_FIELDS: updatedFieldsStr, // dynamically generated from updateData
+        UPDATED_FIELDS: updatedFieldsStr,
         URL: 'https://your-school-portal.com'
       }
-
       const isMailSent = await sendEmail('teacher-profile-update', dataBody)
       if (!isMailSent) {
         return { success: false, message: 'EMAIL_ERROR' }
@@ -34,10 +30,10 @@ module.exports = {
 
       return { success: true, message: 'EMAIL_SUCCESSFULLY_SENT' }
     } catch (error) {
-      console.error(error)
       return { success: false, message: 'SERVER_ERROR', error: error.message }
     }
   },
+
   teacherForgotPassword: async (req, res) => {
         try {
             const email = req.body.email.toLowerCase();
@@ -45,11 +41,11 @@ module.exports = {
  
             if (student) {
                 const resetToken = jwt.sign(
-                    { id: student._id, email: student.email },
+                    { id: student._id, email: student.email },  
                     process.env.JWT_SECRET,
                     { expiresIn: "15m" }
                 );
-                await Student.findOneAndUpdate(
+                await Teacher.findOneAndUpdate(
                     { email },
                     { token: resetToken }
                 );
@@ -67,14 +63,12 @@ module.exports = {
                     await sendEmail("student-forgot-password", dataBody);
                     return res.json(responseData("EMAIL_SENT", {}, req, true));
                 } catch (emailErr) {
-                    console.error("Email sending failed:", emailErr.message);
                     return res.json(responseData("EMAIL_SEND_FAILED", {}, req, false));
                 }
             } else {
                 return res.json(responseData("STUDENT_EMAIL_NOT_FOUND", {}, req, false));
             }
         } catch (err) {
-            console.error("Error:", err.message);
             return res.json(responseData("ERROR_OCCUR", {}, req, false));
         }
     },
@@ -105,7 +99,6 @@ module.exports = {
                 return res.json(responseData('LINK_INVALID', {}, req, false))
             }
         } catch (err) {
-            console.log('Error', err.message)
             return res.json(responseData('ERROR_OCCUR', {}, req, false))
         }
     },
@@ -144,7 +137,6 @@ module.exports = {
  
             return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
         } catch (err) {
-            console.log('Error', err.message)
             return res.json(responseData('ERROR_OCCUR', {}, req, false))
         }
     },

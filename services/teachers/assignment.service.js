@@ -3,13 +3,11 @@ const Assignment = require('../../models/assignment/assignment.schema')
 const Teacher = require('../../models/teacher/teacher.schema')
 const Class = require('../../models/class/class.schema')
 const { responseData } = require('../../helpers/responseData')
-
 const {
   getAssignmentLookup
 } = require('../../helpers/commonAggregationPipeline')
 const mongoose = require('mongoose')
 const {
-  getPaginationArray,
   getPaginationArrayJs
 } = require('../../helpers/helper')
 
@@ -24,7 +22,6 @@ module.exports = {
     file
   ) => {
     try {
-      // ✅ Validate teacher
       const teacher = await Teacher.findById(teacherId)
       if (!teacher) {
         return { success: false, message: { en: 'TEACHER_NOT_FOUND' } }
@@ -47,13 +44,21 @@ module.exports = {
         }
       }
 
-      console.log('SUb---', subjectObjectId)
-      console.log('File--', file)
+      const existingAssignment = await Assignment.findOne({
+      title,
+      classId,
+      subjectId: subjectObjectId
+    });
+
+    if (existingAssignment) {
+      return {
+        success: false,
+        message: 'ASSIGNMENT_ALREADY_EXISTS',
+        results: existingAssignment
+      };
+    }
 
       const filePath = file ? `/uploads/assignments/${file}` : null
-      console.log('file paht : ', filePath);
-      
-
       const assignment = new Assignment({
         title,
         description,
@@ -63,16 +68,13 @@ module.exports = {
         uploadedBy: teacherId,
         subjectId: subjectObjectId
       })
-
       await assignment.save()
-
       return {
         success: true,
         message: { en: 'ASSIGNMENT_UPLOADED_SUCCESSFULLY' },
         results: assignment
       }
     } catch (err) {
-      console.log('assing : ', err)
       return {
         success: false,
         message: { en: 'SERVER_ERROR' },
@@ -81,40 +83,34 @@ module.exports = {
     }
   },
 
-updateAssignment: async (id, title, description, file = null) => {
-  try {
-    // ✅ Validate Assignment ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return { success: false, message: { en: 'ASSIGNMENT_ID_NOT_VALID' }, results: {} };
+  updateAssignment: async (id, title, description, file = null) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return { success: false, message: { en: 'ASSIGNMENT_ID_NOT_VALID' }, results: {} };
+      }
+      const updateData = {};
+      if (title) updateData.title = title;
+      if (description) updateData.description = description;
+      if (file) updateData.fileUrl = `/uploads/assignments/${file}`;
+      const updatedAssignment = await Assignment.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      ).lean();
+
+      if (!updatedAssignment) {
+        return { success: false, message: { en: 'ASSIGNMENT_NOT_FOUND' }, results: {} };
+      }
+
+      return {
+        success: true,
+        message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
+        results: updatedAssignment
+      };
+    } catch (err) {
+      return { success: false, message: { en: 'SERVER_ERROR' }, results: err.message };
     }
-
-    // ✅ Prepare update object
-    const updateData = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (file) updateData.fileUrl = `/uploads/assignments/${file}`;
-
-    // ✅ Perform update
-    const updatedAssignment = await Assignment.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!updatedAssignment) {
-      return { success: false, message: { en: 'ASSIGNMENT_NOT_FOUND' }, results: {} };
-    }
-
-    console.log('--Updated Assignment:', updatedAssignment);
-    return {
-      success: true,
-      message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
-      results: updatedAssignment
-    };
-  } catch (err) {
-    return { success: false, message: { en: 'SERVER_ERROR' }, results: err.message };
-  }
-},
+  },
 
   getAssignments: async (
     classId,
@@ -124,7 +120,6 @@ updateAssignment: async (id, title, description, file = null) => {
     limit = 10
   ) => {
     try {
-      // ✅ Validate ObjectIds
       if (classId && !mongoose.Types.ObjectId.isValid(classId)) {
         return {
           success: false,
@@ -147,17 +142,9 @@ updateAssignment: async (id, title, description, file = null) => {
         }
       }
 
-      // ✅ Build aggregation pipeline
       const pipeline = getAssignmentLookup(classId, subjectId, uploadedBy)
-      console.log('--Pipline', pipeline)
-
       pipeline.push(...getPaginationArrayJs(page, limit))
-
-      // ✅ Run aggregation
       const result = await Assignment.aggregate(pipeline)
-      console.log('result--', result)
-
-      // ✅ $facet returns an array with a single object
       if (result.length === 0) {
         return {
           success: true,
@@ -165,8 +152,7 @@ updateAssignment: async (id, title, description, file = null) => {
           results: { docs: [], totalDocs: 0, limit, page, totalPages: 0 }
         }
       }
-      6
-
+      
       return {
         success: true,
         message: { en: 'ASSIGNMENTS_FETCHED_SUCCESSFULLY' },
@@ -179,7 +165,6 @@ updateAssignment: async (id, title, description, file = null) => {
         }
       }
     } catch (err) {
-      console.error('getAssignments Service Error:', err.message)
       return {
         success: false,
         message: { en: 'SERVER_ERROR' },
@@ -187,6 +172,7 @@ updateAssignment: async (id, title, description, file = null) => {
       }
     }
   },
+
   deleteAssignment: async (assignmentId) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
@@ -198,7 +184,6 @@ updateAssignment: async (id, title, description, file = null) => {
       }
 
       const assignment = await Assignment.findByIdAndDelete(assignmentId)
-
       if (!assignment) {
         return {
           success: false,

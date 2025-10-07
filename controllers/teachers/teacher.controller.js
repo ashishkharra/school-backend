@@ -6,10 +6,8 @@ module.exports = {
 
   getProfile: async (req, res) => {
     try {
-    //   const teacherId = req.user._id
 const { teacherId } = req.params
       const profile = await teacherService.getProfile(teacherId);
-
       return res
         .status(200)
         .json(responseData("TEACHER_PROFILE_FETCHED", profile, req, true));
@@ -22,11 +20,9 @@ const { teacherId } = req.params
   
     requestProfileUpdate: async (req, res) => {
     try {
-   const { teacherId } = req.params
-      const updateData = req.body;   // e.g. { phone, address }
-
+      const { teacherId } = req.params
+      const updateData = req.body;  
       const result = await teacherService.requestProfileUpdate(teacherId, updateData);
-
       return res
         .status(200)
         .json(responseData("PROFILE_UPDATE_REQUEST_SENT", result, req, true));

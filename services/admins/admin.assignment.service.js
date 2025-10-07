@@ -7,7 +7,6 @@ const adminAssignmentService = {
             if (!mongoose.Types.ObjectId.isValid(classId)) {
                 return { success: false, message: 'CLASS_ID_NOT_VALID', data: [] };
             }
-
             const skip = (page - 1) * limit;
             const pipeline = buildAssignmentPipeline(classId, skip, limit);
 
@@ -19,7 +18,6 @@ const adminAssignmentService = {
                 data
             };
         } catch (err) {
-            console.error('adminAssignment error:', err);
             return { success: false, message: 'SERVER_ERROR', data: [] };
         }
     }

@@ -34,6 +34,16 @@ module.exports.validate = (method) => {
       ]
     }
 
+
+
+
+
+
+
+
+
+    //----------------admin-panel-teacher-validation----------------
+
     case "registerTeacher": {
       return [
         // Name
@@ -165,6 +175,239 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ];
     }
+   case "assignClassTeacherOf": {
+  return [
+    // Class ID - required
+    body('classId')
+      .notEmpty().withMessage('CLASS_ID_REQUIRED')
+      .isMongoId().withMessage('CLASS_ID_INVALID'),
+
+    // Teacher ID - required
+    body('teacherId')
+      .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+      .isMongoId().withMessage('TEACHER_ID_INVALID'),
+
+    // Attach existing validator middleware
+    validatorMiddleware
+  ];
+}
+case "assignTeacherToClass": {
+  return [
+    // Class ID - required
+    body('classId')
+      .notEmpty().withMessage('CLASS_ID_REQUIRED')
+      .isMongoId().withMessage('CLASS_ID_INVALID'),
+
+    // Teacher ID - required
+    body('teacherId')
+      .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+      .isMongoId().withMessage('TEACHER_ID_INVALID'),
+
+    // Section - required, must be A/B/C/D
+    body('section')
+      .notEmpty().withMessage('SECTION_REQUIRED')
+      .custom(value => ["A","B","C","D"].includes(value.toUpperCase()))
+      .withMessage('SECTION_INVALID'),
+
+    // Subject ID - required
+    body('subjectId')
+      .notEmpty().withMessage('SUBJECT_ID_REQUIRED')
+      .isMongoId().withMessage('SUBJECT_ID_INVALID'),
+
+    // Start Time - required, format hh:mm AM/PM
+    body('startTime')
+      .notEmpty().withMessage('START_TIME_REQUIRED')
+      .matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+      .withMessage('START_TIME_INVALID'),
+
+    // End Time - required, format hh:mm AM/PM
+    body('endTime')
+      .notEmpty().withMessage('END_TIME_REQUIRED')
+      .matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+      .withMessage('END_TIME_INVALID'),
+
+    // attach your validatorMiddleware
+    validatorMiddleware
+  ];
+}
+case "updateTeacherAssignment": {
+  return [
+    // Assignment ID - required in params
+    body('assignmentId')
+      .optional() // if you validate params separately, you may skip this
+      .isMongoId().withMessage('ASSIGNMENT_ID_INVALID'),
+
+    // Class ID - optional, must be MongoId
+    body('classId')
+      .optional()
+      .isMongoId().withMessage('CLASS_ID_INVALID'),
+
+    // Teacher ID - optional, must be MongoId
+    body('teacherId')
+      .optional()
+      .isMongoId().withMessage('TEACHER_ID_INVALID'),
+
+    // Section - optional, must be A/B/C/D
+    body('section')
+      .optional()
+      .custom(value => ["A", "B", "C", "D"].includes(value.toUpperCase()))
+      .withMessage('SECTION_INVALID'),
+
+    // Subject ID - optional, must be MongoId
+    body('subjectId')
+      .optional()
+      .isMongoId().withMessage('SUBJECT_ID_INVALID'),
+
+    // Start Time - optional, format hh:mm AM/PM
+    body('startTime')
+      .optional()
+      .matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+      .withMessage('START_TIME_INVALID'),
+
+    // End Time - optional, format hh:mm AM/PM
+    body('endTime')
+      .optional()
+      .matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+      .withMessage('END_TIME_INVALID'),
+
+    // Attach your existing validator middleware
+    validatorMiddleware
+  ];
+}
+case "updateClassTeacher": {
+  return [
+    body("classId")
+      .notEmpty().withMessage("CLASS_ID_REQUIRED")
+      .isMongoId().withMessage("CLASS_ID_INVALID"),
+
+    body("teacherId")
+      .notEmpty().withMessage("TEACHER_ID_REQUIRED")
+      .isMongoId().withMessage("TEACHER_ID_INVALID"),
+
+    validatorMiddleware
+  ];
+}
+
+//--------assignment validations-----------------
+case "uploadAssignment": {
+ return [
+    body("teacherId")
+      .notEmpty()
+      .withMessage("TEACHER_ID_REQUIRED")
+      .isMongoId()
+      .withMessage("TEACHER_ID_INVALID"),
+
+    body("classId")
+      .notEmpty()
+      .withMessage("CLASS_ID_REQUIRED")
+      .isMongoId()
+      .withMessage("CLASS_ID_INVALID"),
+
+    body("subjectId")
+      .notEmpty()
+      .withMessage("SUBJECT_ID_REQUIRED")
+      .isMongoId()
+      .withMessage("SUBJECT_ID_INVALID"),
+
+    body("title")
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .isString()
+      .withMessage("TITLE_MUST_BE_STRING"),
+
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("DESCRIPTION_MUST_BE_STRING"),
+
+    body("dueDate")
+      .notEmpty()
+      .withMessage("DUE_DATE_REQUIRED")
+      .isISO8601()
+      .withMessage("DUE_DATE_INVALID"),
+
+    validatorMiddleware
+  ];
+}
+case "updateAssignment": {
+ return [
+   
+
+    body("title")
+      .notEmpty()
+      .withMessage("TITLE_REQUIRED")
+      .isString()
+      .withMessage("TITLE_MUST_BE_STRING"),
+
+    body("description")
+      .optional()
+      .isString()
+      .withMessage("DESCRIPTION_MUST_BE_STRING"),
+
+    validatorMiddleware
+  ];
+}
+
+//------------------------end------------------------ 
+
+
+//------------------attendance validations----------------
+
+case "markOrUpdateAttendance": {
+  return [
+    body("classId")
+      .notEmpty()
+      .withMessage("CLASS_ID_REQUIRED")
+      .isMongoId()
+      .withMessage("CLASS_ID_INVALID"),
+
+    body("date")
+      .notEmpty()
+      .withMessage("DATE_REQUIRED")
+      .isISO8601()
+      .withMessage("DATE_INVALID"),
+
+    body("session")
+      .notEmpty()
+      .withMessage("SESSION_REQUIRED")
+      .isInt({ min: 1 })
+      .withMessage("SESSION_MUST_BE_INTEGER"),
+
+    body("takenBy")
+      .notEmpty()
+      .withMessage("TAKEN_BY_REQUIRED")
+      .isMongoId()
+      .withMessage("TAKEN_BY_INVALID"),
+
+    body("records")
+      .isArray({ min: 1 })
+      .withMessage("RECORDS_MUST_BE_ARRAY"),
+
+    body("records.*.student")
+      .notEmpty()
+      .withMessage("STUDENT_ID_REQUIRED")
+      .isMongoId()
+      .withMessage("STUDENT_ID_INVALID"),
+
+    body("records.*.status")
+      .notEmpty()
+      .withMessage("STATUS_REQUIRED")
+      .isString()
+      .withMessage("STATUS_MUST_BE_STRING"),
+
+    body("records.*.remarks")
+      .optional()
+      .isString()
+      .withMessage("REMARKS_MUST_BE_STRING"),
+
+    validatorMiddleware
+  ];
+}
+
+
+
+//-------------------end-----------------------
+
 
 
     case "registerStudent": {

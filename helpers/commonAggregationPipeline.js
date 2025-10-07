@@ -1,4 +1,4 @@
-const { default: mongoose } = require("mongoose")
+const { default: mongoose } = require('mongoose')
 const { getPaginationArray } = require('./helper')
 const Student = require('../models/students/student.schema.js')
 const Assignment = require('../models/assignment/assignment.schema.js')
@@ -8,23 +8,23 @@ const studentAssignmentPipeline = (assignmentId) => [
 
   {
     $lookup: {
-      from: "classes",
-      localField: "class",
-      foreignField: "_id",
-      as: "classInfo",
-    },
+      from: 'classes',
+      localField: 'class',
+      foreignField: '_id',
+      as: 'classInfo'
+    }
   },
-  { $unwind: "$classInfo" },
+  { $unwind: '$classInfo' },
 
   {
     $lookup: {
-      from: "teachers",
-      localField: "uploadedBy",
-      foreignField: "_id",
-      as: "teacherInfo",
-    },
+      from: 'teachers',
+      localField: 'uploadedBy',
+      foreignField: '_id',
+      as: 'teacherInfo'
+    }
   },
-  { $unwind: "$teacherInfo" },
+  { $unwind: '$teacherInfo' },
 
   {
     $project: {
@@ -32,14 +32,14 @@ const studentAssignmentPipeline = (assignmentId) => [
       fileUrl: 1,
       instructions: 1,
       description: 1,
-      "classInfo._id": 1,
-      "classInfo.name": 1,
-      "classInfo.subject": 1,
-      "teacherInfo._id": 1,
-      "teacherInfo.name": 1,
-    },
-  },
-];
+      'classInfo._id': 1,
+      'classInfo.name': 1,
+      'classInfo.subject': 1,
+      'teacherInfo._id': 1,
+      'teacherInfo.name': 1
+    }
+  }
+]
 
 const studentAttendancePipeline = ({
   studentId,
@@ -48,55 +48,57 @@ const studentAttendancePipeline = ({
   year,
   page = 1,
   limit = 10,
-  teacherNameFilter,
+  teacherNameFilter
 }) => {
-  const matchExpr = [];
+  const matchExpr = []
 
-  if (month) matchExpr.push({ $eq: [{ $month: "$date" }, month] });
-  if (year) matchExpr.push({ $eq: [{ $year: "$date" }, year] });
+  if (month) matchExpr.push({ $eq: [{ $month: '$date' }, month] })
+  if (year) matchExpr.push({ $eq: [{ $year: '$date' }, year] })
 
   if (date) {
-    const start = new Date(date + "T00:00:00.000Z");
-    const end = new Date(date + "T23:59:59.999Z");
-    matchExpr.push({ $gte: ["$date", start] });
-    matchExpr.push({ $lte: ["$date", end] });
+    const start = new Date(date + 'T00:00:00.000Z')
+    const end = new Date(date + 'T23:59:59.999Z')
+    matchExpr.push({ $gte: ['$date', start] })
+    matchExpr.push({ $lte: ['$date', end] })
   }
 
   const pipeline = [
-    { $unwind: "$records" },
-    { $match: { "records.student": new mongoose.Types.ObjectId(studentId) } },
+    { $unwind: '$records' },
+    { $match: { 'records.student': new mongoose.Types.ObjectId(studentId) } },
 
     ...(matchExpr.length ? [{ $match: { $expr: { $and: matchExpr } } }] : []),
 
     {
       $addFields: {
-        status: "$records.status",
-        remarks: "$records.remarks",
-        classId: "$class"
+        status: '$records.status',
+        remarks: '$records.remarks',
+        classId: '$class'
       }
     },
 
     {
       $lookup: {
-        from: "classes",
-        localField: "class",
-        foreignField: "_id",
-        as: "classInfo"
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'classInfo'
       }
     },
-    { $unwind: "$classInfo" },
+    { $unwind: '$classInfo' },
 
     {
       $lookup: {
-        from: "teachers",
-        localField: "classInfo.teacher",
-        foreignField: "_id",
-        as: "teacherInfo"
+        from: 'teachers',
+        localField: 'classInfo.teacher',
+        foreignField: '_id',
+        as: 'teacherInfo'
       }
     },
-    { $unwind: "$teacherInfo" },
+    { $unwind: '$teacherInfo' },
 
-    ...(teacherNameFilter ? [{ $match: { "teacherInfo.name": teacherNameFilter } }] : []),
+    ...(teacherNameFilter
+      ? [{ $match: { 'teacherInfo.name': teacherNameFilter } }]
+      : []),
 
     {
       $project: {
@@ -105,136 +107,141 @@ const studentAttendancePipeline = ({
         session: 1,
         status: 1,
         remarks: 1,
-        className: "$classInfo.name",
-        section: "$classInfo.section",
-        teacherName: "$teacherInfo.name"
+        className: '$classInfo.name',
+        section: '$classInfo.section',
+        teacherName: '$teacherInfo.name'
       }
     },
 
     { $sort: { date: -1, session: 1 } },
     { $skip: (page - 1) * limit },
     { $limit: limit }
-  ];
+  ]
 
-  return pipeline;
-};
+  return pipeline
+}
+
+
+
+//---------teacher 
 
 const getAssignmentLookup = (classId, subjectId, uploadedBy) => {
-  const matchStage = {};
-  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId);
-  if (subjectId) matchStage.subjectId = mongoose.Types.ObjectId(subjectId);
-  if (uploadedBy) matchStage.uploadedBy = mongoose.Types.ObjectId(uploadedBy);
+  const matchStage = {}
+  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId)
+  if (subjectId) matchStage.subjectId = mongoose.Types.ObjectId(subjectId)
+  if (uploadedBy) matchStage.uploadedBy = mongoose.Types.ObjectId(uploadedBy)
 
   return [
     { $match: matchStage },
     {
-          $addFields: {
-            AssignmentPic: {
-              $cond: [
-                {
-                  $or: [{ $eq: ['$fileUrl', ''] }, { $eq: ['$fileUrl', null] }]
-                },
-                '',
-                { $concat: [process.env.IMAGE_PATH, '$fileUrl'] }
-              ]
-            }
-          }
-        },
-    {
-      $lookup: {
-        from: "classes",
-        localField: "classId",
-        foreignField: "_id",
-        as: "classDetails"
+      $addFields: {
+        AssignmentPic: {
+          $cond: [
+            {
+              $or: [{ $eq: ['$fileUrl', ''] }, { $eq: ['$fileUrl', null] }]
+            },
+            '',
+            { $concat: [process.env.IMAGE_PATH, '$fileUrl'] }
+          ]
+        }
       }
     },
-    { $unwind: { path: "$classDetails", preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
-        from: "teachers",
-        localField: "uploadedBy",
-        foreignField: "_id",
-        as: "teacherDetails"
+        from: 'classes',
+        localField: 'classId',
+        foreignField: '_id',
+        as: 'classDetails'
       }
     },
-    { $unwind: { path: "$teacherDetails", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$classDetails', preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
-        from: "subjects",
-        localField: "subjectId",
-        foreignField: "_id",
-        as: "subjectDetails"
+        from: 'teachers',
+        localField: 'uploadedBy',
+        foreignField: '_id',
+        as: 'teacherDetails'
       }
     },
-    { $unwind: { path: "$subjectDetails", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$teacherDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'subjectId',
+        foreignField: '_id',
+        as: 'subjectDetails'
+      }
+    },
+    { $unwind: { path: '$subjectDetails', preserveNullAndEmptyArrays: true } },
     {
       $project: {
         title: 1,
         description: 1,
         dueDate: 1,
         maxMarks: 1,
-        AssignmentPic: 1,  // ✅ renamed field
+        AssignmentPic: 1, // ✅ renamed field
         createdAt: 1,
         updatedAt: 1,
 
         // Class
-        "classDetails._id": 1,
-        "classDetails.name": 1,
-        "classDetails.section": 1,
+        'classDetails._id': 1,
+        'classDetails.name': 1,
+        'classDetails.section': 1,
 
         // Teacher
-        "teacherDetails._id": 1,
-        "teacherDetails.name": 1,
-        "teacherDetails.email": 1,
-        "teacherDetails.phone": 1,
-        "teacherDetails.department": 1,
+        'teacherDetails._id': 1,
+        'teacherDetails.name': 1,
+        'teacherDetails.email': 1,
+        'teacherDetails.phone': 1,
+        'teacherDetails.department': 1,
 
         // Subject
-        "subjectDetails._id": 1,
-        "subjectDetails.name": 1,
-        "subjectDetails.code": 1
+        'subjectDetails._id': 1,
+        'subjectDetails.name': 1,
+        'subjectDetails.code': 1
       }
     }
-  ];
-};
+  ]
+}
+
+
 
 const getTeacherAssignByLookup = (classId, teacherId) => {
-  const matchStage = {};
-  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId);
-  if (teacherId) matchStage.teacherId = mongoose.Types.ObjectId(teacherId);
+  const matchStage = {}
+  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId)
+  if (teacherId) matchStage.teacherId = mongoose.Types.ObjectId(teacherId)
 
   return [
     { $match: matchStage },
 
     {
       $lookup: {
-        from: "classes",
-        localField: "classId",
-        foreignField: "_id",
-        as: "classDetails"
+        from: 'classes',
+        localField: 'classId',
+        foreignField: '_id',
+        as: 'classDetails'
       }
     },
-    { $unwind: { path: "$classDetails", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$classDetails', preserveNullAndEmptyArrays: true } },
 
     {
       $lookup: {
-        from: "teachers",
-        localField: "teacherId",
-        foreignField: "_id",
-        as: "teacherDetails"
+        from: 'teachers',
+        localField: 'teacherId',
+        foreignField: '_id',
+        as: 'teacherDetails'
       }
     },
-    { $unwind: { path: "$teacherDetails", preserveNullAndEmptyArrays: true } },
-     {
+    { $unwind: { path: '$teacherDetails', preserveNullAndEmptyArrays: true } },
+    {
       $lookup: {
-        from: "subjects",
-        localField: "subjectId",
-        foreignField: "_id",
-        as: "subjectDetails"
+        from: 'subjects',
+        localField: 'subjectId',
+        foreignField: '_id',
+        as: 'subjectDetails'
       }
     },
-        { $unwind: { path: "$subjectDetails", preserveNullAndEmptyArrays: true } },
-
+    { $unwind: { path: '$subjectDetails', preserveNullAndEmptyArrays: true } },
 
     {
       $project: {
@@ -244,23 +251,105 @@ const getTeacherAssignByLookup = (classId, teacherId) => {
         endTime: 1,
         createdAt: 1,
         updatedAt: 1,
-        "classDetails._id": 1,
-        "classDetails.name": 1,
-        "classDetails.section": 1,
-        "teacherDetails._id": 1,
-        "teacherDetails.name": 1,
-        "teacherDetails.email": 1,
-        "teacherDetails.phone": 1,
-        "teacherDetails.department": 1
+        'classDetails._id': 1,
+        'classDetails.name': 1,
+        'classDetails.section': 1,
+        'teacherDetails._id': 1,
+        'teacherDetails.name': 1,
+        'teacherDetails.email': 1,
+        'teacherDetails.phone': 1,
+        'teacherDetails.department': 1
       }
     }
+  ]
+}
+
+
+
+
+const getAllTeachersWithClassLookup = (teacherId) => {
+  return [
+    // {
+    //   $match: { _id: new mongoose.Types.ObjectId(teacherId) }
+    // },
+    {
+      $lookup: {
+        from: 'classes',
+        localField: '_id',          // teacher._id
+        foreignField: 'teacher',  // class.teacherId
+        as: 'classesInfo'
+      },
+      
+    },
+   {
+    $project: {
+      // Teacher info
+      name: 1,
+      email: 1,
+      phone: 1,
+      department: 1,
+      designation: 1,
+
+      // Filter classes: only where teacher is class teacher
+      classesInfo: {
+        $map: {
+          input: {
+            $filter: {
+              input: "$classesInfo",
+              as: "class",
+              cond: { $eq: ["$$class.isClassTeacher", true] }
+            }
+          },
+          as: "class",
+          in: {
+            _id: "$$class._id",
+            name: "$$class.name",
+            section: "$$class.section",
+            isClassTeacher: "$$class.isClassTeacher",
+            studentCount: "$$class.studentCount",
+            startTime: "$$class.startTime",
+            endTime: "$$class.endTime"
+          }
+        }
+      }
+    }
+  }
+  ];
+};
+
+const getAttendanceWithStudentLookup = () => {
+  return [
+    { $unwind: '$records' }, // Unwind the records array
+    {
+      $lookup: {
+        from: 'students',                 // students collection
+        localField: 'records.student',    // student id in records
+        foreignField: '_id',
+        as: 'records.studentInfo'         // populate student info
+      }
+    },
+    {
+      $unwind: { path: '$records.studentInfo', preserveNullAndEmptyArrays: true }
+    },
+    {
+      $group: {
+        _id: '$_id',
+        class: { $first: '$class' },
+        date: { $first: '$date' },
+        session: { $first: '$session' },
+        takenBy: { $first: '$takenBy' },
+        records: { $push: '$records' }
+      }
+    },
+    { $sort: { date: -1 } } // Optional: sort by date
   ];
 };
 
 
+//--------
 
 const studentProfilePipeline = (studentId) => {
-  const _id = new mongoose.Types.ObjectId(studentId);
+  const _id = new mongoose.Types.ObjectId(studentId)
 
   return [
     // Match this student
@@ -269,20 +358,20 @@ const studentProfilePipeline = (studentId) => {
     // 1️⃣ Get the student's enrollments
     {
       $lookup: {
-        from: "enrollments",
-        localField: "_id",
-        foreignField: "student",
-        as: "enrollments"
+        from: 'enrollments',
+        localField: '_id',
+        foreignField: 'student',
+        as: 'enrollments'
       }
     },
 
     // 2️⃣ Lookup class details for each enrollment
     {
       $lookup: {
-        from: "classes",
-        localField: "enrollments.class",
-        foreignField: "_id",
-        as: "classDocs"
+        from: 'classes',
+        localField: 'enrollments.class',
+        foreignField: '_id',
+        as: 'classDocs'
       }
     },
 
@@ -291,11 +380,11 @@ const studentProfilePipeline = (studentId) => {
       $addFields: {
         enrollments: {
           $map: {
-            input: "$enrollments",
-            as: "enroll",
+            input: '$enrollments',
+            as: 'enroll',
             in: {
-              year: "$$enroll.year",
-              section: "$$enroll.section",
+              year: '$$enroll.year',
+              section: '$$enroll.section',
               className: {
                 $let: {
                   vars: {
@@ -303,16 +392,16 @@ const studentProfilePipeline = (studentId) => {
                       $arrayElemAt: [
                         {
                           $filter: {
-                            input: "$classDocs",
-                            as: "c",
-                            cond: { $eq: ["$$c._id", "$$enroll.class"] }
+                            input: '$classDocs',
+                            as: 'c',
+                            cond: { $eq: ['$$c._id', '$$enroll.class'] }
                           }
                         },
                         0
                       ]
                     }
                   },
-                  in: "$$matched.name"
+                  in: '$$matched.name'
                 }
               },
               // ✅ Include subjects array from the matched class
@@ -323,16 +412,16 @@ const studentProfilePipeline = (studentId) => {
                       $arrayElemAt: [
                         {
                           $filter: {
-                            input: "$classDocs",
-                            as: "c",
-                            cond: { $eq: ["$$c._id", "$$enroll.class"] }
+                            input: '$classDocs',
+                            as: 'c',
+                            cond: { $eq: ['$$c._id', '$$enroll.class'] }
                           }
                         },
                         0
                       ]
                     }
                   },
-                  in: "$$matched.subjects"
+                  in: '$$matched.subjects'
                 }
               }
             }
@@ -344,35 +433,35 @@ const studentProfilePipeline = (studentId) => {
     // 4️⃣ Recent 5 attendance records
     {
       $lookup: {
-        from: "attendances",
-        let: { studentId: "$_id" },
+        from: 'attendances',
+        let: { studentId: '$_id' },
         pipeline: [
-          { $unwind: "$records" },
-          { $match: { $expr: { $eq: ["$records.student", "$$studentId"] } } },
+          { $unwind: '$records' },
+          { $match: { $expr: { $eq: ['$records.student', '$$studentId'] } } },
           {
             $lookup: {
-              from: "classes",
-              localField: "class",
-              foreignField: "_id",
-              as: "classInfo"
+              from: 'classes',
+              localField: 'class',
+              foreignField: '_id',
+              as: 'classInfo'
             }
           },
-          { $unwind: "$classInfo" },
+          { $unwind: '$classInfo' },
           {
             $project: {
               _id: 0,
               date: 1,
               session: 1,
-              status: "$records.status",
-              remarks: "$records.remarks",
-              className: "$classInfo.name",
-              section: "$classInfo.section"
+              status: '$records.status',
+              remarks: '$records.remarks',
+              className: '$classInfo.name',
+              section: '$classInfo.section'
             }
           },
           { $sort: { date: -1 } },
           { $limit: 5 }
         ],
-        as: "recentAttendance"
+        as: 'recentAttendance'
       }
     },
 
@@ -391,12 +480,12 @@ const studentProfilePipeline = (studentId) => {
         profilePic: 1,
         grades: 1,
         parents: 1,
-        enrollments: 1,       // now contains className, section, subjects
+        enrollments: 1, // now contains className, section, subjects
         recentAttendance: 1
       }
     }
-  ];
-};
+  ]
+}
 
 const assignmentWithClassPipeline = (classId) => [
   {
@@ -404,13 +493,13 @@ const assignmentWithClassPipeline = (classId) => [
   },
   {
     $lookup: {
-      from: 'classes',          // Class collection
+      from: 'classes', // Class collection
       localField: 'class',
       foreignField: '_id',
       as: 'classInfo'
     }
   },
-  { $unwind: '$classInfo' },    // Convert classInfo array to object
+  { $unwind: '$classInfo' }, // Convert classInfo array to object
   {
     $project: {
       title: 1,
@@ -421,7 +510,7 @@ const assignmentWithClassPipeline = (classId) => [
       'classInfo.section': 1
     }
   }
-];
+]
 
 // const classinstudentPipeline = (classId) => [
 //   {
@@ -434,7 +523,7 @@ const assignmentWithClassPipeline = (classId) => [
 //   {
 //     $lookup: {
 //       from: 'classes',          // Class collection name
-//       localField: 'classId',  
+//       localField: 'classId',
 //       foreignField: '_id',
 //       as: 'classInfo'
 //     }
@@ -453,7 +542,6 @@ const assignmentWithClassPipeline = (classId) => [
 //   }
 // ];
 
-
 const teacherProfilePipeline = (teacherId) => {
   return [
     { $match: { _id: new mongoose.Types.ObjectId({ _id: teacherId }) } },
@@ -467,78 +555,82 @@ const teacherProfilePipeline = (teacherId) => {
       }
     },
 
-    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$classData', preserveNullAndEmptyArrays: true } },
 
     {
       $project: {
-        "name": 1,
-        "email": 1,
-        "phone": 1,
-        "dateOfBirth": 1,
-        "gender": 1,
-        "maritalStatus": 1,
-        "spouseName": 1,
-        "children": 1,
-        "address": 1,
-        "bloodGroup": 1,
-        "physicalDisability": 1,
-        "department": 1,
-        "designation": 1,
-        "qualifications": 1,
-        "specialization": 1,
-        "experience": 1,
-        "dateOfJoining": 1,
-        "classes": 1,
-        "subjectsHandled": 1,
-        "salaryInfo": 1,
-        "IDProof": 1,
-        "certificates": 1,
-        "resume": 1,
-        "joiningLetter": 1,
-        "emergencyContact": 1,
-        "achievements": 1,
-        "clubsInCharge": 1,
-        "eventsHandled": 1,
-        "status": 1,
-        "createdAt": 1,
-        "updatedAt": 1,
+        name: 1,
+        email: 1,
+        phone: 1,
+        dateOfBirth: 1,
+        gender: 1,
+        maritalStatus: 1,
+        spouseName: 1,
+        children: 1,
+        address: 1,
+        bloodGroup: 1,
+        physicalDisability: 1,
+        department: 1,
+        designation: 1,
+        qualifications: 1,
+        specialization: 1,
+        experience: 1,
+        dateOfJoining: 1,
+        classes: 1,
+        subjectsHandled: 1,
+        salaryInfo: 1,
+        IDProof: 1,
+        certificates: 1,
+        resume: 1,
+        joiningLetter: 1,
+        emergencyContact: 1,
+        achievements: 1,
+        clubsInCharge: 1,
+        eventsHandled: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
 
-        "classData.name": 1,
-        "classData.section": 1
+        'classData.name': 1,
+        'classData.section': 1
       }
     }
-
-  ];
+  ]
 }
 
-const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilter = {}) => [
+const getClassWithStudentsPipeline = (
+  classId,
+  skip = 0,
+  limit = 10,
+  studentFilter = {}
+) => [
   // Match the specific class
   { $match: { _id: new mongoose.Types.ObjectId(classId) } },
   {
     $lookup: {
-      from: "enrollments",
-      localField: "_id",
-      foreignField: "class",
-      as: "enrollments"
+      from: 'enrollments',
+      localField: '_id',
+      foreignField: 'class',
+      as: 'enrollments'
     }
   },
-  { $unwind: "$enrollments" },
+  { $unwind: '$enrollments' },
   {
     $lookup: {
-      from: "students",
-      localField: "enrollments.student",
-      foreignField: "_id",
-      as: "student"
+      from: 'students',
+      localField: 'enrollments.student',
+      foreignField: '_id',
+      as: 'student'
     }
   },
-  { $unwind: "$student" },
+  { $unwind: '$student' },
   {
     $match: {
-      "student.isRemoved": 0,
+      'student.isRemoved': 0,
       ...studentFilter
     }
   },
-  { $sort: { "enrollments.rollNo": 1 } },
+  { $sort: { 'enrollments.rollNo': 1 } },
   { $skip: skip },
   { $limit: limit },
   {
@@ -548,10 +640,10 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilt
       section: 1,
       subjects: 1,
       teacher: 1,
-      "enrollments._id": 1,
-      "enrollments.academicYear": 1,
-      "enrollments.rollNo": 1,
-      "enrollments.status": 1,
+      'enrollments._id': 1,
+      'enrollments.academicYear': 1,
+      'enrollments.rollNo': 1,
+      'enrollments.status': 1,
       student: {
         _id: 1,
         name: 1,
@@ -562,7 +654,7 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, studentFilt
       }
     }
   }
-];
+]
 
 const getStudentDetailsPipeline = (studentId) => [
   { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
@@ -570,19 +662,19 @@ const getStudentDetailsPipeline = (studentId) => [
   // 1. Lookup all enrollments and attach their class info
   {
     $lookup: {
-      from: "enrollments",
-      let: { studentId: "$_id" },
+      from: 'enrollments',
+      let: { studentId: '$_id' },
       pipeline: [
-        { $match: { $expr: { $eq: ["$student", "$$studentId"] } } },
+        { $match: { $expr: { $eq: ['$student', '$$studentId'] } } },
         {
           $lookup: {
-            from: "classes",
-            localField: "class",
-            foreignField: "_id",
-            as: "classInfo"
+            from: 'classes',
+            localField: 'class',
+            foreignField: '_id',
+            as: 'classInfo'
           }
         },
-        { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
+        { $unwind: { path: '$classInfo', preserveNullAndEmptyArrays: true } },
         {
           $project: {
             _id: 1,
@@ -600,52 +692,52 @@ const getStudentDetailsPipeline = (studentId) => [
           }
         }
       ],
-      as: "enrollments"
+      as: 'enrollments'
     }
   },
 
   // 2. Attendance records
   {
     $lookup: {
-      from: "attendances",
-      localField: "_id",
-      foreignField: "student",
-      as: "attendanceRecords"
+      from: 'attendances',
+      localField: '_id',
+      foreignField: 'student',
+      as: 'attendanceRecords'
     }
   },
 
   // 3. Fees records
   {
     $lookup: {
-      from: "fees",
-      localField: "_id",
-      foreignField: "student",
-      as: "feesRecords"
+      from: 'fees',
+      localField: '_id',
+      foreignField: 'student',
+      as: 'feesRecords'
     }
   },
 
   // 4. Assignment submissions filtered for this student
   {
     $lookup: {
-      from: "assignments",
-      let: { studentId: "$_id" },
+      from: 'assignments',
+      let: { studentId: '$_id' },
       pipeline: [
-        { $match: { $expr: { $in: ["$$studentId", "$submissions.student"] } } },
+        { $match: { $expr: { $in: ['$$studentId', '$submissions.student'] } } },
         {
           $project: {
             title: 1,
             dueDate: 1,
             submissions: {
               $filter: {
-                input: "$submissions",
-                as: "sub",
-                cond: { $eq: ["$$sub.student", "$$studentId"] }
+                input: '$submissions',
+                as: 'sub',
+                cond: { $eq: ['$$sub.student', '$$studentId'] }
               }
             }
           }
         }
       ],
-      as: "assignments"
+      as: 'assignments'
     }
   },
 
@@ -668,42 +760,47 @@ const getStudentDetailsPipeline = (studentId) => [
       isRemoved: 1,
       removedAt: 1,
       removedReason: 1,
-      enrollments: 1,          // now an array with classInfo inside each
+      enrollments: 1, // now an array with classInfo inside each
       attendanceRecords: 1,
       feesRecords: 1,
       assignments: 1,
       grades: 1
     }
   }
-];
+]
 
-const getAllClassesPipeline = (classIdentifier, section, page = 1, limit = 10) => {
-  const match = {};
-  if (classIdentifier) match.classIdentifier = classIdentifier;
-  if (section) match.section = section;
+const getAllClassesPipeline = (
+  classIdentifier,
+  section,
+  page = 1,
+  limit = 10
+) => {
+  const match = {}
+  if (classIdentifier) match.classIdentifier = classIdentifier
+  if (section) match.section = section
 
   const pipeline = [
     { $match: match },
     {
       $lookup: {
-        from: "teachers",
-        localField: "teacher",
-        foreignField: "_id",
-        as: "teacherDoc"
+        from: 'teachers',
+        localField: 'teacher',
+        foreignField: '_id',
+        as: 'teacherDoc'
       }
     },
-    { $unwind: { path: "$teacherDoc", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$teacherDoc', preserveNullAndEmptyArrays: true } },
     {
       $addFields: {
         classTeacher: {
           $cond: [
-            { $eq: ["$isClassTeacher", true] },
+            { $eq: ['$isClassTeacher', true] },
             {
-              _id: "$teacherDoc._id",
-              name: "$teacherDoc.name",
-              email: "$teacherDoc.email",
-              department: "$teacherDoc.department",
-              specialization: "$teacherDoc.specialization"
+              _id: '$teacherDoc._id',
+              name: '$teacherDoc.name',
+              email: '$teacherDoc.email',
+              department: '$teacherDoc.department',
+              specialization: '$teacherDoc.specialization'
             },
             null
           ]
@@ -719,16 +816,16 @@ const getAllClassesPipeline = (classIdentifier, section, page = 1, limit = 10) =
         classTeacher: 1
       }
     },
-    { $sort: { createdAt: -1 } },           // newest first
+    { $sort: { createdAt: -1 } }, // newest first
     { $skip: (page - 1) * limit },
     { $limit: limit }
-  ];
+  ]
 
-  return pipeline;
-};
+  return pipeline
+}
 
 const getStudentWithDetails = async (studentId) => {
-  if (!mongoose.Types.ObjectId.isValid(studentId)) return null;
+  if (!mongoose.Types.ObjectId.isValid(studentId)) return null
 
   const [result] = await Student.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(studentId) } },
@@ -768,9 +865,9 @@ const getStudentWithDetails = async (studentId) => {
         'classInfo.name': 1
       }
     }
-  ]);
+  ])
 
-  return result || null;
+  return result || null
 }
 
 const buildAssignmentPipeline = (classId, skip = 0, limit = 10) => {
@@ -779,28 +876,28 @@ const buildAssignmentPipeline = (classId, skip = 0, limit = 10) => {
 
     {
       $lookup: {
-        from: "classes",
-        localField: "class",
-        foreignField: "_id",
-        as: "classData"
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'classData'
       }
     },
 
-    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$classData', preserveNullAndEmptyArrays: true } },
 
     {
       $project: {
-        "title": 1,
-        "instructions": 1,
-        "dueDate": 1,
-        "maxMarks": 1,
-        "passingMarks": 1,
-        "fileUrl": 1,
-        "resources": 1,
-        "uploadedBy": 1,
-        "subject": 1,
-        "classData.name": 1,
-        "classData.section": 1,
+        title: 1,
+        instructions: 1,
+        dueDate: 1,
+        maxMarks: 1,
+        passingMarks: 1,
+        fileUrl: 1,
+        resources: 1,
+        uploadedBy: 1,
+        subject: 1,
+        'classData.name': 1,
+        'classData.section': 1
       }
     },
 
@@ -813,55 +910,55 @@ function buildAttendancePipeline(classId, skip = 0, limit = 10) {
   return [
     { $match: { class: new mongoose.Types.ObjectId(classId) } },
 
-    { $unwind: { path: "$records", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$records', preserveNullAndEmptyArrays: true } },
 
     {
       $lookup: {
-        from: "students",
-        localField: "records.student",
-        foreignField: "_id",
-        as: "stud"
+        from: 'students',
+        localField: 'records.student',
+        foreignField: '_id',
+        as: 'stud'
       }
     },
-    { $unwind: { path: "$stud", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$stud', preserveNullAndEmptyArrays: true } },
 
     {
       $lookup: {
-        from: "classes",
-        localField: "class",
-        foreignField: "_id",
-        as: "classData"
+        from: 'classes',
+        localField: 'class',
+        foreignField: '_id',
+        as: 'classData'
       }
     },
-    { $unwind: { path: "$classData", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$classData', preserveNullAndEmptyArrays: true } },
 
     {
       $lookup: {
-        from: "teachers",
-        localField: "takenBy",
-        foreignField: "_id",
-        as: "teacherData"
+        from: 'teachers',
+        localField: 'takenBy',
+        foreignField: '_id',
+        as: 'teacherData'
       }
     },
-    { $unwind: { path: "$teacherData", preserveNullAndEmptyArrays: true } },
+    { $unwind: { path: '$teacherData', preserveNullAndEmptyArrays: true } },
 
     {
       $replaceRoot: {
         newRoot: {
           $mergeObjects: [
             {
-              _id: "$_id",
-              status: "$records.status",
-              remarks: "$records.remarks",
-              studentName: "$stud.name",
-              className: "$classData.name",
-              classSection: "$classData.section",
-              teacherName: "$teacherData.name",
+              _id: '$_id',
+              status: '$records.status',
+              remarks: '$records.remarks',
+              studentName: '$stud.name',
+              className: '$classData.name',
+              classSection: '$classData.section',
+              teacherName: '$teacherData.name',
               teacherSubjects: {
                 $map: {
-                  input: "$teacherData.subjectsHandled",
-                  as: "subj",
-                  in: "$$subj.subjectName"
+                  input: '$teacherData.subjectsHandled',
+                  as: 'subj',
+                  in: '$$subj.subjectName'
                 }
               }
             }
@@ -872,7 +969,7 @@ function buildAttendancePipeline(classId, skip = 0, limit = 10) {
 
     { $skip: skip },
     { $limit: limit }
-  ];
+  ]
 }
 
 module.exports = {
@@ -890,9 +987,7 @@ module.exports = {
   // classinstudentPipeline
   assignmentWithClassPipeline,
   getAssignmentLookup,
-  getTeacherAssignByLookup
+  getTeacherAssignByLookup,
+  getAllTeachersWithClassLookup,
+  getAttendanceWithStudentLookup
 }
-
-
-
-

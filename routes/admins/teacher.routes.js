@@ -19,12 +19,16 @@ router.get('/getAllTeacher',teacherController.getAllTeachers);
 router.put('/soft-delete/:id', teacherController.softDeleteTeacher);
 router.get("/deletedTeachersHistory", teacherController.getDeletedTeachersHistory);
 
-router.put('/class-teacherOf', teacherController.assignClassTeacher);
+
+router.post('/class-teacherOf' ,validationRule.validate("assignClassTeacherOf"),teacherController.assignClassTeacher);
+router.put('/update-classteacherOf' ,validationRule.validate("assignClassTeacherOf"),teacherController.updateClassTeacher);
+router.get('/getAll-class-teacher', teacherController.getAllTeachersWithClassData);
+router.delete('/delete-class-teacher/:classId', teacherController.removeClassTeacher);
 
 
 
-router.put('/assign-teacher' ,teacherController.assignTeacherToClassController);
-router.put('/update-assign-teacher/:assignmentId' ,teacherController.updateTeacherAssignmentController);
+router.post('/assign-teacher' , validationRule.validate("assignTeacherToClass"), teacherController.assignTeacherToClassController);
+router.put('/update-assign-teacher/:assignmentId', validationRule.validate("updateTeacherAssignment") ,teacherController.updateTeacherAssignmentController);
 router.delete('/delete-assign-teacher/:assignmentId' ,teacherController.deleteTeacherAssignmentController);
 router.get("/get-teacher-assignments", teacherController.getTeacherAssignmentsController);
 module.exports = router
