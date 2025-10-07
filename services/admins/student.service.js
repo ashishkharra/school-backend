@@ -16,10 +16,10 @@ const { getAllStudentsPipeline, getClassWithStudentsPipeline, getStudentWithDeta
 const adminStudent = {
     addStudent: async (studentData) => {
         try {
-            const { email, phone, password, classId, academicYear, name } = studentData;
+            const { email, phone, password, classId, academicYear, name, address } = studentData;
 
             if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
-                return { success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
+                return { status: 404, success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
             }
 
             const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
@@ -55,7 +55,8 @@ const adminStudent = {
                 ...studentData,
                 password: hashedPassword,
                 classId,
-                status: "active"
+                status: "active",
+                address: address
             });
 
             await Enrollment.create({
@@ -70,7 +71,7 @@ const adminStudent = {
             await classObj.save();
 
             try {
-                await sendEmail("student-registration-success", {
+                const mail = await sendEmail("student-registration-success", {
                     Name: name,
                     Email: email,
                     Password: password,
@@ -81,16 +82,19 @@ const adminStudent = {
                     AcademicYear: academicYear,
                     SchoolName: "Springfield International School",
                     LoginURL: `${process.env.STUDENT_PORTAL_URL}/login`,
-                    To: email
+                    to: email
                 });
+
+                console.log('mail --------> ', mail)
             } catch (mailErr) {
                 console.error("Failed to send registration email:", mailErr);
             }
 
             return {
+                status: 201,
                 success: true,
                 message: "STUDENT_REGISTERED_SUCCESSFULLY",
-                data: {
+                docs: {
                     studentId: student._id,
                     admissionNo,
                     rollNo,
@@ -106,13 +110,14 @@ const adminStudent = {
     },
 
     updateStudent: async (studentData, studentId) => {
+        console.log('su --------- m ', studentData)
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success: false, message: "STUDENT_ID_NOT_VALID" };
+                return { status: 401, success: false, message: "STUDENT_ID_NOT_VALID" };
             }
 
             const student = await Student.findById(studentId);
-            if (!student) return { success: false, message: "STUDENT_NOT_FOUND" };
+            if (!student) return { status: 404, success: false, message: "STUDENT_NOT_FOUND" };
 
             const updateData = {};
 
@@ -176,7 +181,7 @@ const adminStudent = {
                 To: updatedStudent.email
             });
 
-            return { success: true, student: updatedStudent, message: "STUDENT_UPDATED_SUCCESSFULLY" };
+            return { status: 204, success: true, student: updatedStudent, message: "STUDENT_UPDATED_SUCCESSFULLY" };
 
         } catch (error) {
             console.error("UpdateStudent error:", error);

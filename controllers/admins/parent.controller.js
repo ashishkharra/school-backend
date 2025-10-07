@@ -1,12 +1,13 @@
-const responseData = require("../../helpers/responseData");
+const {responseData} = require("../../helpers/responseData");
+const { generateZoomToken } = require('../../helpers/helper.js')
 const adminParentService = require('../../services/admins/parent.service.js')
 
 const adminParentController = {
     scheduleMeeting: async (req, res) => {
         try {
-            const { studentId, date, reason, notes } = req.body;
+            const { studentId, hostId, reason, date, notes } = req.body;
 
-            const result = await adminParentService.scheduleMeeting(studentId, { date, reason, notes });
+            const result = await adminParentService.scheduleMeeting(studentId, hostId, { reason, date, notes });
 
             if (!result?.success) {
                 return res.status(result?.status).json(responseData(result?.message, {}, req, result?.success || false))

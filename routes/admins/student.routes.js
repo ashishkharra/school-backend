@@ -11,19 +11,21 @@ const jsonFieldsForStudent = [
   'emergencyContact',
   'siblings',
   'achievements',
+  'aadharFront',
+  'aadharBack',
   'extraCurricular',
   'certificates',
   'marksheets',
   'medicalRecords',
   'address',
-  'IDProof',
   'transferCertificate'
 ];
 
 router
   .post('/reg', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), validationRule.validate('registerStudent'), adminStudentController.regStudent)
 
-  .put('/update/:studentId?', verifyToken, validationRule.validate('updateStudent'), studentDocFields, adminStudentController.updateStudent)
+  .put('/update/:studentId?', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), adminStudentController.updateStudent)
+  // .put('/update/:studentId?', verifyToken, studentDocFields, validationRule.validate('updateStudent'), adminStudentController.updateStudent)
 
   // .put('/update/:classId/:studentId?', [verifyToken], adminStudentController.updateStudentClass)
 

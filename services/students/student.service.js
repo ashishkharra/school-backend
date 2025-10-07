@@ -183,7 +183,6 @@ const studentService = {
             });
 
             const data = await Attendance.aggregate(pipeline);
-            console.log('data pipeline : ', data)
 
             // total count for pagination
             const totalCountQuery = { "records.student": new mongoose.Types.ObjectId(studentId) };

@@ -1064,11 +1064,11 @@
     "ar": ""
   },
   "SOMETHING_WENT_WRONG": {
-    "en": "Something went wrong",
+    "en": "SOMETHING_WENT_WRONG",
     "ar": ""
   },
   "STUDENT_ID_REQUIRED": {
-    "en": "Student id required",
+    "en": "STUDENT_ID_REQUIRED",
     "ar": ""
   },
   "STUDENT_NOT_FOUND": {
@@ -1076,7 +1076,7 @@
     "ar": ""
   },
   "INVALID_STUDENT_ID": {
-    "en": "Invalid student id",
+    "en": "INVALID_STUDENT_ID",
     "ar": ""
   },
   "STUDENT_PROFILE_FETCHED": {
@@ -1084,7 +1084,7 @@
     "ar": ""
   },
   "GET_ATTENDANCE": {
-    "en": "Attendance fetched successfully",
+    "en": "GET_ATTENDANCE",
     "ar": ""
   },
   "ASSIGNMENT_NOT_FOUND": {
@@ -1541,6 +1541,33 @@
   },
   "CONTACT_NOT_FOUND": {
     "en": "Receiver not found",
+    "ar": ""
+  },
+  "AADHAR_FRONT_REQUIRED": {
+    "en": "Aadhar front image is required",
+    "ar": ""
+  },
+  "AADHAR_BACK_REQUIRED": {
+    "en": "Aadhar back image is required",
+    "ar": ""
+  },
+  "AADHAR_MUST_BE_IMAGE": {
+    "en": "Aadhar card must be image"
+  },
+  "EMERGENCY_PHONE_INVALID": {
+    "en": "Emergency phone is not valid",
+    "ar": ""
+  },
+  "INVALID_PATH": {
+    "en": "Invalid path detected!",
+    "ar": ""
+  },
+  "FILE_TOO_LARGE": {
+    "en": "File is too large",
+    "ar": ""
+  },
+  "ERROR_FETCHING_ATTENDANCE": {
+    "en": "ERROR_FETCHING_ATTENDANCE",
     "ar": ""
   }
 

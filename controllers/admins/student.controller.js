@@ -2,13 +2,14 @@
 const adminStudent = require("../../services/admins/student.service.js");
 const { responseData } = require("../../helpers/responseData.js");
 const { result } = require("lodash");
+const { deleteFileIfExists } = require('../../helpers/helper.js')
 const path = require('path')
 
 const baseUploadDir = path.join(__dirname, '../../uploads');
 const normalizeUploadPath = (filePath) => {
   const normalizedPath = path.normalize(filePath);
   if (!normalizedPath.startsWith(baseUploadDir)) {
-    throw new Error('Invalid file path detected.');
+    return { success : false, message : 'INVALID_PATH'}
   }
   return '/uploads' + normalizedPath.replace(baseUploadDir, '').replace(/\\/g, '/');
 };
@@ -19,7 +20,7 @@ module.exports = {
     try {
       const data = req.body;
       const files = req.files;
-
+      console.log("DATA------",data)
       if (data.parents && typeof data.parents === 'string') data.parents = JSON.parse(data.parents);
       if (data.siblings && typeof data.siblings === 'string') data.siblings = JSON.parse(data.siblings);
       if (data.achievements && typeof data.achievements === 'string') data.achievements = JSON.parse(data.achievements);
@@ -78,33 +79,67 @@ module.exports = {
 
   updateStudent: async (req, res) => {
     try {
+      console.log('profile picture : :::::: ---- ', req.body.profilePic)
       const data = req.body;
       const files = req.files;
       const { studentId } = req.params;
 
+      const existingStudent = await adminStudent.getStudentById(studentId);
+      if (!existingStudent) {
+        return res.status(404).json(responseData("STUDENT_NOT_FOUND", {}, req, false));
+      }
+
       if (files) {
-        const baseUploadPath = path.join(__dirname, '../../uploads');
-        const getRelativePath = (filePath) => filePath.replace(baseUploadPath, '').replace(/\\/g, '/');
+        const getRelativePath = (filePath) =>
+          filePath.replace(baseUploadDir, '').replace(/\\/g, '/');
 
-        if (files.profilePic && files.profilePic[0]) data.profilePic = getRelativePath(files.profilePic[0].path);
-        if (files.IDProof && files.IDProof[0]) data.IDProof = getRelativePath(files.IDProof[0].path);
-        if (files.aadharFront && files.aadharFront[0]) data.aadharFront = getRelativePath(files.aadharFront[0].path);
-        if (files.aadharBack && files.aadharBack[0]) data.aadharBack = getRelativePath(files.aadharBack[0].path);
-
-        if (files.marksheets && files.marksheets.length) {
-          data.marksheets = files.marksheets.map(f => ({ exam: f.originalname, fileUrl: getRelativePath(f.path) }));
+        if (files.profilePic?.[0]) {
+          deleteFileIfExists(existingStudent.profilePic);
+          data.profilePic = getRelativePath(files.profilePic[0].path);
         }
 
-        if (files.certificates && files.certificates.length) {
-          data.certificates = files.certificates.map(f => ({
-            name: f.originalname,
-            issuedBy: req.body.certificatesIssuedBy || null,
-            issueDate: req.body.certificatesIssueDate ? new Date(req.body.certificatesIssueDate) : null,
+        if (files.IDProof?.[0]) {
+          deleteFileIfExists(existingStudent.IDProof);
+          data.IDProof = getRelativePath(files.IDProof[0].path);
+        }
+
+        if (files.aadharFront?.[0]) {
+          deleteFileIfExists(existingStudent.aadharFront);
+          data.aadharFront = getRelativePath(files.aadharFront[0].path);
+        }
+        if (files.aadharBack?.[0]) {
+          deleteFileIfExists(existingStudent.aadharBack);
+          data.aadharBack = getRelativePath(files.aadharBack[0].path);
+        }
+
+        if (files.marksheets?.length) {
+          if (Array.isArray(existingStudent.marksheets)) {
+            existingStudent.marksheets.forEach(m => deleteFileIfExists(m.fileUrl));
+          }
+          data.marksheets = files.marksheets.map(f => ({
+            exam: f.originalname,
             fileUrl: getRelativePath(f.path)
           }));
         }
 
-        if (files.medicalRecords && files.medicalRecords.length) {
+        if (files.certificates?.length) {
+          if (Array.isArray(existingStudent.certificates)) {
+            existingStudent.certificates.forEach(c => deleteFileIfExists(c.fileUrl));
+          }
+          data.certificates = files.certificates.map(f => ({
+            name: f.originalname,
+            issuedBy: req.body.certificatesIssuedBy || null,
+            issueDate: req.body.certificatesIssueDate
+              ? new Date(req.body.certificatesIssueDate)
+              : null,
+            fileUrl: getRelativePath(f.path)
+          }));
+        }
+
+        if (files.medicalRecords?.length) {
+          if (Array.isArray(existingStudent.medicalRecords)) {
+            existingStudent.medicalRecords.forEach(m => deleteFileIfExists(m.fileUrl));
+          }
           data.medicalRecords = files.medicalRecords.map(f => ({
             condition: req.body.medicalCondition || "",
             doctorNote: req.body.doctorNote || "",
@@ -113,8 +148,10 @@ module.exports = {
           }));
         }
 
-        if (files.transferCertificate && files.transferCertificate[0])
+        if (files.transferCertificate?.[0]) {
+          deleteFileIfExists(existingStudent.transferCertificate);
           data.transferCertificate = getRelativePath(files.transferCertificate[0].path);
+        }
       }
 
       const result = await adminStudent.updateStudent(data, studentId);
@@ -127,7 +164,7 @@ module.exports = {
 
     } catch (error) {
       console.error("Error in updateStudent:", error);
-      return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+      return res.status(500).json(responseData("SERVER_ERROR", error.message, req, false));
     }
   },
 

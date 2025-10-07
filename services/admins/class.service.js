@@ -180,7 +180,7 @@ const adminClassService = {
             page = Math.max(parseInt(page, 10) || 1, 1);
             limit = Math.max(parseInt(limit, 10) || 10, 1);
 
-            const filter = { status: "active" }; // Only active subjects
+            const filter = { status: "active" };
             if (name) {
                 filter.name = { $regex: name, $options: "i" };
             }

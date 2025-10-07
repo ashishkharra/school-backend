@@ -754,7 +754,7 @@ const getStudentWithDetails = (studentId) => [
 ];
 // pipeline for getting all classes from db
 const getAllClassesPipeline = (className, page = 1, limit = 10) => {
-  const match = { status: "active" }; // Only active classes
+  const match = { status: "active" }; 
   if (className) match.name = { $regex: className, $options: "i" };
 
   return [
@@ -789,6 +789,7 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
       $project: {
         name: 1,
         section: 1,
+        status: 1,
         studentCount: 1,
         classTeacher: 1,
         createdAt: 1,

@@ -2,6 +2,7 @@ const { body, param } = require('express-validator')
 const FeeStructure = require('../../models/fees/feeStructure.schema.js')
 const StudentFee = require('../../models/fees/studentFee.schema.js')
 const { validatorMiddleware } = require('../../helpers/helper')
+const responseData = require('../../helpers/responseData.js')
 
 module.exports.validate = (method) => {
   switch (method) {
@@ -187,9 +188,6 @@ module.exports.validate = (method) => {
           .notEmpty().withMessage("GENDER_EMPTY")
           .isIn(["Male", "Female", "Other"]).withMessage("GENDER_INVALID"),
 
-        // Blood Group
-        body("bloodGroup")
-          .optional().isString().withMessage("BLOODGROUP_INVALID"),
 
         // Parents
         body("parents").isArray({ min: 1 }).withMessage("PARENT_REQUIRED"),
@@ -197,13 +195,6 @@ module.exports.validate = (method) => {
         body("parents.*.occupation").optional().isString().withMessage("PARENT_OCCUPATION_INVALID"),
         body("parents.*.phone").optional().isMobilePhone("any").withMessage("PARENT_PHONE_INVALID"),
         body("parents.*.email").optional().isEmail().withMessage("PARENT_EMAIL_INVALID"),
-
-        // Guardian
-        body("guardian").optional().isObject().withMessage("GUARDIAN_INVALID"),
-        body("guardian.name").optional().isString().withMessage("GUARDIAN_NAME_INVALID"),
-        body("guardian.relation").optional().isString().withMessage("GUARDIAN_RELATION_INVALID"),
-        body("guardian.phone").optional().isMobilePhone("any").withMessage("GUARDIAN_PHONE_INVALID"),
-        body("guardian.occupation").optional().isString().withMessage("GUARDIAN_OCCUPATION_INVALID"),
 
         // Emergency Contact
         body("emergencyContact").optional().isObject().withMessage("EMERGENCY_CONTACT_INVALID"),
@@ -213,11 +204,11 @@ module.exports.validate = (method) => {
         body("emergencyContact.address").optional().isString().withMessage("EMERGENCY_ADDRESS_INVALID"),
 
         // Address
-        body("address.street").optional().isString().withMessage("STREET_INVALID"),
-        body("address.city").optional().isString().withMessage("CITY_INVALID"),
-        body("address.state").optional().isString().withMessage("STATE_INVALID"),
-        body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
-        body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
+        // body("address.street").optional().isString().withMessage("STREET_INVALID"),
+        // body("address.city").optional().isString().withMessage("CITY_INVALID"),
+        // body("address.state").optional().isString().withMessage("STATE_INVALID"),
+        // body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
+        // body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
 
         // Contact
         body("email").optional().isEmail().withMessage("EMAIL_INVALID"),
@@ -228,9 +219,29 @@ module.exports.validate = (method) => {
         body("academicYear").notEmpty().isString().withMessage("ACADEMIC_YEAR_INVALID"),
         body("section").optional().isIn(["A", "B", "C", "D"]).withMessage("SECTION_INVALID"),
 
-        // Physical Disability
-        body("physicalDisability").optional().isBoolean().withMessage("INVALID_DISABILITY"),
-        body("disabilityDetails").optional().isString().withMessage("DISABILITY_DETAILS_INVALID"),
+        body('aadharFront')
+          .custom((value, { req }) => {
+            if (!req.files || !req.files.aadharFront) {
+              return res.json(responseData("AADHAR_FRONT_REQUIRED", {}, req, false))
+            }
+            const file = req.files.aadharFront[0];
+            if (!file.mimetype.startsWith("image/")) {
+              return res.json(responseData("AADHAR_MUST_BE_IMAGE", {}, req, false))
+            }
+            return true;
+          }),
+
+        body('aadharBack')
+          .custom((value, { req }) => {
+            if (!req.files || !req.files.aadharBack) {
+              return res.json(responseData("AADHAR_BACK_REQUIRED", {}, req, false))
+            }
+            const file = req.files.aadharBack[0];
+            if (!file.mimetype.startsWith("image/")) {
+              return res.json(responseData("AADHAR_MUST_BE_IMAGE", {}, req, false))
+            }
+            return true;
+          }),
 
         validatorMiddleware,
       ];
@@ -359,13 +370,13 @@ module.exports.validate = (method) => {
 
         body("phone").optional().isMobilePhone().withMessage("INVALID_PHONE"),
 
-        // Address
-        body("address").optional().isObject().withMessage("INVALID_ADDRESS"),
-        body("address.street").optional().isString().withMessage("STREET_STRING"),
-        body("address.city").optional().isString().withMessage("CITY_STRING"),
-        body("address.state").optional().isString().withMessage("STATE_STRING"),
-        body("address.zip").optional().isString().withMessage("ZIP_STRING"),
-        body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
+        // // Address
+        // body("address").optional().isObject().withMessage("INVALID_ADDRESS"),
+        // body("address.street").optional().isString().withMessage("STREET_STRING"),
+        // body("address.city").optional().isString().withMessage("CITY_STRING"),
+        // body("address.state").optional().isString().withMessage("STATE_STRING"),
+        // body("address.zip").optional().isString().withMessage("ZIP_STRING"),
+        // body("address.country").optional().isString().withMessage("COUNTRY_STRING"),
 
         // Parents
         body("parents").optional().isArray().withMessage("PARENTS_MUST_BE_ARRAY"),
@@ -561,7 +572,11 @@ module.exports.validate = (method) => {
           .notEmpty().withMessage('STUDENT_ID_REQUIRED')
           .isMongoId().withMessage('STUDENT_ID_INVALID'),
 
-        body('meetingDate')
+        body('hostId')
+          .notEmpty().withMessage('HOST_ID_REQUIRED')
+          .isMongoId().withMessage('HOST_ID_INVALID'),
+
+        body('date')
           .notEmpty().withMessage('MEETING_DATE_REQUIRED')
           .isISO8601().withMessage('MEETING_DATE_INVALID'),
 
@@ -573,10 +588,6 @@ module.exports.validate = (method) => {
           .optional()
           .isString().withMessage('NOTES_INVALID'),
 
-        body('hostId')
-          .notEmpty().withMessage('HOST_ID_REQUIRED')
-          .isMongoId().withMessage('HOST_ID_INVALID'),
-
         validatorMiddleware
       ]
     }
@@ -587,7 +598,7 @@ module.exports.validate = (method) => {
           .notEmpty().withMessage('MEETING_ID_REQUIRED')
           .isMongoId().withMessage('MEETING_ID_INVALID'),
 
-        body('meetingDate')
+        body('date')
           .optional()
           .isISO8601().withMessage('MEETING_DATE_INVALID'),
 

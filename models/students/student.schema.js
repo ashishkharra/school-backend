@@ -76,8 +76,8 @@ const studentSchema = new mongoose.Schema({
   ],
 
   // 📑 Documents & Records
-  aadharFront: {type : String},
-  aadharBack: {type : String},
+  aadharFront: {type : String, required : true},
+  aadharBack: {type : String, required: true},
   marksheets: [
     {
       exam: String,

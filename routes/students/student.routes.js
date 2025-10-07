@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { verifyToken } = require('../../middlewares/verifyToken.js')
-const validationRule = require('../../validations/admins/auth.js')
+const validationRule = require('../../validations/student/auth.js')
 const { uploadSubmission } = require('../../middlewares/multerFile.js')
 const studentController = require('../../controllers/students/student.controller.js');
 
@@ -22,9 +22,9 @@ router.post('/update-profile-request/:studentId/', [verifyToken],
   studentController.requestUpdateProfile
 );
 
-router.post("/submit/:studentId/:assignmentId", uploadSubmission.single("file"), studentController.submitAssignment);
+router.post("/submit/:studentId/:assignmentId", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
 
-router.put("/grade/:submissionId", studentController.gradeSubmission);
+// router.put("/grade/:submissionId", studentController.gradeSubmission);
 
 router.get("/:submissionId", studentController.getSubmissionDetails);
 

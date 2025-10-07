@@ -2,11 +2,12 @@ const mongoose = require('mongoose')
 const Student = require('../../models/students/student.schema.js')
 const Meeting = require('../../models/students/meeting.schema.js')
 const Teacher = require('../../models/teacher/teacher.schema.js')
-const { sendEmail, createZoomMeeting } = require('../../helpers/helper.js')
+const Admin = require('../../models/admin/admin.schema.js')
+const { sendEmail, createZoomMeeting, generateZoomToken } = require('../../helpers/helper.js')
 
 const adminParentService = {
 
-    scheduleMeeting: async (studentId, meetData, hostId) => {
+    scheduleMeeting: async (studentId, hostId, meetData) => {
         try {
 
             if (!mongoose.Types.ObjectId.isValid(studentId)) return { status: 400, success: false, message: 'STUDENT_ID_NOT_VALID' };
@@ -56,12 +57,16 @@ const adminParentService = {
                 to: receiver.email,
                 ParentName: receiver.name,
                 StudentName: student.name,
-                Date: meetData.date,
+                HostName: host.firstName && host.lastName
+                    ? `${host.firstName} ${host.lastName}`
+                    : host.name || "Host",
+                HostRole: host.role || (host instanceof Admin ? "Admin" : "Teacher"),
+                date: meetData.date,
                 Reason: meetData.reason,
-                HostName: host.name,
-                HostRole: host.role,
-                SchoolName: "Bright Future School"
+                SchoolName: "Springfield International School"
             };
+
+            console.log('data body ------> ', dataBody)
 
             await sendEmail('parent-meeting-notification', dataBody);
 

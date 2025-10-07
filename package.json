@@ -4,8 +4,14 @@
   "description": "To make it easy for you to get started with GitLab, here's a list of recommended next steps.",
   "main": "server.js",
   "scripts": {
-    "test": "standard",
+    "test": "jest --runInBand",
     "start": "nodemon server.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   },
   "repository": {
     "type": "git",
@@ -65,6 +71,8 @@
     "validator": "^13.7.0"
   },
   "devDependencies": {
-    "standard": "*"
+    "jest": "^30.2.0",
+    "standard": "*",
+    "supertest": "^7.1.4"
   }
 }

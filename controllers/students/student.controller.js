@@ -107,18 +107,14 @@ const studentController = {
                 teacherNameFilter: teacher || null
             });
 
-            if (!attendance.success) {
-                return res.status(500).json(responseData("ERROR_FETCHING_ATTENDANCE", {}, req));
+            if (!attendance) {
+                return res.status(500).json(responseData("ERROR_FETCHING_ATTENDANCE", {}, req, false));
             }
 
-            return res
-                .status(200)
-                .json(responseData("GET_ATTENDANCE", attendance, req, true));
+            return res.status(200).json(responseData("GET_ATTENDANCE", attendance, req, true));
         } catch (error) {
-            console.error("Error in viewAttendanceByClass:", error);
-            return res
-                .status(500)
-                .json(responseData("SOMETHING_WENT_WRONG", {}, req));
+            console.log("Error in viewAttendanceByClass:", error);
+            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
         }
     },
 

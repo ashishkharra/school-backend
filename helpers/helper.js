@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs')
 const moment = require('moment')
 const sendNotification = require('../helpers/firebase-admin')
 const fs = require('fs')
+const path = require('path')
 const ejs = require('ejs')
 const dayjs = require('dayjs')
 require('dotenv').config()
@@ -38,6 +39,8 @@ const EmailTemplate = require('../models/emailTemplate.js')
 //     secretAccessKey: process.env.AWS_SECRET_KEY
 //   }
 // })
+
+const baseUploadPath = path.join(__dirname, '../uploads');
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -77,7 +80,7 @@ const sendEmailCommon = async (subject, renderedTemplate, dataBody) => {
     const transporter = createTransport()
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
-      to: dataBody.email,
+      to: dataBody.email || dataBody.to,
       subject: subject,
       html: renderedTemplate
     })
@@ -1095,7 +1098,7 @@ module.exports = {
   },
 
   parseMultipartJSONFields: (fields) => (req, res, next) => {
-    fields.forEach(field => {
+    for (const field of fields) {
       if (req.body[field] && typeof req.body[field] === 'string') {
         try {
           req.body[field] = JSON.parse(req.body[field]);
@@ -1106,34 +1109,15 @@ module.exports = {
           });
         }
       }
-    });
+    }
     next();
   },
 
-  generateZoomToken: async () => {
-    try {
-      const res = await axios.post(process.env.ZOOM_TOKEN_URI, null, {
-        params: {
-          grant_type: process.env.ZOOM_GRANT_TYPE,
-          account_id: process.env.ZOOM_ACC_ID,
-        },
-        auth: {
-          username: process.env.ZOOM_ACC_USERNAME,
-          password: process.env.ZOOM_ACC_PASSWORD,
-        },
-      });
-
-      return { success: true, message: 'ZOOM_TOKEN_GENERATED_SUCCESSFULLY', zoom_token: res.data.access_token };
-    } catch (error) {
-      console.error('Failed to get Zoom token:', error)
-      return { success: false, message: 'ZOOM_TOKEN_GENERATION_FAILED' }
-    }
-  },
-
   createZoomMeeting: async ({ topic, start_time }) => {
-    const token = await generateZoomToken();
+    const result = await generateZoomToken();
+    const token = result.zoom_token;
     const zoomRes = await axios.post(
-      process.env.ZOOM_MAIN_URI,
+      'https://api.zoom.us/v2/users/me/meetings',
       {
         topic,
         type: 2,
@@ -1150,6 +1134,42 @@ module.exports = {
       { headers: { Authorization: `Bearer ${token}` } }
     );
     return zoomRes.data;
-  }
+  },
 
+
+  deleteFileIfExists: (filePath) => {
+    try {
+      if (!filePath) return;
+      const fullPath = path.join(baseUploadPath, filePath.replace(/^\/+/, ''));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log(`🗑️ Deleted: ${fullPath}`);
+      }
+    } catch (err) {
+      console.error("Error deleting file:", err);
+    }
+  },
+}
+// generateZoomToken : async () => {
+
+const generateZoomToken = async () => {
+  try {
+    const res = await axios.post('https://zoom.us/oauth/token', null, {
+      params: {
+        grant_type: 'account_credentials',
+        account_id: '4St-QrrUQIaLGZT3lqo7eQ',
+      },
+      auth: {
+        username: 'fcZsBTJaSpatCpqxZqqLhQ',
+        password: '1Prcoeh624cXUb1lG5GA7X02j8Kc72wP',
+      },
+    });
+
+    console.log('token --------- ', res.data.access_token)
+
+    return { success: true, message: 'ZOOM_TOKEN_GENERATED_SUCCESSFULLY', zoom_token: res.data.access_token };
+  } catch (error) {
+    console.error('Failed to get Zoom token:', error)
+    return { success: false, message: 'ZOOM_TOKEN_GENERATION_FAILED' }
+  }
 }

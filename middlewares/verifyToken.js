@@ -81,7 +81,6 @@ const handleTeacherRole = (user, req, res, next) => {
 const handleVerification = async (req, res, next, token) => {
   try {
     const user = jwt.verify(token, process.env.JWT_SECRET)
-    console.log('user in verification : ', user)
 
     if (!user) {
       return res
@@ -91,7 +90,7 @@ const handleVerification = async (req, res, next, token) => {
 
     req.user = user
     const role = (user.role || user.userType || "").toLowerCase();
-
+    // console.log(user)
     switch (role) {
       case constant.type.admin:
       case constant.type.subAdmin:
