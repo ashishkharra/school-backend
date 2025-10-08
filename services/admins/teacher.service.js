@@ -499,7 +499,7 @@ module.exports = {
           { endMinutes: { $gt: startMinutes } }
         ]
       })
-
+      console.log(classConflict, 'classConflict-------')
       if (classConflict) {
         return {
           success: false,
@@ -510,14 +510,14 @@ module.exports = {
       }
 
       const newAssignment = new TeacherTimeTable({
-        classId,
-        section,
-        subjectId,
-        teacherId,
-        startTime,
-        endTime,
-        startMinutes,
-        endMinutes
+     class: classId,
+  section,
+  subject: subjectId,
+  teacher: teacherId,
+  startTime,
+  endTime,
+  startMinutes,
+  endMinutes
       })
 
       const savedAssignment = await newAssignment.save()
@@ -553,7 +553,7 @@ module.exports = {
     }
   },
 
-  updateTeacherAssignment: async ({
+  updateTeacherAssign: async ({
     assignmentId,
     classId,
     teacherId,
@@ -626,13 +626,14 @@ module.exports = {
     }
   },
 
-  deleteTeacherAssignment: async function ({ assignmentId }) {
+  deleteTeacherAssign: async function ({ assignmentId }) {
     try {
       if (!assignmentId) {
         return { success: false, message: 'Assignment ID required', data: {} }
       }
 
       const deleted = await TeacherTimeTable.findByIdAndDelete(assignmentId)
+      console.log(deleted,"deleted-----")
       if (!deleted) {
         return { success: false, message: 'Assignment not found', data: {} }
       }
@@ -646,7 +647,8 @@ module.exports = {
       return { success: false, message: error.message, data: {} }
     }
   },
-  getTeacherAssignments: async ({
+
+  getTeacherAssign: async ({
     classId,
     teacherId,
     page = 1,
@@ -655,16 +657,18 @@ module.exports = {
     try {
       const skip = (page - 1) * limit
       const pipeline = getTeacherAssignByLookup(classId, teacherId)
+      console.log("pipeline-----",pipeline)
       const results = await TeacherTimeTable.aggregate([
         ...pipeline,
         { $skip: skip },
         { $limit: parseInt(limit) }
       ])
-
+ console.log("results-----",results)
       const totalResult = await TeacherTimeTable.aggregate([
         ...getTeacherAssignByLookup(classId, teacherId),
         { $count: 'total' }
       ])
+      console.log(totalResult,"totalResult----")
       const total = totalResult.length > 0 ? totalResult[0].total : 0
 
       return {

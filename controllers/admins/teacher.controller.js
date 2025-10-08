@@ -235,12 +235,12 @@ console.log("queryResult",queryResult)
     }
   },
 
-  updateTeacherAssignmentController: async (req, res) => {
+  updateAssignTeacherToController: async (req, res) => {
     try {
       const { assignmentId } = req.params
       const { classId, teacherId, section, subjectId, startTime, endTime } = req.body
 
-      const updatedAssignment = await adminTeacherService.updateTeacherAssignment({
+      const updatedAssignment = await adminTeacherService.updateTeacherAssign({
         assignmentId,
         classId,
         teacherId,
@@ -269,14 +269,14 @@ console.log("queryResult",queryResult)
     }
   }
   ,
-  deleteTeacherAssignmentController: async (req, res) => {
+  deleteAssignTeacherToController: async (req, res) => {
     try {
       const { assignmentId } = req.params
-
-      const deletedAssignment = await adminTeacherService.deleteTeacherAssignment({
+console.log(req.params,"req.params----")
+      const deletedAssignment = await adminTeacherService.deleteTeacherAssign({
         assignmentId
       })
-
+console.log(deletedAssignment,"deletedAssignment-----")
       return res
         .status(deletedAssignment.success ? 200 : 400)
         .json(
@@ -287,22 +287,28 @@ console.log("queryResult",queryResult)
             deletedAssignment.success
           )
         )
+        
     } catch (error) {
+      console.log("catch",error)
       return res
         .status(400)
         .json(
           responseData('DELETE_TEACHER_FAILED', { error: error.message }, req, false)
         )
     }
+    
   },
-  getTeacherAssignmentsController: async (req, res) => {
+  getAssignTeacherToController: async (req, res) => {
     try {
       const { classId, teacherId, page = 1, limit = 10  } = req.query;
-
-      const queryResult = await adminTeacherService.getTeacherAssignments({ classId, teacherId,
+console.log('req.query',req.query)
+      const queryResult = await adminTeacherService.getTeacherAssign({ classId, teacherId,
+        
           page: parseInt(page),
       limit: parseInt(limit)
        });
+       console.log(queryResult,"queryResult------");
+       
 
     return res.json(
         responseData(

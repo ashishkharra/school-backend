@@ -16,7 +16,9 @@ const teacherTimeTableSchema = new mongoose.Schema({
     match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i 
   },
 startTime: { type: String, required: true }, // e.g. "09:00"
-endTime: { type: String, required: true }    // e.g. "10:30"
+endTime: { type: String, required: true },    // e.g. "10:30",
+startMinutes: { type: Number },
+endMinutes: { type: Number }
 }, { timestamps: true });
 
 module.exports = mongoose.model("TeacherTimeTable", teacherTimeTableSchema);

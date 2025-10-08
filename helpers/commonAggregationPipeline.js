@@ -1100,6 +1100,196 @@ const getSubmissionsPipeline = (classId, studentId, page = 1, limit = 10) => {
 };
 
 
+
+//---------teacher---------
+const getAssignmentLookup = (classId, subjectId, uploadedBy) => {
+  const matchStage = {}
+  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId)
+  if (subjectId) matchStage.subjectId = mongoose.Types.ObjectId(subjectId)
+  if (uploadedBy) matchStage.uploadedBy = mongoose.Types.ObjectId(uploadedBy)
+
+  return [
+    { $match: matchStage },
+    {
+      $addFields: {
+        AssignmentPic: {
+          $cond: [
+            {
+              $or: [{ $eq: ['$fileUrl', ''] }, { $eq: ['$fileUrl', null] }]
+            },
+            '',
+            { $concat: [process.env.IMAGE_PATH, '$fileUrl'] }
+          ]
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classId',
+        foreignField: '_id',
+        as: 'classDetails'
+      }
+    },
+    { $unwind: { path: '$classDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: 'teachers',
+        localField: 'uploadedBy',
+        foreignField: '_id',
+        as: 'teacherDetails'
+      }
+    },
+    { $unwind: { path: '$teacherDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'subjectId',
+        foreignField: '_id',
+        as: 'subjectDetails'
+      }
+    },
+    { $unwind: { path: '$subjectDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        dueDate: 1,
+        maxMarks: 1,
+        AssignmentPic: 1, // ✅ renamed field
+        createdAt: 1,
+        updatedAt: 1,
+
+        // Class
+        'classDetails._id': 1,
+        'classDetails.name': 1,
+        'classDetails.section': 1,
+
+        // Teacher
+        'teacherDetails._id': 1,
+        'teacherDetails.name': 1,
+        'teacherDetails.email': 1,
+        'teacherDetails.phone': 1,
+        'teacherDetails.department': 1,
+
+        // Subject
+        'subjectDetails._id': 1,
+        'subjectDetails.name': 1,
+        'subjectDetails.code': 1
+      }
+    }
+  ]
+}
+
+const getTeacherAssignByLookup = (classId, teacherId) => {
+  const matchStage = {}
+  if (classId) matchStage.classId = mongoose.Types.ObjectId(classId)
+  if (teacherId) matchStage.teacherId = mongoose.Types.ObjectId(teacherId)
+
+  return [
+    { $match: matchStage },
+
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classId',
+        foreignField: '_id',
+        as: 'classDetails'
+      }
+    },
+    { $unwind: { path: '$classDetails', preserveNullAndEmptyArrays: true } },
+
+    {
+      $lookup: {
+        from: 'teachers',
+        localField: 'teacherId',
+        foreignField: '_id',
+        as: 'teacherDetails'
+      }
+    },
+    { $unwind: { path: '$teacherDetails', preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'subjectId',
+        foreignField: '_id',
+        as: 'subjectDetails'
+      }
+    },
+    { $unwind: { path: '$subjectDetails', preserveNullAndEmptyArrays: true } },
+
+    {
+      $project: {
+        section: 1,
+        subject: 1,
+        startTime: 1,
+        endTime: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        'classDetails._id': 1,
+        'classDetails.name': 1,
+        'classDetails.section': 1,
+        'teacherDetails._id': 1,
+        'teacherDetails.name': 1,
+        'teacherDetails.email': 1,
+        'teacherDetails.phone': 1,
+        'teacherDetails.department': 1
+      }
+    }
+  ]
+}
+
+const getAllTeachersWithClassLookup = (teacherId) => {
+  return [
+    // {
+    //   $match: { _id: new mongoose.Types.ObjectId(teacherId) }
+    // },
+    {
+      $lookup: {
+        from: 'classes',
+        localField: '_id',          // teacher._id
+        foreignField: 'teacherId',  // class.teacherId
+        as: 'classesInfo'
+      },
+      
+    },
+   {
+    $project: {
+      // Teacher info
+      name: 1,
+      email: 1,
+      phone: 1,
+      department: 1,
+      designation: 1,
+
+      // Filter classes: only where teacher is class teacher
+      classesInfo: {
+        $map: {
+          input: {
+            $filter: {
+              input: "$classesInfo",
+              as: "class",
+              cond: { $eq: ["$$class.isClassTeacher", true] }
+            }
+          },
+          as: "class",
+          in: {
+            _id: "$$class._id",
+            name: "$$class.name",
+            section: "$$class.section",
+            isClassTeacher: "$$class.isClassTeacher",
+            studentCount: "$$class.studentCount",
+            startTime: "$$class.startTime",
+            endTime: "$$class.endTime"
+          }
+        }
+      }
+    }
+  }
+  ];
+};
+
+
 module.exports = {
   studentAttendancePipeline,
   studentProfilePipeline,
@@ -1120,7 +1310,13 @@ module.exports = {
   getStudentsByClassNamePipeline,
   getClassWithStudentsPipeline,
   getStudentsPipeline,
-  getSubmissionsPipeline
+  getSubmissionsPipeline,
+
+
+  //teacher
+  getAssignmentLookup,
+  getTeacherAssignByLookup,
+  getAllTeachersWithClassLookup
 }
 
 
