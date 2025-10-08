@@ -19,6 +19,16 @@ module.exports = {
       return res.status(422).json(responseData(msg, {}, req))
     }
   },
+
+  adminLogout: async (req, res) => {
+    try {
+      await adminService.adminLogout(req, res)
+    } catch (err) {
+      const msg = err.message || 'SOMETHING_WENT_WRONG'
+      return res.status(422).json(responseData(msg, {}, req))
+    }
+  },
+  
   adminProfile: async (req, res) => {
     try {
       await adminService.adminProfile(req, res)

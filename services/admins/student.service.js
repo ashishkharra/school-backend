@@ -110,7 +110,6 @@ const adminStudent = {
     },
 
     updateStudent: async (studentData, studentId) => {
-        console.log('su --------- m ', studentData)
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { status: 401, success: false, message: "STUDENT_ID_NOT_VALID" };
@@ -121,25 +120,26 @@ const adminStudent = {
 
             const updateData = {};
 
+            // Basic fields
             const basicFields = [
                 'name', 'email', 'phone', 'address', 'parents', 'guardian', 'emergencyContact',
-                'dob', 'gender', 'bloodGroup', 'profilePic', 'physicalDisability', 'disabilityDetails', 'password'
+                'dob', 'gender', 'bloodGroup', 'profilePic', 'physicalDisability', 'disabilityDetails', 'password', 'aadharFront', 'aadharBack'
             ];
             basicFields.forEach(field => {
-                if (typeof studentData[field] !== 'undefined') {
-                    if (field === 'password') {
-                        updateData.password = bcrypt.hashSync(studentData.password, 12);
-                    } else {
-                        updateData[field] = studentData[field];
-                    }
+                if (studentData[field] !== undefined) {
+                    updateData[field] = field === 'password'
+                        ? bcrypt.hashSync(studentData.password, 12)
+                        : studentData[field];
                 }
             });
 
-            const docFields = ['IDProof', 'marksheets', 'certificates', 'medicalRecords', 'transferCertificate', 'disciplinaryActions'];
+            // Document fields
+            const docFields = ['marksheets', 'certificates', 'medicalRecords', 'transferCertificate', 'disciplinaryActions'];
             docFields.forEach(field => {
-                if (studentData[field]) updateData[field] = studentData[field];
+                if (studentData[field] !== undefined) updateData[field] = studentData[field];
             });
 
+            // Update enrollment info if section/academicYear present
             if (studentData.section || studentData.academicYear) {
                 const enrollment = await Enrollment.findOne({ student: studentId });
                 if (!enrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
@@ -147,33 +147,51 @@ const adminStudent = {
                 const newSection = studentData.section || enrollment.section;
                 const newYear = studentData.academicYear || enrollment.academicYear;
 
+                const classObj = await Class.findById(enrollment.class);
+                if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
+                const serial = await Enrollment.countDocuments({
+                    class: enrollment.class,
+                    section: newSection,
+                    academicYear: newYear
+                }) + 1;
+
+                const className = classObj.name.replace(/\D/g, "");
+                const newRollNo = `${className}${newSection}-${String(serial).padStart(3, "0")}`;
+
                 enrollment.section = newSection;
                 enrollment.academicYear = newYear;
+                enrollment.rollNo = newRollNo;
 
-                if (studentData.section || studentData.academicYear) {
-                    const classObj = await Class.findById(enrollment.class);
-                    if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
-
-                    const serial = await Enrollment.countDocuments({
-                        class: enrollment.class,
-                        section: newSection,
-                        academicYear: newYear
-                    }) + 1;
-
-                    const className = classObj.name.replace(/\D/g, "");
-                    const newRollNo = `${className}${newSection}-${String(serial).padStart(3, "0")}`;
-
-                    enrollment.rollNo = newRollNo;
-                    updateData.rollNo = newRollNo;
-                    updateData.section = newSection;
-                    updateData.academicYear = newYear;
-                }
+                updateData.section = newSection;
+                updateData.academicYear = newYear;
+                updateData.rollNo = newRollNo;
 
                 await enrollment.save();
             }
 
-            const updatedStudent = await Student.findByIdAndUpdate(studentId, updateData, { new: true });
+            const updatedStudentDoc = await Student.findByIdAndUpdate(studentId, updateData, { new: true });
 
+            const updatedStudent = updatedStudentDoc.toObject();
+
+            const addStaticUrl = (path) => path ? process.env.STATIC_URL + path : null;
+
+            // Prefix single images
+            ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(field => {
+                updatedStudent[field] = addStaticUrl(updatedStudent[field]);
+            });
+
+            // Prefix arrays
+            ['marksheets', 'certificates', 'medicalRecords'].forEach(arrField => {
+                if (Array.isArray(updatedStudent[arrField])) {
+                    updatedStudent[arrField] = updatedStudent[arrField].map(item => ({
+                        ...item,
+                        fileUrl: addStaticUrl(item.fileUrl)
+                    }));
+                }
+            });
+
+            // Send email notification
             await sendEmail("profile-updated-notification", {
                 Name: updatedStudent.name,
                 Email: updatedStudent.email,
@@ -181,7 +199,7 @@ const adminStudent = {
                 To: updatedStudent.email
             });
 
-            return { status: 204, success: true, student: updatedStudent, message: "STUDENT_UPDATED_SUCCESSFULLY" };
+            return { status: 200, success: true, student: updatedStudent, message: "STUDENT_UPDATED_SUCCESSFULLY" };
 
         } catch (error) {
             console.error("UpdateStudent error:", error);
@@ -666,20 +684,41 @@ const adminStudent = {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { success: false, message: "STUDENT_ID_NOT_VALID" }
             }
+
             const result = await Student.aggregate(getStudentWithDetails(studentId));
 
-            console.log('result of student : ', result)
+            if (!result || !result[0]) {
+                return { success: false, message: "STUDENT_PROFILE_ERROR" };
+            }
 
-            if (!result) return { success: false, message: "STUDENT_PROFILE_ERROR" }
+            // Helper to prepend STATIC_URL
+            const addStaticUrl = (path) => path ? process.env.STATIC_URL + path : null;
+
+            // Prefix single image paths
+            ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(field => {
+                result[0][field] = addStaticUrl(result[0][field]);
+            });
+
+            // Prefix files inside arrays
+            ['certificates', 'marksheets', 'medicalRecords'].forEach(arrayField => {
+                if (Array.isArray(result[0][arrayField])) {
+                    result[0][arrayField] = result[0][arrayField].map(item => ({
+                        ...item,
+                        fileUrl: addStaticUrl(item.fileUrl)
+                    }));
+                }
+            });
+
+            console.log('result of student : ', result[0]);
 
             return {
                 success: true,
                 message: "STUDENT_FETCHED_SUCCESSFULLY",
                 result
-            }
+            };
         } catch (error) {
             console.error("getStudentById error:", error);
-            return { success: false, message: "SERVER_ERROR" }
+            return { success: false, message: error.message }
         }
     },
 }

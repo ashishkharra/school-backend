@@ -1569,6 +1569,17 @@
   "ERROR_FETCHING_ATTENDANCE": {
     "en": "ERROR_FETCHING_ATTENDANCE",
     "ar": ""
+  },
+  "SUBJECT_NAME_REQUIRED": {
+    "en": "Subject name is required",
+    "ar": ""
+  },
+  "SUBJECT_REGISTERED_SUCCESSFULLY": {
+    "en": "Subject registered successfully",
+    "ar": ""
+  },
+  "LOGOUT_SUCCESSFUL": {
+    "en": "Logout successfully!",
+    "ar": ""
   }
-
 }

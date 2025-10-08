@@ -735,22 +735,6 @@ const getStudentWithDetails = (studentId) => [
   },
 
   // Cleanup: remove unwanted fields
-  {
-    $project: {
-      enrollments: 0,
-      feesRecords: 0,
-      feeStructures: 0,
-      attendanceRecords: 0,
-      assignments: 0,
-      feeStructuresDetails: 0,
-      siblings: 0,
-      marksheets: 0,
-      notifications: 0,
-      isVerified: 0,
-      parents: 0,
-      guardian: 0
-    }
-  }
 ];
 // pipeline for getting all classes from db
 const getAllClassesPipeline = (className, page = 1, limit = 10) => {

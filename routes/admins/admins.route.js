@@ -23,6 +23,7 @@ router
   .post('/generatePreSignedUrl', [verifyToken], admin.generatePresignedURL)
   .get('/country-list', [verifyToken], admin.countryList)
   .get('/profile', [verifyToken], admin.adminProfile)
-  .post("/register", admin.registerAdmin);
+  .post("/register", admin.registerAdmin)
+  .post("/logout", [verifyToken], admin.adminLogout);
 
 module.exports = router

@@ -108,6 +108,31 @@ module.exports = {
       return res.json(responseData('ERROR_OCCUR', {}, req, false));
     }
   },
+  adminLogout: async (req, res) => {
+    try {
+      const adminId = req.user?._id;
+
+      if (!adminId) {
+        return { success: false, message: 'INVALID_TOKEN' };
+      }
+
+      const admin = await Admin.findById(adminId);
+      if (!admin) {
+        return { success: false, message: 'ADMIN_NOT_FOUND' };
+      }
+
+      await Admin.findByIdAndUpdate(adminId, {
+        forceLogout: true,
+        accessToken: "",
+        refreshToken: "" 
+      });
+
+      return { success: true, message: 'LOGOUT_SUCCESSFUL' };
+    } catch (error) {
+      console.error('Admin Logout Error:', error);
+      return { success: false, message: 'SERVER_ERROR' };
+    }
+  },
   adminProfile: async (req, res) => {
     try {
       const { _id } = req.user

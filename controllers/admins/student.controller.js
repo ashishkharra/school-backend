@@ -9,9 +9,9 @@ const baseUploadDir = path.join(__dirname, '../../uploads');
 const normalizeUploadPath = (filePath) => {
   const normalizedPath = path.normalize(filePath);
   if (!normalizedPath.startsWith(baseUploadDir)) {
-    return { success : false, message : 'INVALID_PATH'}
+    return { success: false, message: 'INVALID_PATH' }
   }
-  return '/uploads' + normalizedPath.replace(baseUploadDir, '').replace(/\\/g, '/');
+  return normalizedPath.replace(baseUploadDir, '').replace(/\\/g, '/');
 };
 
 module.exports = {
@@ -20,7 +20,7 @@ module.exports = {
     try {
       const data = req.body;
       const files = req.files;
-      console.log("DATA------",data)
+      console.log("DATA------", data)
       if (data.parents && typeof data.parents === 'string') data.parents = JSON.parse(data.parents);
       if (data.siblings && typeof data.siblings === 'string') data.siblings = JSON.parse(data.siblings);
       if (data.achievements && typeof data.achievements === 'string') data.achievements = JSON.parse(data.achievements);
@@ -79,43 +79,27 @@ module.exports = {
 
   updateStudent: async (req, res) => {
     try {
-      console.log('profile picture : :::::: ---- ', req.body.profilePic)
-      const data = req.body;
+      const data = { ...req.body }; // clone body
       const files = req.files;
+
+      console.log('files--------- ', files)
       const { studentId } = req.params;
+      // console.log("DATA----", data)
+      const getRelativePath = (filePath) => filePath.replace(baseUploadDir, '').replace(/\\/g, '/');
 
-      const existingStudent = await adminStudent.getStudentById(studentId);
-      if (!existingStudent) {
-        return res.status(404).json(responseData("STUDENT_NOT_FOUND", {}, req, false));
-      }
-
+      // Only update images/docs if they exist
       if (files) {
-        const getRelativePath = (filePath) =>
-          filePath.replace(baseUploadDir, '').replace(/\\/g, '/');
+        ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(field => {
+          if (files[field]?.[0]) {
+            data[field] = getRelativePath(files[field][0].path);
+            console.log('path field : ::::: : ', data[field])
+          } else {
+            delete data[field];
+          }
+        });
 
-        if (files.profilePic?.[0]) {
-          deleteFileIfExists(existingStudent.profilePic);
-          data.profilePic = getRelativePath(files.profilePic[0].path);
-        }
-
-        if (files.IDProof?.[0]) {
-          deleteFileIfExists(existingStudent.IDProof);
-          data.IDProof = getRelativePath(files.IDProof[0].path);
-        }
-
-        if (files.aadharFront?.[0]) {
-          deleteFileIfExists(existingStudent.aadharFront);
-          data.aadharFront = getRelativePath(files.aadharFront[0].path);
-        }
-        if (files.aadharBack?.[0]) {
-          deleteFileIfExists(existingStudent.aadharBack);
-          data.aadharBack = getRelativePath(files.aadharBack[0].path);
-        }
 
         if (files.marksheets?.length) {
-          if (Array.isArray(existingStudent.marksheets)) {
-            existingStudent.marksheets.forEach(m => deleteFileIfExists(m.fileUrl));
-          }
           data.marksheets = files.marksheets.map(f => ({
             exam: f.originalname,
             fileUrl: getRelativePath(f.path)
@@ -123,23 +107,15 @@ module.exports = {
         }
 
         if (files.certificates?.length) {
-          if (Array.isArray(existingStudent.certificates)) {
-            existingStudent.certificates.forEach(c => deleteFileIfExists(c.fileUrl));
-          }
           data.certificates = files.certificates.map(f => ({
             name: f.originalname,
             issuedBy: req.body.certificatesIssuedBy || null,
-            issueDate: req.body.certificatesIssueDate
-              ? new Date(req.body.certificatesIssueDate)
-              : null,
+            issueDate: req.body.certificatesIssueDate ? new Date(req.body.certificatesIssueDate) : null,
             fileUrl: getRelativePath(f.path)
           }));
         }
 
         if (files.medicalRecords?.length) {
-          if (Array.isArray(existingStudent.medicalRecords)) {
-            existingStudent.medicalRecords.forEach(m => deleteFileIfExists(m.fileUrl));
-          }
           data.medicalRecords = files.medicalRecords.map(f => ({
             condition: req.body.medicalCondition || "",
             doctorNote: req.body.doctorNote || "",
@@ -147,24 +123,24 @@ module.exports = {
             fileUrl: getRelativePath(f.path)
           }));
         }
-
-        if (files.transferCertificate?.[0]) {
-          deleteFileIfExists(existingStudent.transferCertificate);
-          data.transferCertificate = getRelativePath(files.transferCertificate[0].path);
-        }
       }
 
+      // Remove null or undefined fields
+      Object.keys(data).forEach(key => {
+        if (data[key] === 'null' || data[key] === undefined) delete data[key];
+      });
+
+      console.log('updatable data ::::::::::: -------- ', data);
       const result = await adminStudent.updateStudent(data, studentId);
 
-      if (!result?.success) {
-        return res.status(400).json(responseData(result?.message, {}, req, false));
+      if (!result.success) {
+        return res.status(result.status || 400).json(responseData(result.message, {}, req, false));
       }
 
-      return res.status(200).json(responseData(result?.message, result?.student, req, true));
-
+      return res.status(200).json(responseData(result.message, result.student, req, true));
     } catch (error) {
       console.error("Error in updateStudent:", error);
-      return res.status(500).json(responseData("SERVER_ERROR", error.message, req, false));
+      return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
     }
   },
 
@@ -297,13 +273,16 @@ module.exports = {
     try {
       const { studentId } = req.params;
 
-      const student = await adminStudent.getStudentById(studentId);
+      let student = await adminStudent.getStudentById(studentId);
 
       if (!student.success) {
         return res.status(400).json(
           responseData(student.message, null, req, student.success)
         );
       }
+
+      student.profilePic = process.env.STATIC_URL + student.profilePic
+
 
       return res.status(200).json(
         responseData(student.message, student.result, req, student.success)

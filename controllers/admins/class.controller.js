@@ -36,6 +36,7 @@ const adminClassController = {
     addSubjects: async (req, res) => {
         try {
             const data = req.body;
+            console.log('subject data : ', data)
             const result = await adminClassService.addSubjects(data);
             if (!result.success) {
                 return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));

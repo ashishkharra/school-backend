@@ -113,7 +113,7 @@ const adminClassService = {
             };
         } catch (error) {
             console.error("Error while registering subject:", error);
-            return { success: false, message: "SERVER_ERROR" };
+            return { success: false, message: error.message };
         }
     },
 

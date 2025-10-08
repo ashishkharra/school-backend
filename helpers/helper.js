@@ -357,6 +357,7 @@ module.exports = {
   },
   validatorMiddleware: (req, res, next) => {
     const errors = validationResult(req)
+    console.log("VALIDTION ERROR",errors)
     if (!errors.isEmpty()) {
       return res
         .status(200)
