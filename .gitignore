@@ -2,6 +2,7 @@ node_modules
 public/reports
 public/invoice
 public/files
+uploads
 package-lock.json
 .vscode
 .env
