@@ -35,5 +35,6 @@ module.exports = {
         .json(responseData("PROFILE_UPDATE_REQUEST_FAILED", { error: error.message }, req, false));
     }
   },
+
 }
 

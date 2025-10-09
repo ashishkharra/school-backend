@@ -1273,6 +1273,63 @@ const getAllTeachersWithClassLookup = (teacherId) => {
   ];
 };
 
+const teacherAttendancePipeline = ({
+  teacherId,
+  month,
+  date,
+  year,
+  statusFilter,
+  page = 1,
+  limit = 10
+}) => {
+  const matchExpr = [];
+
+  if (month) matchExpr.push({ $eq: [{ $month: "$date" }, month] });
+  if (year) matchExpr.push({ $eq: [{ $year: "$date" }, year] });
+
+  if (date) {
+    const start = new Date(date + "T00:00:00.000Z");
+    const end = new Date(date + "T23:59:59.999Z");
+    matchExpr.push({ $gte: ["$date", start] });
+    matchExpr.push({ $lte: ["$date", end] });
+  }
+
+  const pipeline = [
+    { $match: { teacher: new mongoose.Types.ObjectId(teacherId) } },
+
+    ...(matchExpr.length ? [{ $match: { $expr: { $and: matchExpr } } }] : []),
+
+    ...(statusFilter ? [{ $match: { status: statusFilter } }] : []),
+
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "teacher",
+        foreignField: "_id",
+        as: "teacherInfo"
+      }
+    },
+    { $unwind: "$teacherInfo" },
+
+    {
+      $project: {
+        _id: 0,
+        date: 1,
+        status: 1,
+        remarks: 1,
+        teacherName: "$teacherInfo.name",
+        teacherEmail: "$teacherInfo.email",
+        teacherId: "$teacherInfo._id"
+      }
+    },
+
+    { $sort: { date: -1 } },
+    ...getPaginationArray(page, limit)
+  ];
+
+  return pipeline;
+};
+
 
 module.exports = {
   studentAttendancePipeline,
@@ -1300,7 +1357,9 @@ module.exports = {
   //teacher
   getAssignmentLookup,
   getTeacherAssignByLookup,
-  getAllTeachersWithClassLookup
+  getAllTeachersWithClassLookup,
+
+  teacherAttendancePipeline
 }
 
 

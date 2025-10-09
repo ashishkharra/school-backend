@@ -12,6 +12,6 @@ module.exports.login = async (req, res) => {
     );
   } catch (error) {
     console.error("Login error:", error.message);
-    return res.json(responseData("ERROR_OCCUR", {}, req, false));
+    return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
   }
 };

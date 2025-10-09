@@ -17,7 +17,7 @@ const adminAssignments = {
             return res.status(200).json(responseData(result?.success, result, req, result?.success || true))
         } catch (error) {
             console.log("error while fetching assignments : ", error.message);
-            return res.status(500).json(responseData('SERVER_ERROR', {}, req, false))
+            return res.status(500).json(responseData('SERVER_ERROR', { error : error.message }, req, false))
         }
     },
 
@@ -35,7 +35,7 @@ const adminAssignments = {
             return res.status(200).json(responseData(result?.success, result, req, result?.success || true))
         } catch (error) {
             console.log("error while fetching submissions : ", error.message);
-            return res.status(500).json(responseData('SERVER_ERROR', {}, req, false))
+            return res.status(500).json(responseData('SERVER_ERROR', { error : error.message }, req, false))
         }
     }
 }

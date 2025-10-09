@@ -1581,5 +1581,45 @@
   "LOGOUT_SUCCESSFUL": {
     "en": "Logout successfully!",
     "ar": ""
+  },
+  "TOGGLE_STATUS_FAILED": {
+    "en": "Toggle status failed",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED_ALREADY": {
+    "en": "Attedance already marked for today",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED": {
+    "en": "Attendance marked or updated successfully",
+    "ar": ""
+  },
+  "ATTENDANCE_FETCHED_SUCCESSFULLY":{
+    "en": "Teacher attendance fetched successfully",
+    "ar": ""
+  },
+  "INVALID_TEACHER_ID": {
+    "en": "Invalid teacher id",
+    "ar": ""
+  },
+  "TEACHER_ID_REQUIRED": {
+    "en": "Teacher id required",
+    "ar": ""
+  },
+  "INVALID_MONTH": {
+    "en": "Invalid month",
+    "ar": ""
+  },
+  "GET_TEACHER_ATTENDANCE": {
+    "en": "Teacher attendance successfully fetched",
+    "ar": ""
+  },
+  "FAILED_TEACHER_ATTENDANCE_FAILED": {
+    "en": "Error while fetchind teacher attendance",
+    "ar": ""
+  },
+  "PARENT_PHONE_INVALID": {
+    "en": "Parent phone is invalid",
+    "ar": ""
   }
 }

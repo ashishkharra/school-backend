@@ -56,6 +56,13 @@ const adminClassService = {
         try {
             if (!mongoose.Types.ObjectId.isValid(classId)) return { success: false, message: 'CLASS_ID_NOT_VALID' }
 
+            const { name, section } = classData
+
+            let existingClass = await Class.findOne({ name, section });
+            if (existingClass) {
+                return { success: false, message: "SECTION_ALREADY_EXIST" };
+            }
+
             classData.name = formatClassName(classData.name)
 
             const update = {};
@@ -119,7 +126,7 @@ const adminClassService = {
 
     toggleSubjectStatus: async (id) => {
         try {
-            if (!mongoose.Types.ObjectId.isValid(id)) return { success : false, message : 'SUBJECT_ID_NOT_VALID'}
+            if (!mongoose.Types.ObjectId.isValid(id)) return { success: false, message: 'SUBJECT_ID_NOT_VALID' }
             const subject = await Subject.findById(id);
             if (!subject) return { success: false, message: "SUBJECT_NOT_FOUND" };
 
@@ -135,7 +142,7 @@ const adminClassService = {
 
     toggleClassStatus: async (id) => {
         try {
-            if (!mongoose.Types.ObjectId.isValid(id)) return { success : false, message : "CLASS_ID_NOT_VALID"}
+            if (!mongoose.Types.ObjectId.isValid(id)) return { success: false, message: "CLASS_ID_NOT_VALID" }
             const classObj = await Class.findById(id);
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 

@@ -168,6 +168,17 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ];
     }
+    case "markAttendance": {
+        body('status')
+          .optional()
+          .isIn(['Present', 'Absent']).withMessage('INVALID_STATUS'),
+
+        body('date')
+          .optional()
+          .isISO8601().withMessage('INVALID_DATE_FORMAT'),
+
+        validatorMiddleware
+    }
 
 
     case "registerStudent": {
@@ -305,12 +316,6 @@ module.exports.validate = (method) => {
           .withMessage("DESCRIPTION_MUST_BE_STRING")
           .isLength({ max: 300 })
           .withMessage("DESCRIPTION_MAX_300"),
-
-        // Optional numeric credits
-        body("credits")
-          .optional()
-          .isInt({ min: 0, max: 20 })
-          .withMessage("CREDITS_MUST_BE_INT_0_20"),
 
         validatorMiddleware,
       ];

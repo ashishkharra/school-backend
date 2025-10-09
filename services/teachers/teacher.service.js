@@ -1,7 +1,8 @@
-const Teacher = require('../../models/teacher/teacher.schema')
+const Teacher = require('../../models/teacher/teacher.schema.js')
+const TeacherAttendance = require('../../models/teacher/teacherAttendance.schema.js')
 // const ProfileUpdateRequest = require('../../models/teacher/profileUpdateRequest.schema');
 const { sendEmail } = require('../../helpers/helper')
-const { teacherProfilePipeline } = require('../../helpers/commonAggregationPipeline.js')
+const { teacherProfilePipeline, teacherAttendancePipeline } = require('../../helpers/commonAggregationPipeline.js')
 const { default: mongoose } = require('mongoose')
 module.exports = {
   requestProfileUpdate: async (teacherId, updateData) => {
@@ -38,17 +39,17 @@ module.exports = {
     }
   },
 
-    getProfile: async (teacherId) => {
+  getProfile: async (teacherId) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(teacherId)) return { success : false, message : 'TEACHER_ID_NOT_VALID'}
+      if (!mongoose.Types.ObjectId.isValid(teacherId)) return { success: false, message: 'TEACHER_ID_NOT_VALID' }
 
       const [profile] = await Teacher.aggregate(teacherProfilePipeline(teacherId));
-      if (!profile) return { success : false, message : 'ERROR_FETCHING_TEACHER'};
+      if (!profile) return { success: false, message: 'ERROR_FETCHING_TEACHER' };
 
-      return { success : true, message : 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY', profile }
+      return { success: true, message: 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY', profile }
     } catch (err) {
       console.error("Get Teacher Profile Error:", err.message);
-      return { success : false, message : 'SERVER_ERROR'}
+      return { success: false, message: 'SERVER_ERROR' }
     }
-  }
+  },
 }

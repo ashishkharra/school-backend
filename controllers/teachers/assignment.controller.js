@@ -20,10 +20,9 @@ module.exports = {
       )
 
       res.status(response.success ? 200 : 400).json(response)
-    } catch (err) {
-      res
-        .status(500)
-        .json({ success: false, message: 'Server error', error: err.message })
+    } catch (error) {
+      console.log('Error while uploading controller : ', error.message)
+      return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
     }
   }
   // const getAssignmentsByClass = async (req, res) => {

@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs')
 const Teacher = require('../../models/teacher/teacher.schema')
+const TeacherAttendance = require('../../models/teacher/teacherAttendance.schema.js')
 const { sendEmail } = require('../../helpers/helper') // adjust path
 // const teacherAssignBYClass = require('../../models/class/class.schema');
 const subject = require('../../models/class/subjects.schema')
@@ -510,14 +511,14 @@ module.exports = {
       }
 
       const newAssignment = new TeacherTimeTable({
-     class: classId,
-  section,
-  subject: subjectId,
-  teacher: teacherId,
-  startTime,
-  endTime,
-  startMinutes,
-  endMinutes
+        class: classId,
+        section,
+        subject: subjectId,
+        teacher: teacherId,
+        startTime,
+        endTime,
+        startMinutes,
+        endMinutes
       })
 
       const savedAssignment = await newAssignment.save()
@@ -633,7 +634,7 @@ module.exports = {
       }
 
       const deleted = await TeacherTimeTable.findByIdAndDelete(assignmentId)
-      console.log(deleted,"deleted-----")
+      console.log(deleted, "deleted-----")
       if (!deleted) {
         return { success: false, message: 'Assignment not found', data: {} }
       }
@@ -657,18 +658,18 @@ module.exports = {
     try {
       const skip = (page - 1) * limit
       const pipeline = getTeacherAssignByLookup(classId, teacherId)
-      console.log("pipeline-----",pipeline)
+      console.log("pipeline-----", pipeline)
       const results = await TeacherTimeTable.aggregate([
         ...pipeline,
         { $skip: skip },
         { $limit: parseInt(limit) }
       ])
- console.log("results-----",results)
+      console.log("results-----", results)
       const totalResult = await TeacherTimeTable.aggregate([
         ...getTeacherAssignByLookup(classId, teacherId),
         { $count: 'total' }
       ])
-      console.log(totalResult,"totalResult----")
+      console.log(totalResult, "totalResult----")
       const total = totalResult.length > 0 ? totalResult[0].total : 0
 
       return {
@@ -689,5 +690,100 @@ module.exports = {
         data: []
       }
     }
+  },
+
+  markAttendance: async (teacherId, status) => {
+    // Check if already marked for today
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const existing = await TeacherAttendance.findOne({
+        teacher: teacherId,
+        date: today
+      });
+
+      if (existing) {
+        return { success: false, message: "ATTENDANCE_MARKED_ALREADY" };
+      }
+
+      const attendance = await TeacherAttendance.create({
+        teacher: teacherId,
+        date: today,
+        status: status || "Present",
+      });
+
+      return { success: true, message: "ATTENDANCE_MARKED", attendance };
+    } catch (error) {
+      console.log('Error while marking attendance of teacher : ', error.message)
+      return { success: false, message: 'SERVER_ERROR' }
+    }
+  },
+
+  updateAttendance: async (teacherId, status) => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const updated = await TeacherAttendance.findOneAndUpdate(
+        { teacher: teacherId, date: today },
+        { $set: { status } },
+        { new: true }
+      );
+
+      if (!updated) {
+        return { success: false, message: "Attendance not found for today" };
+      }
+
+      return { success: true, message: "ATTENDANCE_MARKED", updated };
+    } catch (error) {
+      console.log('Error while updating attedance : ', error.message)
+      return { success: false, message: 'SERVER_ERROR' }
+    }
+  },
+
+  getAttendance: async (teacherId, options) => {
+    const { month, date, year, page = 1, limit = 10, statusFilter } = options;
+    try {
+      const pipeline = teacherAttendancePipeline({
+        teacherId,
+        month,
+        date,
+        year,
+        statusFilter,
+        page,
+        limit
+      });
+
+      const data = await TeacherAttendance.aggregate(pipeline);
+
+      const totalCountQuery = { teacher: new mongoose.Types.ObjectId(teacherId) };
+
+      if (year) totalCountQuery.$expr = { $eq: [{ $year: "$date" }, year] };
+      if (month) {
+        totalCountQuery.$expr = totalCountQuery.$expr
+          ? { $and: [totalCountQuery.$expr, { $eq: [{ $month: "$date" }, month] }] }
+          : { $eq: [{ $month: "$date" }, month] };
+      }
+
+      if (statusFilter) totalCountQuery.status = statusFilter;
+
+      const totalDocs = await TeacherAttendance.countDocuments(totalCountQuery);
+
+      return {
+        success: true,
+        jsonData: data,
+        meta: {
+          page,
+          limit,
+          totalDocs,
+          totalPages: Math.ceil(totalDocs / limit)
+        }
+      };
+    } catch (error) {
+      console.error("Error fetching teacher attendance:", error);
+      return { success: false, message: "FAILED_TEACHER_ATTENDANCE_FAILED" };
+    }
   }
+
 }

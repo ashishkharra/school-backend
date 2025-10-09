@@ -21,9 +21,6 @@ const jsonFieldsForStudent = [
   'transferCertificate'
 ];
 
-const jsonFieldsForTeacher= [
-  
-]
 
 router
   .post('/reg', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), validationRule.validate('registerStudent'), adminStudentController.regStudent)

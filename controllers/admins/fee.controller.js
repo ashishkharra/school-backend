@@ -14,7 +14,7 @@ const feeController = {
             return res.status(201).json(responseData(result.message, result.data, req, true));
         } catch (error) {
             console.log("Create Fee Structure Controller Error:", error.message);
-            return res.status(500).json(responseData("FEE_STRUCTURE_CREATION_ERROR", {}, req, false));
+            return res.status(500).json(responseData("FEE_STRUCTURE_CREATION_ERROR", {error : error.message }, req, false));
         }
     },
 
@@ -30,7 +30,7 @@ const feeController = {
             return res.status(201).json(responseData(result.message, result.data, req, true));
         } catch (error) {
             console.log("Assign Student Fee Controller Error:", error.message);
-            return res.status(500).json(responseData("ASSIGN_FEE_ERROR", {}, req, false));
+            return res.status(500).json(responseData("ASSIGN_FEE_ERROR", {error : error.message }, req, false));
         }
     },
 
@@ -48,7 +48,7 @@ const feeController = {
             return res.status(200).json(responseData(result.message, result.data, req, true));
         } catch (error) {
             console.error("Update Student Fee Controller Error:", error);
-            return res.status(500).json(responseData("UPDATE_FEE_ERROR", {}, req, false));
+            return res.status(500).json(responseData("UPDATE_FEE_ERROR", {error : error.message }, req, false));
         }
     },
 
@@ -64,7 +64,7 @@ const feeController = {
             return res.status(201).json(responseData(result.message, result.data, req, true));
         } catch (error) {
             console.log("Add Payment Controller Error:", error.message);
-            return res.status(500).json(responseData("ADD_PAYMENT_ERROR", {}, req, false));
+            return res.status(500).json(responseData("ADD_PAYMENT_ERROR", {error : error.message }, req, false));
         }
     },
 

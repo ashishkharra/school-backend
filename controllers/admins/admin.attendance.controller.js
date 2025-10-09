@@ -26,7 +26,7 @@ const adminAttendanceController = {
             );
         } catch (error) {
             console.log('Error while getting attendances : ', error.message);
-            return res.status(500).json(responseData('SERVER_ERROR', {}, req, false));
+            return res.status(500).json(responseData('SERVER_ERROR', { error : error.message }, req, false));
         }
     }
 }

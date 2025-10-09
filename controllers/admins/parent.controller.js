@@ -18,7 +18,7 @@ const adminParentController = {
                 .json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.error("notify mail error:", error.message);
-            res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+            res.status(500).json(responseData("SERVER_ERROR", {error : error.message }, req, false));
         }
     },
     updateMeeting: async (req, res) => {
@@ -41,7 +41,7 @@ const adminParentController = {
 
         } catch (error) {
             console.error('Update Meeting Controller Error:', error);
-            return res.status(500).json({ success: false, message: 'SERVER_ERROR' });
+            res.status(500).json(responseData("SERVER_ERROR", {error : error.message }, req, false))
         }
     },
 
@@ -60,7 +60,7 @@ const adminParentController = {
 
         } catch (error) {
             console.error('Remove meeting error:', error);
-            res.status(500).json(responseData('SERVER_ERROR', {}, req, false));
+            res.status(500).json(responseData("SERVER_ERROR", {error : error.message }, req, false))
         }
     }
 }
