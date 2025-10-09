@@ -24,6 +24,107 @@ const convertToMinutes = (timeStr) => {
   return hours * 60 + minutes
 }
 module.exports = {
+  // registerTeacher: async (data) => {
+  //   try {
+  //     const {
+  //       name,
+  //       email,
+  //       password,
+  //       phone,
+  //       dateOfBirth,
+  //       gender,
+  //       maritalStatus,
+  //       spouseName,
+  //       children,
+  //       address,
+  //       bloodGroup,
+  //       physicalDisability,
+  //       disabilityDetails,
+  //       department,
+  //       designation,
+  //       qualifications,
+  //       specialization,
+  //       experience,
+  //       dateOfJoining,
+  //       classes,
+  //       subjectsHandled,
+  //       salaryInfo,
+  //       IDProof,
+  //       certificates,
+  //       resume,
+  //       joiningLetter,
+  //       emergencyContact
+  //     } = data
+
+  //     if (!name || !email || !password) {
+  //       return {
+  //         success: false,
+  //         message: 'Name, email, and password are required'
+  //       }
+  //     }
+  //     const existing = await Teacher.findOne({ email: email.toLowerCase() })
+  //     if (existing) {
+  //       return {
+  //         success: false,
+  //         message: 'Teacher with this email already exists'
+  //       }
+  //     }
+  //     const hashedPassword = await bcrypt.hash(password, 10)
+  //     const newTeacher = {
+  //       name,
+  //       email: email.toLowerCase(),
+  //       password: hashedPassword,
+  //       phone,
+  //       dateOfBirth,
+  //       gender,
+  //       maritalStatus,
+  //       spouseName,
+  //       children,
+  //       address,
+  //       bloodGroup,
+  //       physicalDisability,
+  //       disabilityDetails,
+  //       department,
+  //       designation,
+  //       qualifications,
+  //       specialization,
+  //       experience,
+  //       dateOfJoining,
+  //       classes,
+  //       subjectsHandled,
+  //       salaryInfo,
+  //       IDProof,
+  //       certificates,
+  //       resume,
+  //       joiningLetter,
+  //       emergencyContact,
+  //       role: 'teacher'
+  //     }
+
+  //     let result = await teacherSchema.create(newTeacher)
+  //     let safeResult = result.toObject()
+  //     delete safeResult.password
+
+  //     let dataBody = {
+  //       email: email.toLowerCase(),
+  //       PASSWORD: password,
+  //       EMAIL: email,
+  //       URL: 'https://youtube.com'
+  //     }
+  //     const isMailSent = await helper.sendEmail('new-teacher-account', dataBody)
+  //     if (!isMailSent) {
+  //       return { success: false, message: 'EMAIL_NOT_SENT' }
+  //     }
+  //     return {
+  //       success: true,
+  //       message: 'TEACHER_REGISTERED',
+  //       data: safeResult
+  //     }
+  //   } catch (error) {
+  //     return { success: false, message: error.message || 'SERVER_ERROR' }
+  //   }
+  // },
+
   registerTeacher: async (data) => {
     try {
       const {
@@ -34,13 +135,11 @@ module.exports = {
         dateOfBirth,
         gender,
         maritalStatus,
-        spouseName,
-        children,
         address,
         bloodGroup,
         physicalDisability,
         disabilityDetails,
-        department,
+        // department,
         designation,
         qualifications,
         specialization,
@@ -49,27 +148,31 @@ module.exports = {
         classes,
         subjectsHandled,
         salaryInfo,
-        IDProof,
-        certificates,
-        resume,
-        joiningLetter,
+        profilePic,
+        aadharFront,
+        aadharBack,
+        // certificates,
+        // resume,
+        // joiningLetter,
         emergencyContact
       } = data
 
       if (!name || !email || !password) {
         return {
           success: false,
-          message: 'Name, email, and password are required'
+          message: 'NAME_EMAIL_PASSWORD_REQUIRED'
         }
       }
+
       const existing = await Teacher.findOne({ email: email.toLowerCase() })
-      if (existing) {
+      if (existing)
         return {
           success: false,
-          message: 'Teacher with this email already exists'
+          message: 'TEACHER_WITH_THIS_EMAIL_ALREADY_EXISTS'
         }
-      }
+
       const hashedPassword = await bcrypt.hash(password, 10)
+
       const newTeacher = {
         name,
         email: email.toLowerCase(),
@@ -78,13 +181,11 @@ module.exports = {
         dateOfBirth,
         gender,
         maritalStatus,
-        spouseName,
-        children,
         address,
         bloodGroup,
         physicalDisability,
         disabilityDetails,
-        department,
+        // department,
         designation,
         qualifications,
         specialization,
@@ -93,49 +194,43 @@ module.exports = {
         classes,
         subjectsHandled,
         salaryInfo,
-        IDProof,
-        certificates,
-        resume,
-        joiningLetter,
+        profilePic,
+        aadharFront,
+        aadharBack,
+        // certificates,
+        // resume,
+        // joiningLetter,
         emergencyContact,
         role: 'teacher'
       }
 
-      let result = await teacherSchema.create(newTeacher)
+      let result = await Teacher.create(newTeacher)
       let safeResult = result.toObject()
       delete safeResult.password
 
-      let dataBody = {
+      // 🔹 Send email
+      const dataBody = {
         email: email.toLowerCase(),
         PASSWORD: password,
         EMAIL: email,
         URL: 'https://youtube.com'
       }
       const isMailSent = await helper.sendEmail('new-teacher-account', dataBody)
-      if (!isMailSent) {
-        return { success: false, message: 'EMAIL_NOT_SENT' }
-      }
-      return {
-        success: true,
-        message: 'TEACHER_REGISTERED',
-        data: safeResult
-      }
+      if (!isMailSent) return { success: false, message: 'EMAIL_NOT_SENT' }
+      return { success: true, message: 'TEACHER_REGISTERED', data: safeResult }
     } catch (error) {
       return { success: false, message: error.message || 'SERVER_ERROR' }
     }
   },
-
   updateTeacher: async (teacherId, updateData) => {
     try {
       if (!teacherId) {
-        return { success: false, message: 'Teacher ID is required', data: {} }
+        return { success: false, message: 'TEACHER_ID_REQUIRED', data: {} }
       }
-      if (updateData.password) {
-        delete updateData.password
-      }
-      if (updateData.email) {
-        updateData.email = updateData.email.toLowerCase()
-      }
+
+      // if (updateData.password) delete updateData.password;
+      if (updateData.email) updateData.email = updateData.email.toLowerCase()
+
       const updatedTeacher = await Teacher.findByIdAndUpdate(
         teacherId,
         { $set: updateData },
@@ -143,14 +238,12 @@ module.exports = {
       )
         .select('-password -token -refreshToken')
         .lean()
+
       if (!updatedTeacher) {
-        return { success: false, message: 'Teacher not found', data: {} }
+        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
       }
-      return {
-        success: true,
-        message: 'TEACHER_UPDATED',
-        data: updatedTeacher
-      }
+
+      return { success: true, message: 'TEACHER_UPDATED', data: updatedTeacher }
     } catch (error) {
       return {
         success: false,
@@ -162,14 +255,12 @@ module.exports = {
 
   getAllTeachers: async (page = 1, limit = 10, status = 1) => {
     try {
-      page = parseInt(page)
-      limit = parseInt(limit)
-
-      let whereStatement = { isRemoved: { $ne: 1 } }
-
-      helper.filterByStatus(whereStatement, status)
-      const totalTeachers = await Teacher.countDocuments(whereStatement)
-      const teachers = await Teacher.find({ whereStatement })
+ page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+      helper.filterByStatus({isRemoved : {$ne : 1}}, status)
+      const totalTeachers = await Teacher.countDocuments({isRemoved : {$ne : 1}})
+      console.log('total : ', totalTeachers)
+      const teachers = await Teacher.find( {isRemoved : {$ne : 1}} )
         .select('-password -token -refreshToken')
         .lean()
         .sort({ createdAt: -1 })
@@ -179,7 +270,7 @@ module.exports = {
       return {
         success: true,
         message: 'TEACHERS_FETCHED',
-        data: teachers,
+        docs: teachers,
         pagination: {
           total: totalTeachers,
           page,
@@ -191,7 +282,7 @@ module.exports = {
       return {
         success: false,
         message: error.message || 'FETCH_FAILED',
-        data: [],
+        docs: [],
         pagination: {}
       }
     }
@@ -201,7 +292,7 @@ module.exports = {
     try {
       // 1️⃣ Validate teacherId
       if (!teacherId) {
-        return { success: false, message: 'Teacher ID required', data: {} }
+        return { success: false, message: 'TEACHER_ID_REQUIRED', data: {} }
       }
 
       if (!mongoose.Types.ObjectId.isValid(teacherId)) {
@@ -219,7 +310,7 @@ module.exports = {
 
       // 3️⃣ Handle teacher not found
       if (!teacher) {
-        return { success: false, message: 'Teacher not found', data: {} }
+        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
       }
 
       // 4️⃣ Return success
@@ -285,6 +376,19 @@ module.exports = {
       if (!teacherData) {
         return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
       }
+    const existingClassTeacher = await Class.findOne({
+      teacher: teacherId,
+      isClassTeacher: true,
+      _id: { $ne: classId } 
+    });
+
+    if (existingClassTeacher) {
+      return {
+        success: false,
+        message: `TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_${existingClassTeacher.name}`,
+        data: {}
+      };
+    }
 
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
@@ -324,7 +428,10 @@ module.exports = {
       }
       if (classData.teacher) {
       }
-
+  await Class.updateMany(
+      { teacher: mongoose.Types.ObjectId(teacherId), _id: { $ne: classId } },
+      { $set: { teacher: null, isClassTeacher: false } }
+    )
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
 
@@ -381,7 +488,7 @@ module.exports = {
       return {
         success: true,
         message: 'ALL_TEACHERS_WITH_CLASSES_FETCHED_SUCCESSFULLY',
-        data: teachers,
+        docs: teachers,
         pagination: {
           total,
           page: parseInt(page),
@@ -450,7 +557,7 @@ module.exports = {
         !startTime ||
         !endTime
       ) {
-        return { success: false, message: 'Missing required fields', data: {} }
+        return { success: false, message: 'MISSING_REQUIRED_FIELDS', data: {} }
       }
 
       const startMinutes = convertToMinutes(startTime)
@@ -459,21 +566,21 @@ module.exports = {
       if (endMinutes <= startMinutes) {
         return {
           success: false,
-          message: 'End time must be after start time',
+          message: 'END_TIME_MUST_BE_AFTER_START_TIME',
           data: {}
         }
       }
       const classData = await Class.findById(classId)
       if (!classData)
-        return { success: false, message: 'Class not found', data: {} }
+        return { success: false, message: 'CLASS_NOT_FOUND', data: {} }
 
       const teacherData = await Teacher.findById(teacherId)
       if (!teacherData)
-        return { success: false, message: 'Teacher not found', data: {} }
+        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
 
       const subjectData = await subject.findById(subjectId)
       if (!subjectData) {
-        return { success: false, message: 'Subject not found', data: {} }
+        return { success: false, message: 'SUBJECT_NOT_FOUND', data: {} }
       }
       const teacherConflict = await TeacherTimeTable.findOne({
         teacherId: teacherId,
@@ -487,7 +594,7 @@ module.exports = {
         return {
           success: false,
           message:
-            'This teacher is already assigned to another class during this time slot.',
+            'TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT',
           data: {}
         }
       }
@@ -504,20 +611,20 @@ module.exports = {
         return {
           success: false,
           message:
-            'This class already has a teacher assigned during this time slot.',
+            'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
           data: {}
         }
       }
 
       const newAssignment = new TeacherTimeTable({
-     class: classId,
-  section,
-  subject: subjectId,
-  teacher: teacherId,
-  startTime,
-  endTime,
-  startMinutes,
-  endMinutes
+        class: classId,
+        section,
+        subject: subjectId,
+        teacher: teacherId,
+        startTime,
+        endTime,
+        startMinutes,
+        endMinutes
       })
 
       const savedAssignment = await newAssignment.save()
@@ -601,7 +708,7 @@ module.exports = {
         if (overlapping) {
           return {
             success: false,
-            message: 'Selected slot conflicts with existing teacher assignment',
+            message: 'SELECTED_SLOT_CONFLICTS_WITH_EXISTING_TEACHER_ASSIGNMENT',
             data: {}
           }
         }
@@ -629,13 +736,13 @@ module.exports = {
   deleteTeacherAssign: async function ({ assignmentId }) {
     try {
       if (!assignmentId) {
-        return { success: false, message: 'Assignment ID required', data: {} }
+        return { success: false, message: 'ASSIGNMENT_IS_REQUIRED', data: {} }
       }
 
       const deleted = await TeacherTimeTable.findByIdAndDelete(assignmentId)
-      console.log(deleted,"deleted-----")
+      console.log(deleted, 'deleted-----')
       if (!deleted) {
-        return { success: false, message: 'Assignment not found', data: {} }
+        return { success: false, message: 'ASSIGNMENT_NOT-FOUND', data: {} }
       }
 
       return {
@@ -648,33 +755,27 @@ module.exports = {
     }
   },
 
-  getTeacherAssign: async ({
-    classId,
-    teacherId,
-    page = 1,
-    limit = 10
-  }) => {
+  getTeacherAssign: async ({ classId, teacherId, page = 1, limit = 10 }) => {
     try {
       const skip = (page - 1) * limit
       const pipeline = getTeacherAssignByLookup(classId, teacherId)
-      console.log("pipeline-----",pipeline)
+      console.log('pipeline-----', pipeline)
       const results = await TeacherTimeTable.aggregate([
         ...pipeline,
         { $skip: skip },
         { $limit: parseInt(limit) }
       ])
- console.log("results-----",results)
+      console.log('results-----', results)
       const totalResult = await TeacherTimeTable.aggregate([
         ...getTeacherAssignByLookup(classId, teacherId),
         { $count: 'total' }
       ])
-      console.log(totalResult,"totalResult----")
       const total = totalResult.length > 0 ? totalResult[0].total : 0
 
       return {
         success: true,
         message: 'TEACHER_ASSIGNMENTS_FETCHED',
-        data: results,
+        docs: results,
         pagination: {
           total,
           page: parseInt(page),

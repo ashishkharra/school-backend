@@ -13,6 +13,7 @@ const fs = require('fs')
 const path = require('path')
 const ejs = require('ejs')
 const dayjs = require('dayjs')
+
 require('dotenv').config()
 // const EmailTemplate = require('../models/emailTemplate')
 // const Faq = require('../models/faq.model')
@@ -608,6 +609,46 @@ module.exports = {
       }
     ]
   },
+    getPaginationArrayJs: function (page, limit) {
+  return [
+    {
+      $facet: {
+        paginatedResults: [
+          { $skip: (page - 1) * limit },
+          { $limit: limit }
+        ],
+        totalCount: [
+          { $count: 'value' }
+        ]
+      }
+    },
+    {
+      $unwind: {
+        path: '$totalCount',
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $addFields: {
+        docs: '$paginatedResults',
+        totalDocs: { $ifNull: ['$totalCount.value', 0] },
+        limit,
+        page,
+        totalPages: {
+          $ceil: {
+            $divide: [{ $ifNull: ['$totalCount.value', 0] }, limit]
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        paginatedResults: 0,
+        totalCount: 0
+      }
+    }
+  ]
+},
   getEmailTemplateDynamically: async (emailSlug) => {
     const emailTemplateRecord = await EmailTemplate.find({ slug: emailSlug })
     return emailTemplateRecord[0]
@@ -1099,6 +1140,7 @@ module.exports = {
   },
 
   parseMultipartJSONFields: (fields) => (req, res, next) => {
+    if (!req.body) req.body = {};
     for (const field of fields) {
       if (req.body[field] && typeof req.body[field] === 'string') {
         try {
@@ -1174,3 +1216,6 @@ const generateZoomToken = async () => {
     return { success: false, message: 'ZOOM_TOKEN_GENERATION_FAILED' }
   }
 }
+
+
+

@@ -36,37 +36,37 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
-
+//---------------------
     case "registerTeacher": {
-      return [
+    return [
         // Name
         body("name")
           .notEmpty().withMessage("NAME_EMPTY")
           .isLength({ min: 2 }).withMessage("NAME_LENGTH_MIN")
           .isLength({ max: 50 }).withMessage("NAME_LENGTH_MAX"),
 
-        // Email validations
+        // Email
         body("email")
           .notEmpty().withMessage("EMAIL_EMPTY")
           .isEmail().withMessage("EMAIL_VALID"),
 
-        // Password validations
+        // Password
         body("password")
           .notEmpty().withMessage("PASSWORD_EMPTY")
           .isLength({ min: 8 }).withMessage("PASSWORD_MIN")
           .isLength({ max: 30 }).withMessage("PASSWORD_MAX"),
 
-        // Phone validations
+        // Phone
         body("phone")
           .notEmpty().withMessage("PHONE_EMPTY")
           .isMobilePhone().withMessage("PHONE_VALID"),
 
-        // Date of Birth validations (ISO 8601 format)
+        // Date of Birth
         body("dateOfBirth")
           .notEmpty().withMessage("DOB_EMPTY")
           .isISO8601().withMessage("DOB_VALID"),
 
-        // Gender validations (case-insensitive)
+        // Gender
         body("gender")
           .notEmpty().withMessage("GENDER_EMPTY")
           .custom(value => ["male", "female", "other"].includes(value.toLowerCase()))
@@ -74,22 +74,37 @@ module.exports.validate = (method) => {
           .bail()
           .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
 
-        // Address validations
+        // Address (object)
         body("address")
           .notEmpty().withMessage("ADDRESS_EMPTY")
-          .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+          .isObject().withMessage("ADDRESS_OBJECT_REQUIRED")
+          .bail()
+          .custom(addr => addr.street && addr.city && addr.state && addr.zipCode)
+          .withMessage("ADDRESS_INCOMPLETE"),
 
-        // Qualifications validations: array of strings, minimum 1
+        // Qualifications: array of strings, minimum 1
         body("qualifications")
           .isArray({ min: 1 }).withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
           .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
 
-        // Classes validations: array of strings, minimum 1
+        // Classes: array of strings (ObjectIds as string)
         body("classes")
           .isArray({ min: 1 }).withMessage("CLASSES_ARRAY_REQUIRED")
-          .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+          .custom(arr => arr.every(c => /^[0-9a-fA-F]{24}$/.test(c))).withMessage("CLASSES_INVALID_OBJECTID"),
 
-        // Emergency Contact validations
+        // Specialization: array of strings (ObjectIds as string)
+        body("specialization")
+          .isArray({ min: 1 }).withMessage("SPECIALIZATION_ARRAY_REQUIRED")
+          .custom(arr => arr.every(s => /^[0-9a-fA-F]{24}$/.test(s)))
+          .withMessage("SPECIALIZATION_INVALID_OBJECTID"),
+
+        // SubjectsHandled: array of objects with valid classId
+        body("subjectsHandled")
+          .isArray({ min: 1 }).withMessage("SUBJECTS_HANDLED_ARRAY_REQUIRED")
+          .custom(arr => arr.every(sub => sub.subjectName && sub.subjectCode && /^[0-9a-fA-F]{24}$/.test(sub.classId)))
+          .withMessage("SUBJECTS_HANDLED_INVALID"),
+
+        // Emergency Contact
         body("emergencyContact")
           .notEmpty().withMessage("EMERGENCY_CONTACT_EMPTY")
           .isObject().withMessage("EMERGENCY_CONTACT_OBJECT_REQUIRED"),
@@ -135,22 +150,39 @@ module.exports.validate = (method) => {
           .bail()
           .customSanitizer(value => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()),
 
-        // Address (optional)
+        // Address (optional, object)
         body("address")
           .optional()
-          .isLength({ min: 5 }).withMessage("ADDRESS_MIN"),
+          .isObject().withMessage("ADDRESS_OBJECT_REQUIRED")
+          .bail()
+          .custom(addr => !addr || (addr.street && addr.city && addr.state && addr.zipCode))
+          .withMessage("ADDRESS_INCOMPLETE"),
 
-        // Qualifications (optional)
+        // Qualifications (optional, array of strings)
         body("qualifications")
           .optional()
           .isArray().withMessage("QUALIFICATIONS_ARRAY_REQUIRED")
           .custom(arr => arr.every(q => typeof q === "string")).withMessage("QUALIFICATIONS_STRING_ONLY"),
 
-        // Classes (optional)
+        // Classes (optional, array of ObjectId strings)
         body("classes")
           .optional()
           .isArray().withMessage("CLASSES_ARRAY_REQUIRED")
-          .custom(arr => arr.every(c => typeof c === "string")).withMessage("CLASSES_STRING_ONLY"),
+          .custom(arr => arr.every(c => /^[0-9a-fA-F]{24}$/.test(c))).withMessage("CLASSES_INVALID_OBJECTID"),
+
+        // Specialization (optional, array of ObjectId strings)
+        body("specialization")
+          .optional()
+          .isArray().withMessage("SPECIALIZATION_ARRAY_REQUIRED")
+          .custom(arr => arr.every(s => /^[0-9a-fA-F]{24}$/.test(s)))
+          .withMessage("SPECIALIZATION_INVALID_OBJECTID"),
+
+        // SubjectsHandled (optional, array of objects with classId as ObjectId)
+        body("subjectsHandled")
+          .optional()
+          .isArray().withMessage("SUBJECTS_HANDLED_ARRAY_REQUIRED")
+          .custom(arr => arr.every(sub => sub.subjectName && sub.subjectCode && /^[0-9a-fA-F]{24}$/.test(sub.classId)))
+          .withMessage("SUBJECTS_HANDLED_INVALID"),
 
         // Emergency Contact (optional)
         body("emergencyContact")
@@ -168,8 +200,217 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ];
     }
+  case "classTeacherOf": {
+         return [
+      // classId is required and must be a valid ObjectId
+      body('classId')
+        .notEmpty().withMessage('CLASS_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
 
+      // teacherId is required and must be a valid ObjectId
+      body('teacherId')
+        .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
 
+      validatorMiddleware
+    ];
+    }
+  case "updateClassTeacherOf": {
+        return [
+      // classId is required and must be a valid ObjectId
+      body('classId')
+        .notEmpty().withMessage('CLASS_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
+
+      // teacherId is required and must be a valid ObjectId
+      body('teacherId')
+        .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
+
+      validatorMiddleware
+    ];
+    }
+     case "assignTeachertoClass": {
+      return [
+      // classId (required, ObjectId)
+      body('classId')
+        .notEmpty().withMessage('CLASS_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
+
+      // teacherId (required, ObjectId)
+      body('teacherId')
+        .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
+
+      // section (required, string)
+      body('section')
+        .notEmpty().withMessage('SECTION_REQUIRED')
+        .isString().withMessage('SECTION_MUST_BE_STRING'),
+
+      // subjectId (required, ObjectId)
+      body('subjectId')
+        .notEmpty().withMessage('SUBJECT_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('SUBJECT_ID_INVALID'),
+
+      // startTime (required, string, basic format check e.g., HH:MM AM/PM)
+      body('startTime')
+        .notEmpty().withMessage('START_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('START_TIME_INVALID'),
+
+      // endTime (required, string, basic format check)
+      body('endTime')
+        .notEmpty().withMessage('END_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('END_TIME_INVALID'),
+
+      validatorMiddleware
+    ];
+    }
+      case "updateAssignTeachertoClass": {
+    return [
+      // classId (required, ObjectId)
+      body('classId')
+        .notEmpty().withMessage('CLASS_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
+
+      // teacherId (required, ObjectId)
+      body('teacherId')
+        .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
+
+      // section (required, string)
+      body('section')
+        .notEmpty().withMessage('SECTION_REQUIRED')
+        .isString().withMessage('SECTION_MUST_BE_STRING'),
+
+      // subjectId (required, ObjectId)
+      body('subjectId')
+        .notEmpty().withMessage('SUBJECT_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('SUBJECT_ID_INVALID'),
+
+      // startTime (required, string, basic format check e.g., HH:MM AM/PM)
+      body('startTime')
+        .notEmpty().withMessage('START_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('START_TIME_INVALID'),
+
+      // endTime (required, string, basic format check)
+      body('endTime')
+        .notEmpty().withMessage('END_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('END_TIME_INVALID'),
+
+      validatorMiddleware
+    ];
+    }
+    return [
+      // classId (required, ObjectId)
+      body('classId')
+        .notEmpty().withMessage('CLASS_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
+
+      // teacherId (required, ObjectId)
+      body('teacherId')
+        .notEmpty().withMessage('TEACHER_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
+
+      // section (required, string)
+      body('section')
+        .notEmpty().withMessage('SECTION_REQUIRED')
+        .isString().withMessage('SECTION_MUST_BE_STRING'),
+
+      // subjectId (required, ObjectId)
+      body('subjectId')
+        .notEmpty().withMessage('SUBJECT_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('SUBJECT_ID_INVALID'),
+
+      // startTime (required, string, basic format check e.g., HH:MM AM/PM)
+      body('startTime')
+        .notEmpty().withMessage('START_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('START_TIME_INVALID'),
+
+      // endTime (required, string, basic format check)
+      body('endTime')
+        .notEmpty().withMessage('END_TIME_REQUIRED')
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('END_TIME_INVALID'),
+
+      validatorMiddleware
+    ];
+         return [
+      // assignmentId (required, in params, ObjectId)
+      param('assignmentId')
+        .notEmpty().withMessage('ASSIGNMENT_ID_REQUIRED')
+        .bail()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('ASSIGNMENT_ID_INVALID'),
+
+      // classId (optional, ObjectId)
+      body('classId')
+        .optional()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('CLASS_ID_INVALID'),
+
+      // teacherId (optional, ObjectId)
+      body('teacherId')
+        .optional()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('TEACHER_ID_INVALID'),
+
+      // section (optional, string)
+      body('section')
+        .optional()
+        .isString().withMessage('SECTION_MUST_BE_STRING'),
+
+      // subjectId (optional, ObjectId)
+      body('subjectId')
+        .optional()
+        .custom(value => /^[0-9a-fA-F]{24}$/.test(value))
+        .withMessage('SUBJECT_ID_INVALID'),
+
+      // startTime (optional, string, format HH:MM AM/PM)
+      body('startTime')
+        .optional()
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('START_TIME_INVALID'),
+
+      // endTime (optional, string, format HH:MM AM/PM)
+      body('endTime')
+        .optional()
+        .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+        .withMessage('END_TIME_INVALID'),
+
+      validatorMiddleware
+    ];
+//---------
     case "registerStudent": {
       return [
         // Name

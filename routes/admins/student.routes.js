@@ -5,25 +5,21 @@ const { studentDocFields } = require('../../middlewares/multer.setup.js')
 const { parseMultipartJSONFields } = require('../../helpers/helper.js')
 const adminStudentController = require('../../controllers/admins/student.controller.js')
 
-const jsonFieldsForStudent = [
-  'parents',
-  'guardian',
-  'emergencyContact',
-  'siblings',
-  'achievements',
-  'aadharFront',
-  'aadharBack',
-  'extraCurricular',
-  'certificates',
-  'marksheets',
-  'medicalRecords',
-  'address',
-  'transferCertificate'
-];
+  const jsonFieldsForStudent = [
+    'emergencyContact',
+    'siblings',
+    'achievements',
+    'aadharFront',
+    'aadharBack',
+    'extraCurricular',
+    'certificates',
+    'marksheets',
+    'medicalRecords',
+    'address',
+    'transferCertificate'
+  ];
 
-const jsonFieldsForTeacher= [
-  
-]
+
 
 router
   .post('/reg', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), validationRule.validate('registerStudent'), adminStudentController.regStudent)

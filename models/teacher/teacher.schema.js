@@ -6,6 +6,11 @@ const teacherSchema = new mongoose.Schema(
   
     employeeId: { type: String, unique: true, sparse: true }, // official employee ID
     name: { type: String, required: true },
+
+     profilePic: {
+    type: { type: String },
+    fileUrl: String
+  },
     email: { type: String, unique: true, required: true, lowercase: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["teacher"], default: "teacher" },
@@ -20,14 +25,6 @@ const teacherSchema = new mongoose.Schema(
       type: String,
       enum: ["Single", "Married", "Divorced", "Widowed"]
     },
-    spouseName: { type: String },
-    children: [
-      {
-        name: String,
-        age: Number,
-        school: String
-      }
-    ],
     address: {
       street: String,
       city: String,
@@ -40,7 +37,7 @@ const teacherSchema = new mongoose.Schema(
     disabilityDetails: { type: String }, // e.g. "Hearing impairment", "Mobility issues"
 
     // 🏫 Academic & Professional
-    department: { type: String }, // e.g., "Mathematics"
+    // department: { type: String }, // e.g., "Mathematics"
     designation: { type: String }, // e.g., "Senior Teacher"
     qualifications: [{ type: String }],
     specialization: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }], // main subject expertise
@@ -62,21 +59,29 @@ const teacherSchema = new mongoose.Schema(
       netSalary: { type: Number }
     },
     // 📑 Documents & Records
-    IDProof: {
+    
+    // certificates: [
+    //   {
+    //     name: String,
+    //     issuedBy: String,
+    //     year: Number,
+    //     fileUrl: String
+    //   }
+    // ],
+
+    
+      aadharFront: {
       type: { type: String },
       number: String,
       fileUrl: String
     },
-    certificates: [
-      {
-        name: String,
-        issuedBy: String,
-        year: Number,
-        fileUrl: String
-      }
-    ],
-    resume: { type: String },
-    joiningLetter: { type: String },
+      aadharBack: {
+      type: { type: String },
+      number: String,
+      fileUrl: String
+    },
+    // resume: { type: String },
+    // joiningLetter: { type: String },
     // 👨‍👩‍👦 Emergency Contact
     emergencyContact: {
       name: String,
@@ -196,3 +201,14 @@ module.exports = mongoose.model("Teacher", teacherSchema);
     //   default: () =>
     //     "T-" + Math.random().toString(36).substring(2, 8).toUpperCase()
     // },
+
+
+
+     // spouseName: { type: String },
+    // children: [
+    //   {
+    //     name: String,
+    //     age: Number,
+    //     school: String
+    //   }
+    // ],

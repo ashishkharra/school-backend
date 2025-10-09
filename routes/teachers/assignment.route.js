@@ -15,10 +15,11 @@ const { uploadAssignmanet } = require('../../middlewares/multerFile')
 //   assignmentController.uploadAssignment
 // )
 
-router.post(
-  '/upload-assignment',
-  uploadAssignmanet.single('file'),
-  assignmentController.uploadAssignmentController
-)
+router.post('/upload-assignment',uploadAssignmanet.single('file'),assignmentController.uploadAssignmentController)
+router.get("/get-assignment", assignmentController.getAssignmentsController);
+router.delete("/delete-assignment/:assignmentId", assignmentController.deleteAssignmentController);
+router.put('/update-assignment/:id',uploadAssignmanet.single('file'), assignmentController. updateAssignmentController );
+
+
 
 module.exports = router

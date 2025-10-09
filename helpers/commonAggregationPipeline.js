@@ -1232,7 +1232,7 @@ const getAllTeachersWithClassLookup = (teacherId) => {
       $lookup: {
         from: 'classes',
         localField: '_id',          // teacher._id
-        foreignField: 'teacherId',  // class.teacherId
+        foreignField: 'teacher',  // class.teacherId
         as: 'classesInfo'
       },
       
@@ -1247,29 +1247,31 @@ const getAllTeachersWithClassLookup = (teacherId) => {
       designation: 1,
 
       // Filter classes: only where teacher is class teacher
-      classesInfo: {
-        $map: {
-          input: {
-            $filter: {
-              input: "$classesInfo",
-              as: "class",
-              cond: { $eq: ["$$class.isClassTeacher", true] }
+    classesInfo: {
+          $map: {
+            input: {
+              $filter: {
+                input: "$classesInfo",
+                as: "class",
+                cond: { $eq: ["$$class.isClassTeacher", true] }
+              }
+            },
+            as: "class",
+            in: {
+              _id: "$$class._id",
+              name: "$$class.name",
+              section: "$$class.section",
+              studentCount: "$$class.studentCount",
+              startTime: "$$class.startTime",
+              endTime: "$$class.endTime",
+              isClassTeacher: "$$class.isClassTeacher"
             }
-          },
-          as: "class",
-          in: {
-            _id: "$$class._id",
-            name: "$$class.name",
-            section: "$$class.section",
-            isClassTeacher: "$$class.isClassTeacher",
-            studentCount: "$$class.studentCount",
-            startTime: "$$class.startTime",
-            endTime: "$$class.endTime"
           }
         }
       }
-    }
-  }
+    },
+    // Only include teachers who have at least one class as class teacher
+    { $match: { "classesInfo.0": { $exists: true } } }
   ];
 };
 

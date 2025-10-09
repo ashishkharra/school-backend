@@ -45,7 +45,7 @@ markAttendance: async (req, res) => {
       console.log("Validation failed: Missing or invalid fields");
       return res
         .status(400)
-        .json(responseData("INVALID_INPUT_DATA", { error: "Invalid input data" }, req, false));
+        .json(responseData("INVALID_INPUT_DATA", req, false));
     }
 
     // Date validation
@@ -54,14 +54,14 @@ markAttendance: async (req, res) => {
       console.log("Invalid date format detected");
       return res
         .status(400)
-        .json(responseData("INVALID_DATE_FORMAT", { error: "Invalid date format" }, req, false));
+        .json(responseData("INVALID_DATE_FORMAT", req, false));
     }
 
     // Session validation (only allow 1, 2, or 3)
     if (![1, 2, 3].includes(session)) {
       return res
         .status(400)
-        .json(responseData("INVALID_SESSION", { error: "Invalid session value" }, req, false));
+        .json(responseData("INVALID_SESSION",req, false));
     }
 
     // Save / update attendance
@@ -72,15 +72,11 @@ markAttendance: async (req, res) => {
       records,
       takenBy
     );
-
-    console.log("Saved attendance record:", savedRecord);
-
     return res
       .status(200)
       .json(responseData("ATTENDANCE_MARKED_SUCCESSFULLY", savedRecord, req, true));
 
   } catch (error) {
-    console.error("Error while marking/updating attendance:", error);
     return res
       .status(500)
       .json(responseData("ATTENDANCE_MARKING_FAILED", { error: error.message }, req, false));
