@@ -1275,6 +1275,145 @@ const getAllTeachersWithClassLookup = (teacherId) => {
   ];
 };
 
+const teacherAttendancePipeline = ({
+  teacherId,
+  month,
+  date,
+  year,
+  statusFilter,
+  page = 1,
+  limit = 10
+}) => {
+  const matchExpr = [];
+
+  if (month) matchExpr.push({ $eq: [{ $month: "$date" }, month] });
+  if (year) matchExpr.push({ $eq: [{ $year: "$date" }, year] });
+
+  if (date) {
+    const start = new Date(date + "T00:00:00.000Z");
+    const end = new Date(date + "T23:59:59.999Z");
+    matchExpr.push({ $gte: ["$date", start] });
+    matchExpr.push({ $lte: ["$date", end] });
+  }
+
+  const pipeline = [
+    { $match: { teacher: new mongoose.Types.ObjectId(teacherId) } },
+
+    ...(matchExpr.length ? [{ $match: { $expr: { $and: matchExpr } } }] : []),
+
+    ...(statusFilter ? [{ $match: { status: statusFilter } }] : []),
+
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "teacher",
+        foreignField: "_id",
+        as: "teacherInfo"
+      }
+    },
+    { $unwind: "$teacherInfo" },
+
+    {
+      $project: {
+        _id: 0,
+        date: 1,
+        status: 1,
+        remarks: 1,
+        teacherName: "$teacherInfo.name",
+        teacherEmail: "$teacherInfo.email",
+        teacherId: "$teacherInfo._id"
+      }
+    },
+
+    { $sort: { date: -1 } },
+    ...getPaginationArray(page, limit)
+  ];
+
+  return pipeline;
+};
+
+
+const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
+  return [
+    // Match documents
+    { $match: matchQuery },
+
+    // Lookup student details
+    {
+      $lookup: {
+        from: "students",
+        localField: "records.student",
+        foreignField: "_id",
+        as: "studentData"
+      }
+    },
+
+    // Map the records array with required student fields only
+    {
+      $addFields: {
+        records: {
+          $map: {
+            input: "$records",
+            as: "r",
+            in: {
+              _id: "$$r._id",
+              status: "$$r.status",
+              remarks: "$$r.remarks",
+              student: {
+                $let: {
+                  vars: {
+                    student: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$studentData",
+                            as: "s",
+                            cond: { $eq: ["$$s._id", "$$r.student"] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: {
+                    _id: "$$student._id",
+                    name: "$$student.name",
+                    email: "$$student.email",
+                    dob: "$$student.dob",
+                    address: "$$student.address",
+                    profilePic: "$$student.profilePic"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // Remove the temporary studentData array
+    { $project: { studentData: 0 } },
+
+    // Sort by date descending
+    { $sort: { date: -1 } },
+
+    // Pagination
+    {
+      $facet: {
+        docs: [
+          { $skip: (page - 1) * limit },
+          { $limit: limit }
+        ],
+        totalCount: [{ $count: "count" }]
+      }
+    }
+  ];
+};
+
+module.exports = {
+  getAttendanceLookup
+};
+
 
 module.exports = {
   studentAttendancePipeline,
@@ -1302,7 +1441,9 @@ module.exports = {
   //teacher
   getAssignmentLookup,
   getTeacherAssignByLookup,
-  getAllTeachersWithClassLookup
+  getAllTeachersWithClassLookup,
+getAttendanceLookup,
+  teacherAttendancePipeline
 }
 
 

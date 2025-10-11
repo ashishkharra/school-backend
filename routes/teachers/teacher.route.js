@@ -8,7 +8,6 @@ const validationRule = require('../../validations/admins/auth');
 // const { teacherLogin } = require('../../services/teachers/teachers.service');
 const teacherController = require('../../controllers/teachers/teacher.controller');
 
-
 router.post('/request-profile-update/:teacherId', teacherController.requestProfileUpdate);
 router.post('/getProfile',teacherController.getProfile);
 router.post('/forgot-password', validationRule.validate('forgot-password'), teacherController.teacherForgotPassword)

@@ -109,7 +109,7 @@ const adminStudent = {
         }
     },
 
-    updateStudent: async (studentData, studentId) => {
+    updateStudent: async (studentId, studentData, filePayload) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
                 return { status: 401, success: false, message: "STUDENT_ID_NOT_VALID" };
@@ -123,7 +123,8 @@ const adminStudent = {
             // Basic fields
             const basicFields = [
                 'name', 'email', 'phone', 'address', 'parents', 'guardian', 'emergencyContact',
-                'dob', 'gender', 'bloodGroup', 'profilePic', 'physicalDisability', 'disabilityDetails', 'password', 'aadharFront', 'aadharBack'
+                'dob', 'gender', 'bloodGroup', 'physicalDisability', 'disabilityDetails',
+                'password'
             ];
             basicFields.forEach(field => {
                 if (studentData[field] !== undefined) {
@@ -133,20 +134,27 @@ const adminStudent = {
                 }
             });
 
-            // Document fields
-            const docFields = ['marksheets', 'certificates', 'medicalRecords', 'transferCertificate', 'disciplinaryActions'];
-            docFields.forEach(field => {
-                if (studentData[field] !== undefined) updateData[field] = studentData[field];
+            // Arrays: append new files
+            const arrayFields = ['marksheets', 'certificates', 'medicalRecords'];
+            arrayFields.forEach(field => {
+                const oldArray = student[field] || [];
+                const newArray = filePayload[field] || [];
+                updateData[field] = [...oldArray, ...newArray];
             });
 
-            // Update enrollment info if section/academicYear present
+            // Single doc fields: overwrite if new file
+            const singleDocFields = ['transferCertificate', 'aadharFront', 'aadharBack', 'profilePic'];
+            singleDocFields.forEach(field => {
+                if (filePayload[field]) updateData[field] = filePayload[field];
+            });
+
+            // Enrollment info
             if (studentData.section || studentData.academicYear) {
                 const enrollment = await Enrollment.findOne({ student: studentId });
                 if (!enrollment) return { success: false, message: "ENROLLMENT_NOT_FOUND" };
 
                 const newSection = studentData.section || enrollment.section;
                 const newYear = studentData.academicYear || enrollment.academicYear;
-
                 const classObj = await Class.findById(enrollment.class);
                 if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
@@ -171,27 +179,26 @@ const adminStudent = {
             }
 
             const updatedStudentDoc = await Student.findByIdAndUpdate(studentId, updateData, { new: true });
-
             const updatedStudent = updatedStudentDoc.toObject();
 
             const addStaticUrl = (path) => path ? process.env.STATIC_URL + path : null;
 
-            // Prefix single images
-            ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(field => {
-                updatedStudent[field] = addStaticUrl(updatedStudent[field]);
+            // Single files
+            ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(f => {
+                updatedStudent[f] = addStaticUrl(updatedStudent[f]);
             });
 
-            // Prefix arrays
+            // Arrays
             ['marksheets', 'certificates', 'medicalRecords'].forEach(arrField => {
                 if (Array.isArray(updatedStudent[arrField])) {
-                    updatedStudent[arrField] = updatedStudent[arrField].map(item => ({
-                        ...item,
-                        fileUrl: addStaticUrl(item.fileUrl)
+                    updatedStudent[arrField] = updatedStudent[arrField].map(i => ({
+                        ...i,
+                        fileUrl: addStaticUrl(i.fileUrl)
                     }));
                 }
             });
 
-            // Send email notification
+            // Email notification
             await sendEmail("profile-updated-notification", {
                 Name: updatedStudent.name,
                 Email: updatedStudent.email,
@@ -202,7 +209,7 @@ const adminStudent = {
             return { status: 200, success: true, student: updatedStudent, message: "STUDENT_UPDATED_SUCCESSFULLY" };
 
         } catch (error) {
-            console.error("UpdateStudent error:", error);
+            console.error("❌ UpdateStudent error:", error);
             return { success: false, message: "SERVER_ERROR" };
         }
     },
@@ -682,7 +689,7 @@ const adminStudent = {
     getStudentById: async (studentId) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success: false, message: "STUDENT_ID_NOT_VALID" }
+                return { success: false, message: "STUDENT_ID_NOT_VALID" };
             }
 
             const result = await Student.aggregate(getStudentWithDetails(studentId));
@@ -709,7 +716,8 @@ const adminStudent = {
                 }
             });
 
-            console.log('result of student : ', result[0]);
+            // Remove the password before sending
+            if (result[0].password) delete result[0].password;
 
             return {
                 success: true,
@@ -718,7 +726,7 @@ const adminStudent = {
             };
         } catch (error) {
             console.error("getStudentById error:", error);
-            return { success: false, message: error.message }
+            return { success: false, message: error.message };
         }
     },
 }

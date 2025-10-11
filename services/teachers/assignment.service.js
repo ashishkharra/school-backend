@@ -2,88 +2,18 @@
 const Assignment = require('../../models/assignment/assignment.schema')
 const mongoose = require('mongoose')
 const Attendance = require('../../models/students/attendance.schema')
-const { getAssignmentLookup} = require('../../helpers/commonAggregationPipeline')
+const {
+  getAssignmentLookup
+} = require('../../helpers/commonAggregationPipeline')
 const Teacher = require('../../models/teacher/teacher.schema')
 
 const { getPaginationArrayJs } = require('../../helpers/helper')
 
 const Class = require('../../models/class/class.schema')
-// const Student= require('../../models/students/student.schema')
-
-// services/teachers/assignment.service.js
-// const Assignment = require('../../models/assignment/assignment.schema');
-// const Teacher = require('../../models/teacher/teacher.schema');
-// const Class = require('../../models/class/class.schema');
 
 module.exports = {
-  // uploadAssignment: async (
-  //   teacherId,
-  //   classId,
-  //   subjectId,
-  //   title,
-  //   description,
-  //   file
-  // ) => {
-  //   try {
-  //     // ✅ Validate teacher
-  //     const teacher = await Teacher.findById(teacherId);
-  //     if (!teacher) {
-  //       return { success: false, message: { en: 'Teacher not found' } };
-  //     }
 
-  //     // Ensure teacher.subjects is always an array
-  //     const subjectsArray = Array.isArray(teacher.subjects) ? teacher.subjects : [];
-
-  //     // ✅ Validate class
-  //     const classExists = await Class.findById(classId);
-  //     if (!classExists) {
-  //       return { success: false, message: { en: 'Class not found' } };
-  //     }
-
-  //     // ✅ Check subject belongs to teacher
-  //     const subjectExists = subjectsArray.some(
-  //       (subj) => subj.subjectId.toString() === subjectId
-  //     );
-  //     if (!subjectExists) {
-  //       return {
-  //         success: false,
-  //         message: { en: 'Subject not assigned to this teacher' }
-  //       };
-  //     }
-
-  //     // ✅ Prepare file path if uploaded
-  //     const filePath = file ? `/uploads/assignments/${file}` : null;
-
-  //     // Create assignment
-  //     const assignment = new Assignment({
-  //       title,
-  //       description,
-  //       file: filePath,
-  //       class: classId,
-  //       uploadedBy: teacherId,
-  //       subjectId
-  //     });
-
-  //     await assignment.save();
-
-  //     return {
-  //       success: true,
-  //       message: "ASSIGNMENT_CREATED_SUCCESSFULLY",
-  //       results: assignment
-  //     };
-  //   } catch (err) {
-  //     // ✅ Detailed error logging
-  //     console.error('Assignment upload error:', err);
-
-  //     return {
-  //       success: false,
-  //       message: 'SERVER_ERROR',
-  //     };
-  //   }
-  // }
-
-
-    uploadAssignment: async (
+  uploadAssignment: async (
     teacherId,
     classId,
     subjectId,
@@ -120,19 +50,18 @@ module.exports = {
       console.log('File--', file)
 
       const filePath = file ? `/uploads/assignments/${file}` : null
-      console.log('file paht : ', filePath);
-      
+      console.log('file paht : ', filePath)
 
       const assignment = new Assignment({
         title,
         description,
         dueDate,
         fileUrl: filePath,
-        class: classId,   
+        class: classId,
         uploadedBy: teacherId,
         subjectId: subjectObjectId
       })
-
+      console.log('assignment---------', assignment)
       await assignment.save()
 
       return {
@@ -150,40 +79,52 @@ module.exports = {
     }
   },
 
-updateAssignment: async (id, title, description, file = null) => {
-  try {
-    // ✅ Validate Assignment ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return { success: false, message: { en: 'ASSIGNMENT_ID_NOT_VALID' }, results: {} };
+  updateAssignment: async (id, title, description, file = null) => {
+    try {
+      // ✅ Validate Assignment ID
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return {
+          success: false,
+          message: { en: 'ASSIGNMENT_ID_NOT_VALID' },
+          results: {}
+        }
+      }
+
+      // ✅ Prepare update object
+      const updateData = {}
+      if (title) updateData.title = title
+      if (description) updateData.description = description
+      if (file) updateData.fileUrl = `/uploads/assignments/${file}`
+
+      // ✅ Perform update
+      const updatedAssignment = await Assignment.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      ).lean()
+
+      if (!updatedAssignment) {
+        return {
+          success: false,
+          message: { en: 'ASSIGNMENT_NOT_FOUND' },
+          results: {}
+        }
+      }
+
+      console.log('--Updated Assignment:', updatedAssignment)
+      return {
+        success: true,
+        message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
+        results: updatedAssignment
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: { en: 'SERVER_ERROR' },
+        results: err.message
+      }
     }
-
-    // ✅ Prepare update object
-    const updateData = {};
-    if (title) updateData.title = title;
-    if (description) updateData.description = description;
-    if (file) updateData.fileUrl = `/uploads/assignments/${file}`;
-
-    // ✅ Perform update
-    const updatedAssignment = await Assignment.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!updatedAssignment) {
-      return { success: false, message: { en: 'ASSIGNMENT_NOT_FOUND' }, results: {} };
-    }
-
-    console.log('--Updated Assignment:', updatedAssignment);
-    return {
-      success: true,
-      message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
-      results: updatedAssignment
-    };
-  } catch (err) {
-    return { success: false, message: { en: 'SERVER_ERROR' }, results: err.message };
-  }
-},
+  },
 
   getAssignments: async (
     classId,
@@ -289,4 +230,4 @@ updateAssignment: async (id, title, description, file = null) => {
       }
     }
   }
-};
+}

@@ -8,10 +8,7 @@ const attendanceSchema = new mongoose.Schema(
       required: true 
     },
 
-    date: { 
-      type: Date, 
-      required: true 
-    },
+     date: { type: String, required: true },
 
     session: { 
       type: Number, 
@@ -28,7 +25,7 @@ const attendanceSchema = new mongoose.Schema(
         },
         status: { 
           type: String, 
-          enum: ["Present", "Absent", "Late", "Excused"], 
+          enum: ["Present", "Absent", "Late", "Excused" ,"Pending"], 
           default: "Present" 
         },
         remarks: { 

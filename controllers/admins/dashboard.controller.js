@@ -5,17 +5,17 @@ module.exports = {
   dashboard: async (req, res) => {
     try {
       await dashboardService.dashboard(req, res)
-    } catch (err) {
+    } catch (error) {
       const msg = err.message || 'SOMETHING_WENT_WRONG'
-      return res.status(422).json(responseData(msg, {}, req, true))
+      return res.status(422).json(responseData(msg, { error : error.message }, req, true))
     }
   },
   graphManager: async (req, res) => {
     try {
       await dashboardService.graphManager(req, res)
-    } catch (err) {
+    } catch (error) {
       const msg = err.message || 'SOMETHING_WENT_WRONG'
-      return res.status(422).json(responseData(msg, {}, req, true))
+      return res.status(422).json(responseData(msg, { error : error.message }, req, true))
     }
   }
 }

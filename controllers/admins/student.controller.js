@@ -14,13 +14,16 @@ const normalizeUploadPath = (filePath) => {
   return normalizedPath.replace(baseUploadDir, '').replace(/\\/g, '/');
 };
 
+const getRelativePath = (filePath) =>
+  filePath.replace(baseUploadDir, "").replace(/\\/g, "/");
+
 module.exports = {
   // Add Student
   regStudent: async (req, res) => {
     try {
       const data = req.body;
       const files = req.files;
-      console.log("DATA------", data)
+      console.log("DATA------", files)
       if (data.parents && typeof data.parents === 'string') data.parents = JSON.parse(data.parents);
       if (data.siblings && typeof data.siblings === 'string') data.siblings = JSON.parse(data.siblings);
       if (data.achievements && typeof data.achievements === 'string') data.achievements = JSON.parse(data.achievements);
@@ -71,75 +74,105 @@ module.exports = {
         return res.status(400).json(responseData(result.message, {}, req, false));
       }
       return res.status(201).json(responseData(result.message, result.data, req, true));
-    } catch (err) {
-      console.error('Student register error:', err);
-      return res.status(500).json(responseData('REGISTRATION_FAILED', {}, req, false));
+    } catch (error) {
+      console.error('Student register error:', error);
+      return res.status(500).json(responseData('REGISTRATION_FAILED', { error: error.message }, req, false));
     }
   },
 
   updateStudent: async (req, res) => {
     try {
-      const data = { ...req.body }; // clone body
-      const files = req.files;
-
-      console.log('files--------- ', files)
       const { studentId } = req.params;
-      // console.log("DATA----", data)
-      const getRelativePath = (filePath) => filePath.replace(baseUploadDir, '').replace(/\\/g, '/');
+      const files = req.files;
+      const bodyData = { ...req.body };
 
-      // Only update images/docs if they exist
-      if (files) {
-        ['profilePic', 'aadharFront', 'aadharBack', 'transferCertificate'].forEach(field => {
-          if (files[field]?.[0]) {
-            data[field] = getRelativePath(files[field][0].path);
-            console.log('path field : ::::: : ', data[field])
-          } else {
-            delete data[field];
+      // Parse JSON strings if sent as strings
+      const fields = ["address", "parents", "guardian", "emergencyContact"];
+      fields.forEach(key => {
+        if (!bodyData[key] || bodyData[key] === "null") {
+          bodyData[key] = key === "parents" ? [] : {};
+        } else if (typeof bodyData[key] === "string") {
+          try {
+            bodyData[key] = JSON.parse(bodyData[key]);
+          } catch {
+            bodyData[key] = key === "parents" ? [] : {};
           }
-        });
-
-
-        if (files.marksheets?.length) {
-          data.marksheets = files.marksheets.map(f => ({
-            exam: f.originalname,
-            fileUrl: getRelativePath(f.path)
-          }));
         }
-
-        if (files.certificates?.length) {
-          data.certificates = files.certificates.map(f => ({
-            name: f.originalname,
-            issuedBy: req.body.certificatesIssuedBy || null,
-            issueDate: req.body.certificatesIssueDate ? new Date(req.body.certificatesIssueDate) : null,
-            fileUrl: getRelativePath(f.path)
-          }));
-        }
-
-        if (files.medicalRecords?.length) {
-          data.medicalRecords = files.medicalRecords.map(f => ({
-            condition: req.body.medicalCondition || "",
-            doctorNote: req.body.doctorNote || "",
-            date: req.body.medicalDate ? new Date(req.body.medicalDate) : new Date(),
-            fileUrl: getRelativePath(f.path)
-          }));
-        }
-      }
-
-      // Remove null or undefined fields
-      Object.keys(data).forEach(key => {
-        if (data[key] === 'null' || data[key] === undefined) delete data[key];
       });
 
-      console.log('updatable data ::::::::::: -------- ', data);
-      const result = await adminStudent.updateStudent(data, studentId);
+      // 🖼️ File handling
+      const filePayload = {};
 
-      if (!result.success) {
-        return res.status(result.status || 400).json(responseData(result.message, {}, req, false));
+      // Single file fields
+      const singleFileFields = ["profilePic", "aadharFront", "aadharBack", "transferCertificate"];
+      const student = await adminStudent.getStudentById(studentId); // Fetch current student for old file paths
+
+      for (const field of singleFileFields) {
+        if (files[field]?.[0]) {
+          // Delete old file if exists
+          if (student.result[0][field]) {
+            deleteFileIfExists(student.result[0][field]);
+          }
+          // Set new file path
+          filePayload[field] = getRelativePath(files[field][0].path);
+        } else if (bodyData[field] === null || bodyData[field] === "null") {
+          // If explicitly null, remove the file
+          if (student.result[0][field]) {
+            deleteFileIfExists(student.result[0][field]);
+          }
+          filePayload[field] = null;
+        }
+        // else leave undefined → don't overwrite old DB value
       }
 
-      return res.status(200).json(responseData(result.message, result.student, req, true));
+      // Multiple files
+      if (files.marksheets?.length) {
+        filePayload.marksheets = files.marksheets.map(f => ({
+          exam: f.originalname,
+          fileUrl: getRelativePath(f.path)
+        }));
+      }
+
+      if (files.certificates?.length) {
+        filePayload.certificates = files.certificates.map(f => ({
+          name: f.originalname,
+          issuedBy: bodyData.certificatesIssuedBy || null,
+          issueDate: bodyData.certificatesIssueDate ? new Date(bodyData.certificatesIssueDate) : null,
+          fileUrl: getRelativePath(f.path)
+        }));
+      }
+
+      if (files.medicalRecords?.length) {
+        filePayload.medicalRecords = files.medicalRecords.map(f => ({
+          condition: bodyData.medicalCondition || "",
+          doctorNote: bodyData.doctorNote || "",
+          date: bodyData.medicalDate ? new Date(bodyData.medicalDate) : new Date(),
+          fileUrl: getRelativePath(f.path)
+        }));
+      }
+
+      // 🧹 Clean nulls from bodyData
+      Object.keys(bodyData).forEach(key => {
+        if (bodyData[key] === "null" || bodyData[key] === null || bodyData[key] === undefined) {
+          delete bodyData[key];
+        }
+      });
+
+      // 🧠 Call Service
+      const result = await adminStudent.updateStudent(studentId, bodyData, filePayload);
+
+      if (!result.success) {
+        return res
+          .status(result.status || 400)
+          .json(responseData(result.message, {}, req, false));
+      }
+
+      return res
+        .status(200)
+        .json(responseData(result.message, result.student, req, true));
+
     } catch (error) {
-      console.error("Error in updateStudent:", error);
+      console.error("❌ UpdateStudent error:", error);
       return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
     }
   },
@@ -209,7 +242,7 @@ module.exports = {
 
     } catch (error) {
       console.error("updateStudentClassAndSection controller error:", error);
-      return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+      return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
   },
 
@@ -234,7 +267,7 @@ module.exports = {
       console.error("deleteStudent Controller error:", error);
       return res
         .status(500)
-        .json(responseData("SERVER_ERROR", error.message, req, false));
+        .json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
   },
 
@@ -265,7 +298,7 @@ module.exports = {
       console.error("getStudentAccordingClass controller error:", error);
       return res
         .status(500)
-        .json(responseData("ERROR_WHILE_GETTING_STUDENTS", {}, req, false));
+        .json(responseData("ERROR_WHILE_GETTING_STUDENTS", { error: error.message }, req, false));
     }
   },
 
@@ -290,10 +323,8 @@ module.exports = {
     } catch (error) {
       console.error("getStudentById controller error:", error);
       return res.status(500).json(
-        responseData("SERVER_ERROR", null, req, false)
+        responseData("SERVER_ERROR", { error: error.message }, req, false)
       );
     }
   }
-
-
 };    

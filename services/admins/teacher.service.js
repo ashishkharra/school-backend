@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs')
 const Teacher = require('../../models/teacher/teacher.schema')
+const TeacherAttendance = require('../../models/teacher/teacherAttendance.schema.js')
 const { sendEmail } = require('../../helpers/helper') // adjust path
 // const teacherAssignBYClass = require('../../models/class/class.schema');
 const subject = require('../../models/class/subjects.schema')
@@ -24,107 +25,6 @@ const convertToMinutes = (timeStr) => {
   return hours * 60 + minutes
 }
 module.exports = {
-  // registerTeacher: async (data) => {
-  //   try {
-  //     const {
-  //       name,
-  //       email,
-  //       password,
-  //       phone,
-  //       dateOfBirth,
-  //       gender,
-  //       maritalStatus,
-  //       spouseName,
-  //       children,
-  //       address,
-  //       bloodGroup,
-  //       physicalDisability,
-  //       disabilityDetails,
-  //       department,
-  //       designation,
-  //       qualifications,
-  //       specialization,
-  //       experience,
-  //       dateOfJoining,
-  //       classes,
-  //       subjectsHandled,
-  //       salaryInfo,
-  //       IDProof,
-  //       certificates,
-  //       resume,
-  //       joiningLetter,
-  //       emergencyContact
-  //     } = data
-
-  //     if (!name || !email || !password) {
-  //       return {
-  //         success: false,
-  //         message: 'Name, email, and password are required'
-  //       }
-  //     }
-  //     const existing = await Teacher.findOne({ email: email.toLowerCase() })
-  //     if (existing) {
-  //       return {
-  //         success: false,
-  //         message: 'Teacher with this email already exists'
-  //       }
-  //     }
-  //     const hashedPassword = await bcrypt.hash(password, 10)
-  //     const newTeacher = {
-  //       name,
-  //       email: email.toLowerCase(),
-  //       password: hashedPassword,
-  //       phone,
-  //       dateOfBirth,
-  //       gender,
-  //       maritalStatus,
-  //       spouseName,
-  //       children,
-  //       address,
-  //       bloodGroup,
-  //       physicalDisability,
-  //       disabilityDetails,
-  //       department,
-  //       designation,
-  //       qualifications,
-  //       specialization,
-  //       experience,
-  //       dateOfJoining,
-  //       classes,
-  //       subjectsHandled,
-  //       salaryInfo,
-  //       IDProof,
-  //       certificates,
-  //       resume,
-  //       joiningLetter,
-  //       emergencyContact,
-  //       role: 'teacher'
-  //     }
-
-  //     let result = await teacherSchema.create(newTeacher)
-  //     let safeResult = result.toObject()
-  //     delete safeResult.password
-
-  //     let dataBody = {
-  //       email: email.toLowerCase(),
-  //       PASSWORD: password,
-  //       EMAIL: email,
-  //       URL: 'https://youtube.com'
-  //     }
-  //     const isMailSent = await helper.sendEmail('new-teacher-account', dataBody)
-  //     if (!isMailSent) {
-  //       return { success: false, message: 'EMAIL_NOT_SENT' }
-  //     }
-  //     return {
-  //       success: true,
-  //       message: 'TEACHER_REGISTERED',
-  //       data: safeResult
-  //     }
-  //   } catch (error) {
-  //     return { success: false, message: error.message || 'SERVER_ERROR' }
-  //   }
-  // },
-
   registerTeacher: async (data) => {
     try {
       const {
@@ -170,7 +70,13 @@ module.exports = {
           success: false,
           message: 'TEACHER_WITH_THIS_EMAIL_ALREADY_EXISTS'
         }
-
+      const existingPhone = await Teacher.findOne({ phone })
+      if (existingPhone) {
+        return {
+          success: false,
+          message: 'TEACHER_WITH_THIS_PHONE_ALREADY_EXISTS'
+        }
+      }
       const hashedPassword = await bcrypt.hash(password, 10)
 
       const newTeacher = {
@@ -255,12 +161,14 @@ module.exports = {
 
   getAllTeachers: async (page = 1, limit = 10, status = 1) => {
     try {
- page = parseInt(page) || 1;
-    limit = parseInt(limit) || 10;
-      helper.filterByStatus({isRemoved : {$ne : 1}}, status)
-      const totalTeachers = await Teacher.countDocuments({isRemoved : {$ne : 1}})
+      page = parseInt(page) || 1
+      limit = parseInt(limit) || 10
+      helper.filterByStatus({ isRemoved: { $ne: 1 } }, status)
+      const totalTeachers = await Teacher.countDocuments({
+        isRemoved: { $ne: 1 }
+      })
       console.log('total : ', totalTeachers)
-      const teachers = await Teacher.find( {isRemoved : {$ne : 1}} )
+      const teachers = await Teacher.find({ isRemoved: { $ne: 1 } })
         .select('-password -token -refreshToken')
         .lean()
         .sort({ createdAt: -1 })
@@ -376,19 +284,19 @@ module.exports = {
       if (!teacherData) {
         return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
       }
-    const existingClassTeacher = await Class.findOne({
-      teacher: teacherId,
-      isClassTeacher: true,
-      _id: { $ne: classId } 
-    });
+      const existingClassTeacher = await Class.findOne({
+        teacher: teacherId,
+        isClassTeacher: true,
+        _id: { $ne: classId }
+      })
 
-    if (existingClassTeacher) {
-      return {
-        success: false,
-        message: `TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_${existingClassTeacher.name}`,
-        data: {}
-      };
-    }
+      if (existingClassTeacher) {
+        return {
+          success: false,
+          message: `TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_${existingClassTeacher.name}`,
+          data: {}
+        }
+      }
 
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
@@ -428,10 +336,10 @@ module.exports = {
       }
       if (classData.teacher) {
       }
-  await Class.updateMany(
-      { teacher: mongoose.Types.ObjectId(teacherId), _id: { $ne: classId } },
-      { $set: { teacher: null, isClassTeacher: false } }
-    )
+      await Class.updateMany(
+        { teacher: mongoose.Types.ObjectId(teacherId), _id: { $ne: classId } },
+        { $set: { teacher: null, isClassTeacher: false } }
+      )
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
 
@@ -610,8 +518,7 @@ module.exports = {
       if (classConflict) {
         return {
           success: false,
-          message:
-            'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
+          message: 'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
           data: {}
         }
       }
@@ -770,6 +677,7 @@ module.exports = {
         ...getTeacherAssignByLookup(classId, teacherId),
         { $count: 'total' }
       ])
+      console.log(totalResult, 'totalResult----')
       const total = totalResult.length > 0 ? totalResult[0].total : 0
 
       return {
@@ -789,6 +697,107 @@ module.exports = {
         message: error.message || 'FETCH_FAILED',
         data: []
       }
+    }
+  },
+
+  markAttendance: async (teacherId, status) => {
+    // Check if already marked for today
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const existing = await TeacherAttendance.findOne({
+        teacher: teacherId,
+        date: today
+      })
+
+      if (existing) {
+        return { success: false, message: 'ATTENDANCE_MARKED_ALREADY' }
+      }
+
+      const attendance = await TeacherAttendance.create({
+        teacher: teacherId,
+        date: today,
+        status: status || 'Present'
+      })
+
+      return { success: true, message: 'ATTENDANCE_MARKED', attendance }
+    } catch (error) {
+      console.log('Error while marking attendance of teacher : ', error.message)
+      return { success: false, message: 'SERVER_ERROR' }
+    }
+  },
+
+  updateAttendance: async (teacherId, status) => {
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const updated = await TeacherAttendance.findOneAndUpdate(
+        { teacher: teacherId, date: today },
+        { $set: { status } },
+        { new: true }
+      )
+
+      if (!updated) {
+        return { success: false, message: 'Attendance not found for today' }
+      }
+
+      return { success: true, message: 'ATTENDANCE_MARKED', updated }
+    } catch (error) {
+      console.log('Error while updating attedance : ', error.message)
+      return { success: false, message: 'SERVER_ERROR' }
+    }
+  },
+
+  getAttendance: async (teacherId, options) => {
+    const { month, date, year, page = 1, limit = 10, statusFilter } = options
+    try {
+      const pipeline = teacherAttendancePipeline({
+        teacherId,
+        month,
+        date,
+        year,
+        statusFilter,
+        page,
+        limit
+      })
+
+      const data = await TeacherAttendance.aggregate(pipeline)
+
+      const totalCountQuery = {
+        teacher: new mongoose.Types.ObjectId(teacherId)
+      }
+
+      if (year) totalCountQuery.$expr = { $eq: [{ $year: '$date' }, year] }
+      if (month) {
+        totalCountQuery.$expr = totalCountQuery.$expr
+          ? {
+              $and: [
+                totalCountQuery.$expr,
+                { $eq: [{ $month: '$date' }, month] }
+              ]
+            }
+          : { $eq: [{ $month: '$date' }, month] }
+      }
+
+      if (statusFilter) totalCountQuery.status = statusFilter
+
+      const totalDocs = await TeacherAttendance.countDocuments(totalCountQuery)
+
+      return {
+        success: true,
+        jsonData: data,
+        meta: {
+          page,
+          limit,
+          totalDocs,
+          totalPages: Math.ceil(totalDocs / limit)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching teacher attendance:', error)
+      return { success: false, message: 'FAILED_TEACHER_ATTENDANCE_FAILED' }
     }
   }
 }
