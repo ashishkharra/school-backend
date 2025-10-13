@@ -33,16 +33,6 @@ const classSchema = new mongoose.Schema(
     isClassTeacher: { type: Boolean, enum: [true, false], default: false },
 
     studentCount: { type: Number, default: 0 },
-
-    startTime: {
-      type: String,
-      match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i,
-    },
-
-    endTime: {
-      type: String,
-      match: /^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i,
-    },
     status: { type : String, enum: ['active', 'inactive'], default : 'active'}
   },
   { timestamps: true }

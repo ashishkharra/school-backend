@@ -12,7 +12,7 @@ const adminClassService = {
 
     addClass: async (classData) => {
         try {
-            let { name, section, startTime, endTime } = classData;
+            let { name, section } = classData;
             name = formatClassName(name);
             section = section.toUpperCase();
 
@@ -37,8 +37,6 @@ const adminClassService = {
                 section,
                 classIdentifier,
                 studentCount: 0,
-                startTime,
-                endTime,
             });
 
             if (!newClass) {

@@ -47,6 +47,7 @@ const dashboardService = {
             const now = new Date();
             const currentYear = now.getFullYear();
 
+            // Academic year: April to March
             let academicStart, academicEnd;
             if (now.getMonth() >= 3) {
                 academicStart = new Date(currentYear, 3, 1);
@@ -61,12 +62,9 @@ const dashboardService = {
                 'Jan', 'Feb', 'Mar'
             ];
 
+            // 1️⃣ Student Enrollment per month
             const enrollments = await Enrollment.aggregate([
-                {
-                    $match: {
-                        createdAt: { $gte: academicStart, $lte: academicEnd }
-                    }
-                },
+                { $match: { createdAt: { $gte: academicStart, $lte: academicEnd } } },
                 {
                     $group: {
                         _id: { month: { $month: "$createdAt" } },
@@ -82,45 +80,50 @@ const dashboardService = {
 
             const xAxis = months;
             const yAxis = months.map((month, index) => {
-                let monthNumber;
-                if (index < 9) {
-                    monthNumber = index + 4;
-                } else {
-                    monthNumber = index - 8;
-                }
+                let monthNumber = index < 9 ? index + 4 : index - 8; // Apr=4,...,Mar=3
                 return monthMap[monthNumber] || 0;
             });
 
+            // 2️⃣ Teacher count per specialization
             const teachers = await Teacher.aggregate([
-                { $unwind: "$specialization" }, // flatten specialization array
-                {
-                    $group: {
-                        _id: "$specialization", // group by each subject
-                        count: { $sum: 1 }      // count teachers per subject
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0,
-                        name: "$_id",   // rename to "name"
-                        value: "$count" // rename count to value
-                    }
-                }
+                { $unwind: "$specialization" },
+                { $group: { _id: "$specialization", count: { $sum: 1 } } },
+                { $project: { _id: 0, name: "$_id", value: "$count" } }
             ]);
 
-            console.log('-----------------', teacherGraphData);
+            // 3️⃣ Total Male/Female Students
+            const genderCounts = await Enrollment.aggregate([
+                {
+                    $lookup: {
+                        from: "students",
+                        localField: "student",
+                        foreignField: "_id",
+                        as: "studentInfo"
+                    }
+                },
+                { $unwind: "$studentInfo" },
+                { $match: { "studentInfo.isRemoved": 0 } },
+                { $group: { _id: "$studentInfo.gender", count: { $sum: 1 } } }
+            ]);
 
-            const students = { xAxis, yAxis }
+            const genderStats = { male: 0, female: 0 };
+            genderCounts.forEach(g => {
+                if (g._id.toLowerCase() === 'male') genderStats.male = g.count;
+                if (g._id.toLowerCase() === 'female') genderStats.female = g.count;
+            });
 
-            console.log('xAxis:', xAxis);
-            console.log('yAxis:', yAxis);
+            const students = { xAxis, yAxis };
+
+            console.log("Dashboard Data:", { students, teachers, genderStats });
+
             return res.status(200).json(
                 responseData(
                     'DASHBOARD_SUCCESSFULLY',
                     {
                         docs: {
                             students,
-                            teachers
+                            teachers,
+                            genderStats
                         }
                     },
                     req,
@@ -128,10 +131,9 @@ const dashboardService = {
                 )
             );
 
-
         } catch (error) {
             console.error("Dashboard Service Error:", error);
-            return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false))
+            return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false));
         }
     }
 };

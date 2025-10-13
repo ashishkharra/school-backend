@@ -249,7 +249,7 @@ const studentService = {
         }
     },
 
-    submitAssignment: async (studentId, assignmentId, files) => {
+    submitAssignment: async (studentId, assignmentId, classId, files) => {
         try {
             const assignment = await Assignment.findById(assignmentId);
             if (!assignment) return { success: false, message: "ASSIGNMENT_NOT_FOUND" };
@@ -257,7 +257,7 @@ const studentService = {
             const now = new Date();
             const isLate = now > assignment.dueDate;
 
-            let submission = await Submission.findOne({ student: studentId, assignment: assignmentId });
+            let submission = await Submission.findOne({ student: studentId, assignment: assignmentId, class: classId });
 
             const formattedFiles = files.map(f => ({
                 fileUrl: f.path,
@@ -279,6 +279,7 @@ const studentService = {
                 submission.submittedAt = now;
                 submission.status = "Submitted";
                 submission.isLate = isLate;
+                submission.class = classId;
 
                 await submission.save();
             } else {

@@ -6,13 +6,12 @@ module.exports = {
 
   getProfile: async (req, res) => {
     try {
-      //   const teacherId = req.user._id
-      const { teacherId } = req.params
+        const teacherId = req.user._id
       const profile = await teacherService.getProfile(teacherId);
 
       return res
         .status(200)
-        .json(responseData("TEACHER_PROFILE_FETCHED", profile, req, true));
+        .json(responseData(profile?.message, profile, req, profile?.success||true));
     } catch (error) {
       return res
         .status(400)
@@ -84,5 +83,23 @@ module.exports = {
             return res.status(422).json(responseData(msg, {}, req))
         }
     },
+
+    getAttendance: async (req, res) => {
+        try {
+            const { month, year } = req.query;
+            const teacherId = req.user._id;
+
+            if (!month || !year) {
+                return res.status(400).json(responseData("MONTH_YEAR_REQUIRED", {}, req, false));
+            }
+
+            const attendance = await teacherService.getAttendance(teacherId, parseInt(month), parseInt(year));
+
+            return res.status(200).json(responseData("ATTENDANCE_FETCHED", attendance, req, true));
+        } catch (err) {
+            console.error("Error:", err.message);
+            return res.status(500).json(responseData("ERROR_OCCUR", {error : err.message}, req, false));
+        }
+    }
 }
 

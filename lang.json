@@ -1660,5 +1660,37 @@
   "ASSIGNMENT_DELETED_SUCCESSFULLY": 
   { "en": "Assignment deleted successfully", "ar": "" },
   "DELETE_ASSIGNMENT_FAILED": 
-  { "en": "Assignment deletion failed", "ar": "" }
+  { "en": "Assignment deletion failed", "ar": "" },
+  "TEACHER_PROFILE_FETCHED": {
+    "en": "Teacher not found",
+    "ar": ""
+  },
+  "SCHOOL_SETTINGS_FETCHED": {
+    "en": "Settings fetched successfully",
+    "ar": ""
+  },
+  "TEACHER_ATTENDANCE_FETCHED": {
+    "en": "Teacher attendance fetched successfully",
+    "ar": ""
+  },
+  "MONTH_YEAR_REQUIRED": {
+    "en": "Month and year are required",
+    "ar": ""
+  },
+  "DASHBOARD_SUCCESSFULLY": {
+    "en": "Dashboard data fetched successfully",
+    "ar": ""
+  },
+  "SETTINGS_UPDATED": {
+    "en": "Settings updated successfully",
+    "ar": ""
+  },
+  "ADDRESS_INCOMPLETE": {
+    "en": "Address is incomplete",
+    "ar": ""
+  },
+  "FETCHING_TEACHER_PROFILE_SUCCESSFULLY": {
+    "en": "Fetching teacher profile successfully",
+    "ar": ""
+  }
 }

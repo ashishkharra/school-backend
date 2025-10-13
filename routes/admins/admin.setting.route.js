@@ -14,28 +14,30 @@ const jsonFieldsForSchool = [
   "academicSession"
 ];
 
-router.post(
-  "/school-settings",
-  [verifyToken, schoolDoc, parseMultipartJSONFields(jsonFieldsForSchool), validationRule.validate('adminSetting')],
-  schoolSettingController.saveSettings
-);
 
-router.put(
-  "/update-settings/:id",
-  [verifyToken, schoolDoc, parseMultipartJSONFields(jsonFieldsForSchool), validationRule.validate('updateAdminSetting')],
-  schoolSettingController.updateSettings
-)
+router
+  .post(
+    "/school-settings",
+    [verifyToken, schoolDoc, parseMultipartJSONFields(jsonFieldsForSchool), validationRule.validate('adminSetting')],
+    schoolSettingController.saveSettings
+  )
 
-router.get(
-  "/school-settings",
-  [verifyToken],
-  schoolSettingController.getSettings
-);
+  .put(
+    "/update-settings",
+    [verifyToken, schoolDoc, parseMultipartJSONFields(jsonFieldsForSchool), validationRule.validate('updateAdminSetting')],
+    schoolSettingController.updateSettings
+  )
 
-router.patch(
-  "/school-settings/reset",
-  [verifyToken],
-  schoolSettingController.resetSettings
-);
+  .get(
+    "/school-settings",
+    [verifyToken],
+    schoolSettingController.getSettings
+  )
+
+  .patch(
+    "/school-settings/reset",
+    [verifyToken],
+    schoolSettingController.resetSettings
+  )
 
 module.exports = router;

@@ -28,6 +28,7 @@ const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
 const adminFeeRoutes = require('./routes/admins/fees.route.js')
 const adminteachersalaryRoutes = require('./routes/admins/teacher.salary.js')
 const parentRoutes = require('./routes/admins/parent.route.js')
+const adminSettingRoute = require('./routes/admins/admin.setting.route.js')
 
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
@@ -79,6 +80,7 @@ app.use('/api/admins/attendances', adminAttendanceRoutes)
 app.use('/api/admins/email-template', adminEmailTemplateRouter)
 app.use('/api/admins/fees', adminFeeRoutes)
 app.use('/api/admins/teachersalary', adminteachersalaryRoutes)
+app.use('/api/admins/setting', adminSettingRoute)
 app.use('/api/parents/meeting', parentRoutes)
 // app.use('/v1/admin/notification', adminNotificationRouter)
 

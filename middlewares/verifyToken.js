@@ -55,7 +55,7 @@ const handleStudentRole = (user, req, res, next) => {
 }
 
 const handleTeacherRole = (user, req, res, next) => {
-  Student.findOne({
+  Teacher.findOne({
     _id: user._id
   })
     .then((data) => {
@@ -120,6 +120,7 @@ exports.verifyToken = async (req, res, next) => {
   if (!token) {
     return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, false))
   }
+
   handleVerification(req, res, next, token)
 }
 
