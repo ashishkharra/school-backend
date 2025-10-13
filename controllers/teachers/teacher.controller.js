@@ -21,19 +21,68 @@ module.exports = {
   },
   requestProfileUpdate: async (req, res) => {
     try {
-      const { teacherId } = req.params
-      const updateData = req.body;   // e.g. { phone, address }
+      const { teacherId } = req.params;
+      const requestedFields = req.body.requestedFields; // nested object with updates
 
-      const result = await teacherService.requestProfileUpdate(teacherId, updateData);
+      if (!requestedFields || Object.keys(requestedFields).length === 0) {
+        return res
+          .status(400)
+          .json(responseData('REQUESTED_FIELDS_EMPTY', {}, req, false));
+      }
+
+      const result = await teacherService.requestProfileUpdate(teacherId, requestedFields);
+
+      if (!result.success) {
+        return res
+          .status(400)
+          .json(responseData(result.message, {}, req, false));
+      }
 
       return res
         .status(200)
-        .json(responseData("PROFILE_UPDATE_REQUEST_SENT", result, req, true));
+        .json(
+          responseData(
+            result.message,
+            {
+              teacherId,
+              requestedFields // return full data
+            },
+            req,
+            true
+          )
+        );
     } catch (error) {
+      console.error('Error in requestProfileUpdate controller:', error);
       return res
-        .status(400)
-        .json(responseData("PROFILE_UPDATE_REQUEST_FAILED", { error: error.message }, req, false));
+        .status(500)
+        .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
     }
   },
+  teacherForgotPassword: async (req, res) => {
+        try {
+            await teacherService.teacherForgotPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+ 
+    teacherResetPassword: async (req, res) => {
+        try {
+            await teacherService.teacherResetPassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
+ 
+    changePassword: async (req, res) => {
+        try {
+            await teacherService.changePassword(req, res)
+        } catch (err) {
+            const msg = err.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {}, req))
+        }
+    },
 }
 

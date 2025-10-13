@@ -1,92 +1,184 @@
-
-const attendanceService = require('../../services/teachers/attendance.service');
-const { responseData } = require('../../helpers/responseData'); // Assume you have this utility for consistent responses
+const attendanceService = require('../../services/teachers/attendance.service')
+const { responseData } = require('../../helpers/responseData') 
+const { constant } = require('lodash')
 
 module.exports = {
-  // getStudentsByClass: async (req, res) => {
-  //   try {
-  //     const classId = req.params.classId;
-  //     console.log("classid", classId);
-  //     const students = await attendanceService.getStudentsByClass(classId);
-  //     console.log("styy", students);
-  //     res.json(responseData('STUDENTS_FETCHED', students, req, true));
-  //   } catch (error) {
-  //     res.status(500).json(responseData('ERROR_OCCUR', error.message, req, false));
-  //   }
-  // },
+  // MARK OR UPDATE ATTENDANCE
+ markOrUpdateAttendance: async (req, res) => {
+    try {
+      const { classId, session, takenBy, records } = req.body
 
-getStudentsByClass: async (req, res) => {
+      if (!classId || !session || !takenBy || !records) {
+        return res
+          .status(400)
+          .json(responseData('MISSING_REQUIRED_FIELDS', {}, req, false))
+      }
+
+      if (!Array.isArray(records)) {
+        return res
+          .status(400)
+          .json(responseData('RECORDS_MUST_BE_ARRAY', {}, req, false))
+      }
+
+      const result = await attendanceService.markOrUpdateAttendance({
+        classId,
+        session,
+        takenBy,
+        records
+      })
+
+      if (!result.success) {
+        return res
+          .status(400)
+          .json(
+            responseData(
+              result.message || 'ATTENDANCE_UPDATE_FAILED',
+              {},
+              req,
+              false
+            )
+          )
+      }
+
+      return res
+        .status(200)
+        .json(
+          responseData(
+            'ATTENDANCE_FETCHED_OR_UPDATED',
+            result.results,
+            req,
+            true
+          )
+        )
+    } catch (error) {
+      console.error(error)
+      return res
+        .status(500)
+        .json(responseData('SERVER_ERROR', { error: error.message }, req, false))
+    }
+  },
+
+  // UPDATE ATTENDANCE BY ID
+updateAttendanceController: async (req, res) => {
   try {
-    const classId = req.params.classId;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { attendanceId } = req.params;
+    const { records } = req.body;
 
-    
-    console.log("classid", classId, "page", page, "limit", limit);
+    if (!attendanceId) {
+      return res
+        .status(400)
+        .json(responseData("MISSING_ATTENDANCE_ID", {}, req, false));
+    }
+    if (!records || !Array.isArray(records)) {
+      return res
+        .status(400)
+        .json(responseData("RECORDS_MUST_BE_ARRAY", {}, req, false));
+    }
 
-    // Pass page and limit directly (not skip)
-    const students = await attendanceService.getStudentsByClass(classId, page, limit);
+    const updatedAttendance = await attendanceService.updateAttendanceById({ attendanceId, records });
 
-    console.log("styy", students);
-    res.json(responseData('STUDENTS_FETCHED', students, req, true));
+    if (!updatedAttendance || !updatedAttendance.success) {
+      return res
+        .status(404)
+        .json(responseData("ATTENDANCE_RECORD_NOT_FOUND", {}, req, false));
+    }
+
+    // Only pass the actual attendance document, not the entire service response
+    return res
+      .status(200)
+      .json(
+        responseData(
+          "ATTENDANCE_UPDATED_SUCCESSFULLY",
+          updatedAttendance.results, // <--- fixed here
+          req,
+          true
+        )
+      );
   } catch (error) {
-    res.status(500).json(responseData('ERROR_OCCUR', error.message, req, false));
+    return res
+      .status(500)
+      .json(
+        responseData("SERVER_ERROR", { error: error.message }, req, false)
+      );
   }
 }
 ,
-markAttendance: async (req, res) => {
+
+  getAttendance: async (req, res) => {
+    const { date, page = 1, limit = 10 } = req.query
+    try {
+      const queryResult = await attendanceService.getAttendanceData(
+        date,
+        parseInt(page),
+        parseInt(limit)
+      )
+
+      // check if docs exist
+      if (!queryResult.results || queryResult.results.docs.length === 0) {
+        return res
+          .status(404)
+          .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
+      }
+
+      return res
+        .status(200)
+        .json(
+          responseData(
+            'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
+            queryResult.results,
+            req,
+            queryResult.success
+          )
+        )
+    } catch (error) {
+      if (error.message === 'Invalid date format') {
+        return res
+          .status(400)
+          .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
+      }
+      res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
+    }
+  },
+deleteAttendance: async (req, res) => {
   try {
-    // Use consistent field names matching schema
-    const { class: classId, date, session, records, takenBy } = req.body;
-    console.log("Received request body:", req.body);
+    const { attendanceId } = req.params; // get _id from URL
 
-    // Basic validation
-    if (!classId || !date || !session || !records || !Array.isArray(records) || records.length === 0 || !takenBy) {
-      console.log("Validation failed: Missing or invalid fields");
+    if (!attendanceId) {
       return res
         .status(400)
-        .json(responseData("INVALID_INPUT_DATA", { error: "Invalid input data" }, req, false));
+        .json(responseData('MISSING_ATTENDANCE_ID', {}, req, false));
     }
 
-    // Date validation
-    const parsedDate = new Date(date);
-    if (isNaN(parsedDate.getTime())) {
-      console.log("Invalid date format detected");
+    const deletedAttendance = await attendanceService.deleteAttendance(attendanceId);
+
+    if (!deletedAttendance || !deletedAttendance.success) {
       return res
-        .status(400)
-        .json(responseData("INVALID_DATE_FORMAT", { error: "Invalid date format" }, req, false));
+        .status(404)
+        .json(responseData('ATTENDANCE_NOT_FOUND', {}, req, false));
     }
 
-    // Session validation (only allow 1, 2, or 3)
-    if (![1, 2, 3].includes(session)) {
-      return res
-        .status(400)
-        .json(responseData("INVALID_SESSION", { error: "Invalid session value" }, req, false));
-    }
-
-    // Save / update attendance
-    const savedRecord = await attendanceService.markOrUpdateAttendance(
-      classId,
-      parsedDate,
-      session,
-      records,
-      takenBy
-    );
-
-    console.log("Saved attendance record:", savedRecord);
-
+    // Only pass the actual deleted document to results
     return res
       .status(200)
-      .json(responseData("ATTENDANCE_MARKED_SUCCESSFULLY", savedRecord, req, true));
-
+      .json(
+        responseData(
+          'ATTENDANCE_DELETED_SUCCESSFULLY',
+          deletedAttendance.results,
+          req,
+          true
+        )
+      );
   } catch (error) {
-    console.error("Error while marking/updating attendance:", error);
     return res
       .status(500)
-      .json(responseData("ATTENDANCE_MARKING_FAILED", { error: error.message }, req, false));
+      .json(
+        responseData('SERVER_ERROR', { error: error.message }, req, false)
+      );
   }
 }
 
-
 }
-

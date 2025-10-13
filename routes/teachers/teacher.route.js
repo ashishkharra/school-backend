@@ -4,14 +4,14 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../../middlewares/verifyToken')
 // const teacherController = require('../../controllers/teachers/teacher.controller');
-// const validationRule = require('../../validations/admins/auth');
+const validationRule = require('../../validations/admins/auth');
 // const { teacherLogin } = require('../../services/teachers/teachers.service');
 const teacherController = require('../../controllers/teachers/teacher.controller');
 
-
-//get student by class
 router.post('/request-profile-update/:teacherId', teacherController.requestProfileUpdate);
-
-
+router.post('/getProfile',teacherController.getProfile);
+router.post('/forgot-password', validationRule.validate('forgot-password'), teacherController.teacherForgotPassword)
+router.post('/reset-password/:token', validationRule.validate('reset-password'), teacherController.teacherResetPassword)
+router.post('/change-password', [verifyToken], validationRule.validate('change-password'), teacherController.changePassword)
 
 module.exports = router;

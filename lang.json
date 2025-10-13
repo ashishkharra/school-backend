@@ -1581,5 +1581,84 @@
   "LOGOUT_SUCCESSFUL": {
     "en": "Logout successfully!",
     "ar": ""
-  }
+  },
+  "TOGGLE_STATUS_FAILED": {
+    "en": "Toggle status failed",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED_ALREADY": {
+    "en": "Attedance already marked for today",
+    "ar": ""
+  },
+  "ATTENDANCE_MARKED": {
+    "en": "Attendance marked or updated successfully",
+    "ar": ""
+  },
+  "ATTENDANCE_FETCHED_SUCCESSFULLY":{
+    "en": "Teacher attendance fetched successfully",
+    "ar": ""
+  },
+  "INVALID_TEACHER_ID": {
+    "en": "Invalid teacher id",
+    "ar": ""
+  },
+  "TEACHER_ID_REQUIRED": {
+    "en": "Teacher id required",
+    "ar": ""
+  },
+  "INVALID_MONTH": {
+    "en": "Invalid month",
+    "ar": ""
+  },
+  "GET_TEACHER_ATTENDANCE": {
+    "en": "Teacher attendance successfully fetched",
+    "ar": ""
+  },
+  "FAILED_TEACHER_ATTENDANCE_FAILED": {
+    "en": "Error while fetchind teacher attendance",
+    "ar": ""
+  },
+  "PARENT_PHONE_INVALID": {
+    "en": "Parent phone is invalid",
+    "ar": ""
+  },
+    "MISSING_REQUIRED_FIELDS":
+   { "en": "Missing required fields", "ar": "" },
+  "RECORDS_MUST_BE_ARRAY": 
+  { "en": "Records must be an array", "ar": "" },
+  "ATTENDANCE_UPDATE_FAILED": 
+  { "en": "Attendance update failed", "ar": "" },
+  "ATTENDANCE_FETCHED_OR_UPDATED": 
+  { "en": "Attendance fetched or updated successfully", "ar": "" },
+  "MISSING_ATTENDANCE_ID": 
+  { "en": "Attendance ID is missing", "ar": "" },
+  "ATTENDANCE_RECORD_NOT_FOUND":
+   { "en": "Attendance record not found", "ar": "" },
+  "ATTENDANCE_UPDATED_SUCCESSFULLY": 
+  { "en": "Attendance updated successfully", "ar": "" },
+  "NO_ATTENDANCE_RECORDS_FOUND": 
+  { "en": "No attendance records found", "ar": "" },
+  "ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY":
+   { "en": "Attendance records fetched successfully", "ar": "" },
+  "ATTENDANCE_NOT_FOUND":
+   { "en": "Attendance not found", "ar": "" },
+  "ATTENDANCE_DELETED_SUCCESSFULLY": {
+  "en": "Attendance deleted successfully",
+   "ar": "" },
+  "ASSIGNMENT_UPLOADED_SUCCESSFULLY": 
+  { "en": "Assignment uploaded successfully", "ar": "" },
+  "ASSIGNMENT_UPLOAD_FAILED": 
+  { "en": "Assignment upload failed", "ar": "" },
+  "GET_ASSIGNMENT_FAILED":
+   { "en": "Fetching assignments failed", "ar": "" },
+  "ASSIGNMENT_ID_REQUIRED":
+   { "en": "Assignment ID is required", "ar": "" },
+  "ASSIGNMENT_UPDATED": 
+  { "en": "Assignment updated successfully", "ar": "" },
+  "ASSIGNMENT_UPDATE_FAILED": 
+  { "en": "Assignment update failed", "ar": "" },
+  "ASSIGNMENT_DELETED_SUCCESSFULLY": 
+  { "en": "Assignment deleted successfully", "ar": "" },
+  "DELETE_ASSIGNMENT_FAILED": 
+  { "en": "Assignment deletion failed", "ar": "" }
 }

@@ -6,27 +6,27 @@ const studentController = {
     studentForgotPassword: async (req, res) => {
         try {
             await studentService.studentForgotPassword(req, res)
-        } catch (err) {
-            const msg = err.message || 'SOMETHING_WENT_WRONG'
-            return res.status(422).json(responseData(msg, {}, req))
+        } catch (error) {
+            const msg = error.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {error : error.message}, req))
         }
     },
 
     studentResetPassword: async (req, res) => {
         try {
             await studentService.studentResetPassword(req, res)
-        } catch (err) {
-            const msg = err.message || 'SOMETHING_WENT_WRONG'
-            return res.status(422).json(responseData(msg, {}, req))
+        } catch (error) {
+            const msg = error.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {error : error.message}, req))
         }
     },
 
     changePassword: async (req, res) => {
         try {
             await studentService.changePassword(req, res)
-        } catch (err) {
-            const msg = err.message || 'SOMETHING_WENT_WRONG'
-            return res.status(422).json(responseData(msg, {}, req))
+        } catch (error) {
+            const msg = error.message || 'SOMETHING_WENT_WRONG'
+            return res.status(422).json(responseData(msg, {error : error.message}, req))
         }
     },
 
@@ -56,7 +56,7 @@ const studentController = {
 
         } catch (error) {
             console.error("Controller error:", error);
-            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
+            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {error : error.message}, req));
         }
     },
 
@@ -82,7 +82,7 @@ const studentController = {
 
         } catch (error) {
             console.error("Error fetching student profile:", error.message);
-            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
+            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {error : error.message}, req));
         }
     },
 
@@ -114,7 +114,7 @@ const studentController = {
             return res.status(200).json(responseData("GET_ATTENDANCE", attendance, req, true));
         } catch (error) {
             console.log("Error in viewAttendanceByClass:", error);
-            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {}, req));
+            return res.status(500).json(responseData("SOMETHING_WENT_WRONG", {error : error.message}, req));
         }
     },
 
@@ -157,9 +157,9 @@ const studentController = {
             return res.status(result.success ? 200 : 400).json(
                 responseData(result.message, result.data || {}, req, result.success)
             );
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
         }
     },
 
@@ -171,9 +171,9 @@ const studentController = {
 
             const result = await studentService.gradeSubmission(submissionId, teacherId, marks, feedback);
             return res.status(result.success ? 200 : 400).json(responseData(result.message, result.data, req, result.success));
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
         }
     },
 
@@ -182,9 +182,9 @@ const studentController = {
             const { submissionId } = req.params;
             const result = await studentService.getSubmissionDetails(submissionId);
             return res.status(result.success ? 200 : 404).json(responseData(result.message, result.data, req, result.success));
-        } catch (err) {
-            console.error(err);
-            return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
         }
     }
 

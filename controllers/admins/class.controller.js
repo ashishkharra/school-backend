@@ -14,7 +14,7 @@ const adminClassController = {
             return res.status(201).json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.log('Class register error : ', error.message)
-            return res.status(500).json(responseData("REGISTRATION_FAILED", {}, req, false));
+            return res.status(500).json(responseData("REGISTRATION_FAILED", { error: error.message }, req, false));
         }
     },
 
@@ -29,7 +29,7 @@ const adminClassController = {
             return res.status(201).json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.log('Class register error : ', error.message)
-            return res.status(500).json(responseData("CLASS_UPDATE_FAILED", {}, req, false));
+            return res.status(500).json(responseData("CLASS_UPDATE_FAILED", { error: error.message }, req, false));
         }
     },
 
@@ -44,7 +44,7 @@ const adminClassController = {
             return res.status(201).json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.log('Subject register error : ', error.message)
-            return res.status(500).json(responseData("REGISTRATION_FAILED", {}, req, false));
+            return res.status(500).json(responseData("REGISTRATION_FAILED", { error: error.message }, req, false));
         }
     },
 
@@ -60,9 +60,9 @@ const adminClassController = {
             }
 
             return res.status(200).json({ success: true, message: result.message, subject: result.subject });
-        } catch (err) {
-            console.error("subjectStatus error:", err);
-            return res.status(500).json({ success: false, message: "SERVER_ERROR" });
+        } catch (error) {
+            console.error("subjectStatus error:", error);
+            return res.status(500).json(responseData("TOGGLE_STATUS_FAILED", { error: error.message }, req, false));
         }
     },
 
@@ -78,9 +78,9 @@ const adminClassController = {
             }
 
             return res.status(200).json({ success: true, message: result.message, class: result.class });
-        } catch (err) {
-            console.error("classStatus error:", err);
-            return res.status(500).json({ success: false, message: "SERVER_ERROR" });
+        } catch (error) {
+            console.error("classStatus error:", error);
+            return res.status(500).json(responseData("TOGGLE_STATUS_FAILED", { error: error.message }, req, false));
         }
     },
 
@@ -111,73 +111,73 @@ const adminClassController = {
             console.log("Get all class error :", error.message);
             return res
                 .status(500)
-                .json(responseData("ERROR_WHILE_GETTING_ALL_CLASSES", {}, req, false));
+                .json(responseData("ERROR_WHILE_GETTING_ALL_CLASSES", { error: error.message }, req, false));
         }
     },
 
-        getAllSubjects: async (req, res) => {
-            try {
-                const page = parseInt(req.query.page, 10) || 1;
-                const limit = parseInt(req.query.limit, 10) || 10;
-                const { name } = req.query;
+    getAllSubjects: async (req, res) => {
+        try {
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = parseInt(req.query.limit, 10) || 10;
+            const { name } = req.query;
 
-                const queryResult = await adminClassService.getSubjects(page, limit, name);
+            const queryResult = await adminClassService.getSubjects(page, limit, name);
 
-                if (!queryResult.success) {
-                    return res
-                        .status(400)
-                        .json(responseData(queryResult.message, {}, req, false));
-                }
-
-                return res.json(
-                    responseData(
-                        'GET_LIST',
-                        {
-                            docs: queryResult.subjects,
-                            ...queryResult.pagination
-                        },
-                        req,
-                        true
-                    )
-                );
-            } catch (error) {
-                console.log('Get all subjects error : ', error);
+            if (!queryResult.success) {
                 return res
-                    .status(500)
-                    .json(responseData("ERROR_WHILE_GETTING_ALL_SUBJECTS", {}, req, false));
+                    .status(400)
+                    .json(responseData(queryResult.message, {}, req, false));
             }
-        },
 
-            updateSubject: async (req, res) => {
-                try {
-                    const data = req.body;
-                    console.log(' update subject data : ', data)
-                    const { subjectId } = req.params
+            return res.json(
+                responseData(
+                    'GET_LIST',
+                    {
+                        docs: queryResult.subjects,
+                        ...queryResult.pagination
+                    },
+                    req,
+                    true
+                )
+            );
+        } catch (error) {
+            console.log('Get all subjects error : ', error);
+            return res
+                .status(500)
+                .json(responseData("ERROR_WHILE_GETTING_ALL_SUBJECTS", { error: error.message }, req, false));
+        }
+    },
 
-                    const result = await adminClassService.updateSubject(data, subjectId);
-                    if (!result.success) {
-                        return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
-                    }
-                    return res.status(201).json(responseData(result?.message, result, req, true));
-                } catch (error) {
-                    console.log('Subject update error : ', error.message)
-                    return res.status(500).json(responseData("SUBJECT_UPDATE_FAILED", {}, req, false));
-                }
-            },
+    updateSubject: async (req, res) => {
+        try {
+            const data = req.body;
+            console.log(' update subject data : ', data)
+            const { subjectId } = req.params
 
-                deleteSubject: async (req, res) => {
-                    try {
-                        const { subjectId } = req.params
-                        const result = await adminClassService.deleteSubject(data, subjectId);
-                        if (!result.success) {
-                            return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
-                        }
-                        return res.status(201).json(responseData(result?.message, result, req, true));
-                    } catch (error) {
-                        console.log('Subject delete error : ', error.message)
-                        return res.status(500).json(responseData("SUBJECT_DELETE_FAILED", {}, req, false));
-                    }
-                }
+            const result = await adminClassService.updateSubject(data, subjectId);
+            if (!result.success) {
+                return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
+            }
+            return res.status(201).json(responseData(result?.message, result, req, true));
+        } catch (error) {
+            console.log('Subject update error : ', error.message)
+            return res.status(500).json(responseData("SUBJECT_UPDATE_FAILED", { error: error.message }, req, false));
+        }
+    },
+
+    deleteSubject: async (req, res) => {
+        try {
+            const { subjectId } = req.params
+            const result = await adminClassService.deleteSubject(data, subjectId);
+            if (!result.success) {
+                return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
+            }
+            return res.status(201).json(responseData(result?.message, result, req, true));
+        } catch (error) {
+            console.log('Subject delete error : ', error.message)
+            return res.status(500).json(responseData("SUBJECT_DELETE_FAILED", { error: error.message }, req, false));
+        }
+    }
 }
 
 module.exports = adminClassController
