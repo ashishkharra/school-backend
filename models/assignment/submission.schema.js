@@ -22,7 +22,7 @@ const submissionSchema = new mongoose.Schema({
 
   status: { type: String, enum: ["Submitted", "Pending", "Late", "Graded"], default: "Submitted" },
   isLate: { type: Boolean, default: false },
-
+  classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
   marksObtained: { type: Number, default: 0 },
   feedback: { type: String },
   gradedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" }

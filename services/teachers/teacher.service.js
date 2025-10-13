@@ -48,20 +48,19 @@ requestProfileUpdate: async (teacherId, requestedFields) => {
       return { success: false, message: 'SERVER_ERROR', results: { error: error.message } };
     }
   },
-
-  getProfile: async (teacherId) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(teacherId)) return { success: false, message: 'TEACHER_ID_NOT_VALID' }
-
-      const [profile] = await Teacher.aggregate(teacherProfilePipeline(teacherId));
-      if (!profile) return { success: false, message: 'ERROR_FETCHING_TEACHER' };
-
-      return { success: true, message: 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY', profile }
-    } catch (err) {
-      console.error("Get Teacher Profile Error:", err.message);
-      return { success: false, message: 'SERVER_ERROR' }
-    }
-  },
+    getProfile: async (teacherId) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(teacherId)) return { success: false, message: 'TEACHER_ID_NOT_VALID' }
+ 
+            const [profile] = await Teacher.aggregate(teacherProfilePipeline(teacherId));
+            if (!profile) return { success: false, message: 'ERROR_FETCHING_TEACHER' };
+ 
+            return { success: true, message: 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY', profile }
+        } catch (err) {
+            console.error("Get Teacher Profile Error:", err.message);
+            return { success: false, message: 'SERVER_ERROR' }
+        }
+    },
 
      teacherForgotPassword: async (req, res) => {
         try {

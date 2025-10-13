@@ -121,7 +121,7 @@ module.exports = {
         EMAIL: email,
         URL: 'https://youtube.com'
       }
-      const isMailSent = await helper.sendEmail('new-teacher-account', dataBody)
+      const isMailSent = await sendEmail('new-teacher-account', dataBody)
       if (!isMailSent) return { success: false, message: 'EMAIL_NOT_SENT' }
       return { success: true, message: 'TEACHER_REGISTERED', data: safeResult }
     } catch (error) {

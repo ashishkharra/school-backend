@@ -55,7 +55,7 @@ const handleStudentRole = (user, req, res, next) => {
 }
 
 const handleTeacherRole = (user, req, res, next) => {
-  Student.findOne({
+  Teacher.findOne({
     _id: user._id
   })
     .then((data) => {
@@ -90,7 +90,7 @@ const handleVerification = async (req, res, next, token) => {
 
     req.user = user
     const role = (user.role || user.userType || "").toLowerCase();
-    // console.log(user)
+    console.log(user)
     switch (role) {
       case constant.type.admin:
       case constant.type.subAdmin:
