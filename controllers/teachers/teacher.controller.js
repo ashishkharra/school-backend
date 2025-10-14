@@ -4,11 +4,12 @@ const { responseData } = require('../../helpers/responseData'); // Assume you ha
 
 module.exports = {
 
-  getProfile: async (req, res) => {
+   getProfile: async (req, res) => {
     try {
-        const teacherId = req.user._id
+        const {teacherId} = req.user._id
+        // const {teacherId} = req.params
       const profile = await teacherService.getProfile(teacherId);
-
+ 
       return res
         .status(200)
         .json(responseData(profile?.message, profile, req, profile?.success||true));

@@ -375,6 +375,97 @@ const assignmentWithClassPipeline = (classId) => [
 //     }
 //   ];
 // };
+const teacherProfilePipeline = (teacherId) => {
+  return [
+    // 1️⃣ Match the teacher
+    { $match: { _id: new mongoose.Types.ObjectId(teacherId) } },
+ 
+    // 2️⃣ Extract file URLs from nested objects
+    {
+      $addFields: {
+        profilePic: "$profilePic.fileUrl",
+        aadharFront: "$aadharFront.fileUrl",
+        aadharBack: "$aadharBack.fileUrl",
+        resume: "$resume.fileUrl",
+        joiningLetter: "$joiningLetter.fileUrl",
+        certificates: {
+          $map: {
+            input: "$certificates",
+            as: "cert",
+            in: "$$cert.fileUrl"
+          }
+        }
+      }
+    },
+ 
+    // 3️⃣ Populate class details
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classes',
+        foreignField: '_id',
+        as: 'classData'
+      }
+    },
+ 
+    // 4️⃣ Project only required fields
+    {
+      $project: {
+        // basic info
+        name: 1,
+        email: 1,
+        phone: 1,
+        dob: 1,
+        gender: 1,
+        maritalStatus: 1,
+        spouseName: 1,
+        children: 1,
+        address: 1,
+        country: 1,
+        bloodGroup: 1,
+        physicalDisability: 1,
+        disabilityDetails: 1,
+ 
+        // professional info
+        department: 1,
+        designation: 1,
+        qualifications: 1,
+        specialization: 1,
+        experience: 1,
+        dateOfJoining: 1,
+        subjectsHandled: 1,
+        classes: 1,
+        salaryInfo: 1,
+ 
+        // file fields
+        profilePic: 1,
+        aadharFront: 1,
+        aadharBack: 1,
+        certificates: 1,
+        resume: 1,
+        joiningLetter: 1,
+ 
+        // emergency / achievements
+        emergencyContact: 1,
+        achievements: 1,
+        clubsInCharge: 1,
+        eventsHandled: 1,
+ 
+        // meta fields
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
+ 
+        // populated class info
+        classData: {
+          _id: 1,
+          name: 1,
+          section: 1
+        }
+      }
+    }
+  ];
+};
 
 // pipeline for getting all students from db
 const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, filters = {}) => {
@@ -1407,93 +1498,56 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
   ];
 };
 
-const teacherProfilePipeline = (teacherId) => {
+const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
   return [
-    // 1️⃣ Match the teacher
-    { $match: { _id: new mongoose.Types.ObjectId(teacherId) }},
+    { $match: whereStatement },
 
-    // 2️⃣ Extract file URLs from nested objects
-    {
-      $addFields: {
-        profilePic: "$profilePic.fileUrl",
-        aadharFront: "$aadharFront.fileUrl",
-        aadharBack: "$aadharBack.fileUrl",
-        resume: "$resume.fileUrl",
-        joiningLetter: "$joiningLetter.fileUrl",
-        certificates: {
-          $map: {
-            input: "$certificates",
-            as: "cert",
-            in: "$$cert.fileUrl"
-          }
-        }
-      }
-    },
-
-    // 3️⃣ Populate class details
+    // Lookup student data
     {
       $lookup: {
-        from: 'classes',
-        localField: 'classes',
+        from: 'students',
+        localField: 'student',
         foreignField: '_id',
-        as: 'classData'
+        as: 'studentData'
+      }
+    },
+    { $unwind: { path: '$studentData', preserveNullAndEmptyArrays: true } },
+
+    // Lookup assignment data
+    {
+      $lookup: {
+        from: 'assignments',
+        localField: 'assignment',
+        foreignField: '_id',
+        as: 'assignmentData'
+      }
+    },
+    { $unwind: { path: '$assignmentData', preserveNullAndEmptyArrays: true } },
+
+    // Lookup subject inside assignmentData
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'assignmentData.subjectId', // field in assignments collection
+        foreignField: '_id',
+        as: 'assignmentData.subjectData'
       }
     },
 
-    // 4️⃣ Project only required fields
+    // Optional: unwind subjectData if you want only one subject object
     {
-      $project: {
-        // basic info
-        name: 1,
-        email: 1,
-        phone: 1,
-        dob: 1,
-        gender: 1,
-        maritalStatus: 1,
-        spouseName: 1,
-        children: 1,
-        address: 1,
-        country: 1,
-        bloodGroup: 1,
-        physicalDisability: 1,
-        disabilityDetails: 1,
+      $unwind: { path: '$assignmentData.subjectData', preserveNullAndEmptyArrays: true }
+    },
 
-        // professional info
-        department: 1,
-        designation: 1,
-        qualifications: 1,
-        specialization: 1,
-        experience: 1,
-        dateOfJoining: 1,
-        subjectsHandled: 1,
-        classes: 1,
-        salaryInfo: 1,
-
-        // file fields
-        profilePic: 1,
-        aadharFront: 1,
-        aadharBack: 1,
-        certificates: 1,
-        resume: 1,
-        joiningLetter: 1,
-
-        // emergency / achievements
-        emergencyContact: 1,
-        achievements: 1,
-        clubsInCharge: 1,
-        eventsHandled: 1,
-
-        // meta fields
-        status: 1,
-        createdAt: 1,
-        updatedAt: 1,
-
-        // populated class info
-        classData: {
-          _id: 1,
-          name: 1,
-          section: 1
-        }
+    // Facet for pagination
+    {
+      $facet: {
+        docs: [
+          { $sort: { createdAt: -1 } },
+          { $skip: (page - 1) * limit },
+          { $limit: limit }
+        ],
+        totalCount: [{ $count: 'count' }]
       }
     }
   ];
@@ -1532,7 +1586,8 @@ module.exports = {
   getTeacherAssignByLookup,
   getAllTeachersWithClassLookup,
   getAttendanceLookup,
-  teacherAttendancePipeline
+  teacherAttendancePipeline,
+  getGradeLookupPipeline
 }
 
 

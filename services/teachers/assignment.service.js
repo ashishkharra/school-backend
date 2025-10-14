@@ -2,15 +2,15 @@
 const Assignment = require('../../models/assignment/assignment.schema')
 const mongoose = require('mongoose')
 const Attendance = require('../../models/students/attendance.schema')
+const Submission = require('../../models/assignment/submission.schema');
+const Grade = require('../../models/assignment/grades.schema');
 const {
-  getAssignmentLookup
+  getAssignmentLookup,
+  getGradeLookupPipeline
 } = require('../../helpers/commonAggregationPipeline')
 const Teacher = require('../../models/teacher/teacher.schema')
-
-const { getPaginationArrayJs } = require('../../helpers/helper')
-
-const Class = require('../../models/class/class.schema')
-
+const { getPaginationArrayJs, filterByKeyword } = require('../../helpers/helper')
+const Class = require('../../models/class/class.schema');
 module.exports = {
 
   uploadAssignment: async (
@@ -229,5 +229,130 @@ module.exports = {
         results: []
       }
     }
+  },
+
+  assignGradesToClassPerStudent: async ({ classId, gradesData }) => {
+    const result = [];
+
+    // 1️⃣ Fetch all submissions of this class
+    const submissions = await Submission.find({ classId });
+    if (!submissions.length) return [];
+console.log("=====",submissions)
+    // 2️⃣ Loop through each student grade
+    for (const item of gradesData) {
+      const { studentId, marks, grade, remark } = item;
+
+      if (!mongoose.Types.ObjectId.isValid(studentId)) continue;
+
+      // 3️⃣ Find submissions of this student
+      const studentSubmissions = submissions.filter(sub => sub.student.toString() === studentId);
+
+      for (const sub of studentSubmissions) {
+        // Validate grade
+        const gradeValue = grade && ['A','B','C','D','F'].includes(grade) ? grade : null;
+
+        // 4️⃣ Upsert grade
+        const gradeRecord = await Grade.findOneAndUpdate(
+          {
+            classId: sub.classId,
+            student: sub.student,
+            assignment: sub.assignment
+          },
+          {
+            $set: {
+              marks: marks !== undefined ? marks : null,
+              grade: gradeValue,
+              remark: remark || '',
+              updatedAt: new Date()
+            },
+            $setOnInsert: { createdAt: new Date() }
+          },
+          { upsert: true, new: true }
+        );
+
+        result.push(gradeRecord);
+      }
+    }
+
+    return result;
+  },
+   updateGradeById: async ({ gradeId, marks, grade, remark }) => {
+    const gradeRecord = await Grade.findById(gradeId);
+
+    if (!gradeRecord) return null;
+
+    if (marks !== undefined) gradeRecord.marks = marks;
+    if (grade && ['A','B','C','D','F'].includes(grade)) gradeRecord.grade = grade;
+    if (remark !== undefined) gradeRecord.remark = remark;
+
+    gradeRecord.updatedAt = new Date();
+
+    await gradeRecord.save();
+
+    return gradeRecord;
+  },
+
+   // Delete grade by gradeId
+  deleteGrade: async (gradeId) => {
+    const deletedGrade = await Grade.findByIdAndDelete(gradeId);
+    return deletedGrade; // returns null if not found
+  },
+
+  
+ getGrades: async ({ classId, keyword, page = 1, limit = 10 }) => {
+  try {
+    let whereStatement = {};
+
+    // If classId is provided, filter by it
+    if (classId) {
+      if (!mongoose.Types.ObjectId.isValid(classId)) {
+        return {
+          success: false,
+          message: { en: 'CLASS_ID_NOT_VALID' },
+          results: {}
+        };
+      }
+      whereStatement.classId = new mongoose.Types.ObjectId(classId);
+    }
+
+    // Apply keyword filter on student name
+    if (keyword) {
+      keyword = keyword.trim();
+      whereStatement.$or = [
+        { 'studentData.firstName': { $regex: keyword, $options: 'i' } },
+        { 'studentData.lastName': { $regex: keyword, $options: 'i' } },
+        { 'studentData.name': { $regex: keyword, $options: 'i' } }
+      ];
+    }
+
+    // Build aggregation pipeline
+    const pipeline = getGradeLookupPipeline({ whereStatement, page, limit });
+    const result = await Grade.aggregate(pipeline);
+
+    const totalDocs = result[0]?.totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(totalDocs / limit);
+
+    return {
+      success: true,
+      message: { en: 'GRADES_FETCHED_SUCCESSFULLY' },
+      results: {
+        docs: result[0]?.docs || [],
+        totalDocs,
+        limit,
+        page,
+        totalPages
+      }
+    };
+
+  } catch (err) {
+    console.error('getGrades Service Error:', err.message);
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: { error: { en: err.message } }
+    };
   }
 }
+};
+
+
