@@ -141,7 +141,7 @@ const studentController = {
 
     submitAssignment: async (req, res) => {
         try {
-            const { assignmentId, studentId } = req.params;
+            const { assignmentId, studentId, classId } = req.body;
             // const studentId = req.user._id;
 
             const files = [];
@@ -152,7 +152,7 @@ const studentController = {
                 return res.status(400).json(responseData("NO_FILES_UPLOADED", {}, req, false));
             }
 
-            const result = await studentService.submitAssignment(studentId, assignmentId, files);
+            const result = await studentService.submitAssignment(studentId, assignmentId, classId, files);
 
             return res.status(result.success ? 200 : 400).json(
                 responseData(result.message, result.data || {}, req, result.success)

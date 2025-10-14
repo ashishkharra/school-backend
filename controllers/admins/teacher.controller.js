@@ -40,8 +40,6 @@ module.exports = {
     try {
       const data = req.body
       const files = req.files || {}
-      console.log(files, 'files---')
-      // 🔹 Attach uploaded file paths to req.body
 
       if (files) {
         if (files.profilePic?.[0]) {
@@ -194,7 +192,6 @@ module.exports = {
       const { page = 1, limit = 10, status } = req.query
 
       const queryResult = await adminTeacherService.getAllTeachers(page, limit, status);
-      console.log("queryResult", queryResult)
       return res.json(
         responseData(
           'GET_LIST',
@@ -496,7 +493,6 @@ module.exports = {
 
   markAttendance: async (req, res) => {
     try {
-      console.log('attendance data ; ', req.body)
       const { teacherId, status } = req.body;
       const result = await adminTeacherService.markAttendance(teacherId, status);
 
@@ -529,7 +525,8 @@ module.exports = {
 
   getAttendance: async (req, res) => {
     try {
-      const { teacherId, month, year, date, page = 1, limit = 10, status } = req.query;
+      const { teacherId } = req.params;
+      const { month, year, date, page = 1, limit = 10, status } = req.query;
 
       if (!teacherId) {
         return res.status(400).json(responseData("TEACHER_ID_REQUIRED", {}, req, false));
@@ -564,14 +561,31 @@ module.exports = {
         status: status || null
       });
 
+    
       if (!result.success) {
-        return res.status(400).json(responseData(result.message, {}, req, false));
+        return res.status(400).json(responseData(result.message, {}, req, result?.success || false));
       }
 
-      return res.status(200).json(responseData("GET_TEACHER_ATTENDANCE", result, req, true));
+      return res.status(200).json(responseData(result?.message, result.data[0], req, result?.success || true));
     } catch (error) {
       console.error("Error in getAttendance:", error);
       return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
-  }
+  },
+
+  getTeacherProfile: async (req, res) => {
+    try {
+      const { teacherId } = req.params;
+
+      const result = await adminTeacherService.getTeacherProfile(teacherId);
+      if (!result.success) {
+        return res.status(404).json(responseData(result.message, {}, req, false));
+      }
+
+      return res.status(200).json(responseData("TEACHER_PROFILE_FETCHED", result.data, req, true));
+    } catch (error) {
+      console.error("Error in getTeacherProfile:", error);
+      return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+    }
+  },
 }

@@ -57,7 +57,6 @@ module.exports = {
       email = email?.toLowerCase();
 
       let admin = await Admin.findOne({ email });
-      console.log("admin-------------", admin)
       if (!isEmpty(admin)) {
         if (admin?.status === constant.status.inactive) {
           return res.json(responseData('ACCOUNT_INACTIVE', {}, req, false));
@@ -72,40 +71,37 @@ module.exports = {
           console.log('admin data : ', adminData)
 
           delete adminData['password'];
+          delete adminData['token'];
+          delete adminData['refreshToken'];
+    
           adminData.fullName = `${adminData.firstName} ${adminData.lastName}`;
-          console.log('payload to token ===>', {
-            _id: adminData._id,
-            email: adminData.email,
-            fullName: adminData.fullName,
-            status: adminData.status,
-            role: adminData.role
-          });
 
           const deviceTokens = generateAuthToken(adminData);
 
-          console.log('deviceTokens---------- ', deviceTokens)
-          await Admin.findOneAndUpdate(
+          const result = await Admin.findOneAndUpdate(
             { _id: admin._id },
             {
               forceLogout: false,
+              token: deviceTokens.token,
+              refreshToken: deviceTokens.refreshToken
             }
           );
 
           return res.json(
             responseData(
               'ACCOUNT_LOGIN',
-              { ...deviceTokens },
+              result,
               req,
               true
             )
           );
         });
       } else {
-        return res.json(responseData('ADMIN_NOT_FOUND', {}, req, false));
+        return res.status(404).json(responseData('ADMIN_NOT_FOUND', {}, req, false));
       }
     } catch (error) {
       console.log('Error', error.message);
-      return res.json(responseData('ERROR_OCCUR', {}, req, false));
+      return res.status(500).json(responseData('ERROR_OCCUR', {}, req, false));
     }
   },
   adminLogout: async (req, res) => {
@@ -175,7 +171,10 @@ module.exports = {
   adminResetPassword: async (req, res) => {
     try {
       const { password } = req.body
+      console.log('password : ', password)
       const token = req.params.token
+
+      console.log('token : ', token)
 
       const resetToken = await Admin.findOne({ token })
       const passwordMatch = await bcrypt.compare(password, resetToken?.password)
@@ -211,18 +210,22 @@ module.exports = {
       const isPasswordMatch = await bcrypt.compare(oldPassword, admin.password)
 
       if (!isPasswordMatch) {
-        return res.json(responseData('INVALID_OLD_PASSWORD', {}, req, false))
+        return res.status(
+          400
+        ).json(responseData('INVALID_OLD_PASSWORD', {}, req, false))
       }
 
       if (oldPassword === newPassword) {
-        return res.json(responseData('PASSWORD_SAME_ERROR', {}, req, false))
+        return res.status(400).json(responseData('PASSWORD_SAME_ERORR', {}, req, false))
       }
 
       const salt = await bcrypt.genSalt(10)
       const hash = await bcrypt.hash(newPassword, salt)
 
       if (!hash) {
-        return res.json(responseData('ERROR_OCCUR', {}, req, false))
+        return res.status(
+          500
+        ).json(responseData('ERROR_OCCUR', {}, req, false))
       }
 
       await Admin.findOneAndUpdate(
@@ -237,7 +240,9 @@ module.exports = {
       return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
     } catch (err) {
       console.log('Error', err.message)
-      return res.json(responseData('ERROR_OCCUR', {}, req, false))
+      return res.status(
+        500
+      ).json(responseData('ERROR_OCCUR', {}, req, false))
     }
   },
   editAdmin: async (req, res) => {

@@ -273,14 +273,13 @@ module.exports = {
 
   getStudentAccordingClass: async (req, res) => {
     try {
-      const { page = 1, limit = 10, classId, ...filters } = req.query; // extract classId separately
+      const { page = 1, limit = 10, classId, ...filters } = req.query;
 
       const pageNumber = parseInt(page, 10);
       const limitNumber = parseInt(limit, 10);
 
-      // Call service correctly
       const queryResult = await adminStudent.getStudentAccordingClass(
-        classId || null, // ✅ pass classId
+        classId || null,
         filters,
         pageNumber,
         limitNumber
@@ -292,7 +291,6 @@ module.exports = {
           .json(responseData(queryResult.message, {}, req, false));
       }
 
-      // Return full object (with students + pagination)
       return res.json(responseData("GET_LIST", queryResult, req, true));
     } catch (error) {
       console.error("getStudentAccordingClass controller error:", error);

@@ -432,7 +432,7 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, filters = {
         as: "enrollments"
       }
     },
-    { $unwind: "$enrollments" },
+    { $unwind: { path: "$enrollments", preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
         from: "students",
@@ -441,7 +441,7 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, filters = {
         as: "student"
       }
     },
-    { $unwind: "$student" },
+    { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
     { $match: matchStage },
     {
       $replaceRoot: {
@@ -457,7 +457,8 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, filters = {
           gender: "$student.gender",
           bloodGroup: "$student.bloodGroup",
           phone: "$student.phone",
-          email: "$student.email"
+          email: "$student.email",
+          profilePic: "$student.profilePic.fileUrl"
         }
       }
     },
@@ -469,7 +470,6 @@ const getClassWithStudentsPipeline = (classId, skip = 0, limit = 10, filters = {
 
 const getAllStudentsPipeline = (skip = 0, limit = 10, filters = {}) => {
   const matchStage = { "student.isRemoved": 0 };
-
   if (filters.academicYear) matchStage["academicYear"] = filters.academicYear;
   if (filters.section) matchStage["section"] = filters.section;
   if (filters.rollNo) matchStage["rollNo"] = { $regex: filters.rollNo, $options: "i" };
@@ -485,7 +485,7 @@ const getAllStudentsPipeline = (skip = 0, limit = 10, filters = {}) => {
         as: "classInfo"
       }
     },
-    { $unwind: "$classInfo" },
+    { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
         from: "students",
@@ -494,23 +494,16 @@ const getAllStudentsPipeline = (skip = 0, limit = 10, filters = {}) => {
         as: "student"
       }
     },
-    { $unwind: "$student" },
+    { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
     { $match: matchStage },
     {
       $replaceRoot: {
         newRoot: {
-          name: "$student.name",
-          academicYear: "$academicYear",
-          rollNo: "$rollNo",
-          status: "$status",
-          classId: "$classInfo._id",
-          className: "$classInfo.name",
-          section: "$classInfo.section",
-          _id: "$student._id",
-          gender: "$student.gender",
-          bloodGroup: "$student.bloodGroup",
-          phone: "$student.phone",
-          email: "$student.email"
+          $mergeObjects: [
+            { classId: "$classInfo._id", className: "$classInfo.name", section: "$classInfo.section" },
+            "$student",
+            { academicYear: "$academicYear", rollNo: "$rollNo", status: "$status" }
+          ]
         }
       }
     },
@@ -519,6 +512,7 @@ const getAllStudentsPipeline = (skip = 0, limit = 10, filters = {}) => {
     { $limit: limit }
   ];
 };
+
 
 const getStudentsByClassNamePipeline = (className, skip = 0, limit = 10, studentFilter = {}) => [
   // Lookup class details
@@ -530,7 +524,7 @@ const getStudentsByClassNamePipeline = (className, skip = 0, limit = 10, student
       as: "classInfo"
     }
   },
-  { $unwind: "$classInfo" },
+  { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
 
   // Match by class name
   { $match: { "classInfo.name": className } },
@@ -544,7 +538,10 @@ const getStudentsByClassNamePipeline = (className, skip = 0, limit = 10, student
       as: "student"
     }
   },
-  { $unwind: "$student" },
+  { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+
+  // Remove null students (optional)
+  { $match: { student: { $ne: null } } },
 
   // Apply filters
   {
@@ -559,12 +556,12 @@ const getStudentsByClassNamePipeline = (className, skip = 0, limit = 10, student
   { $skip: skip },
   { $limit: limit },
 
-  // Replace root to flatten
+  // Flatten root
   {
     $replaceRoot: {
       newRoot: {
         $mergeObjects: [
-          "$student", // student info at root
+          "$student",
           {
             academicYear: "$academicYear",
             rollNo: "$rollNo",
@@ -580,11 +577,11 @@ const getStudentsByClassNamePipeline = (className, skip = 0, limit = 10, student
     }
   },
 
-  // Final projection: only keep what’s needed
+  // Final projection
   {
     $project: {
-      isRemoved: 0,   // hide unwanted flags
-      password: 0,    // sensitive data
+      isRemoved: 0,
+      password: 0,
       token: 0,
       refreshToken: 0,
       logs: 0
@@ -774,7 +771,7 @@ const getStudentWithDetails = (studentId) => [
 ];
 // pipeline for getting all classes from db
 const getAllClassesPipeline = (className, page = 1, limit = 10) => {
-  const match = { status: "active" }; 
+  const match = { status: "active" };
   if (className) match.name = { $regex: className, $options: "i" };
 
   return [
@@ -1271,19 +1268,19 @@ const getAllTeachersWithClassLookup = (teacherId) => {
         foreignField: 'teacher',  // class.teacherId
         as: 'classesInfo'
       },
-      
-    },
-   {
-    $project: {
-      // Teacher info
-      name: 1,
-      email: 1,
-      phone: 1,
-      department: 1,
-      designation: 1,
 
-      // Filter classes: only where teacher is class teacher
-    classesInfo: {
+    },
+    {
+      $project: {
+        // Teacher info
+        name: 1,
+        email: 1,
+        phone: 1,
+        department: 1,
+        designation: 1,
+
+        // Filter classes: only where teacher is class teacher
+        classesInfo: {
           $map: {
             input: {
               $filter: {
@@ -1500,9 +1497,6 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
     }
   ];
 };
-
-module.exports = getGradeLookupPipeline;
-
 
 module.exports = {
   getAttendanceLookup

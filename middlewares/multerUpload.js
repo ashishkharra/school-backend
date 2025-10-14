@@ -27,7 +27,6 @@ const createUploader = ({ folderName, subFolder = null, allowedMime = [], maxSiz
       cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-      // console.log('Uploading file:', file.originalname, 'for field:', file.fieldname);
       const ext = path.extname(file.originalname);
       const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
       cb(null, uniqueName);

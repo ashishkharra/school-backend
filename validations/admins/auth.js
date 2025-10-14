@@ -36,6 +36,123 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
+    case 'adminSetting': {
+      return [
+        body("schoolName")
+          .optional()
+          .isString()
+          .withMessage("SCHOOL_NAME_MUST_BE_STRING")
+          .isLength({ min: 2, max: 100 })
+          .withMessage("SCHOOL_NAME_LENGTH_INVALID"),
+
+        body("address")
+          .optional()
+          .isObject()
+          .withMessage("ADDRESS_MUST_BE_OBJECT"),
+        body("address.street").optional().isString(),
+        body("address.city").optional().isString(),
+        body("address.state").optional().isString(),
+        body("address.zip").optional().isString(),
+        body("address.country").optional().isString(),
+
+        body("contact")
+          .optional()
+          .isObject()
+          .withMessage("CONTACT_MUST_BE_OBJECT"),
+        body("contact.phone").optional().isString(),
+        body("contact.email").optional().isEmail().withMessage("CONTACT_EMAIL_INVALID"),
+        body("contact.website").optional().isString(),
+
+        body("schoolTiming")
+          .optional()
+          .isObject()
+          .withMessage("SCHOOL_TIMING_MUST_BE_OBJECT"),
+        body("schoolTiming.startTime")
+          .optional()
+          .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+          .withMessage("SCHOOL_START_TIME_INVALID"),
+        body("schoolTiming.endTime")
+          .optional()
+          .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+          .withMessage("SCHOOL_END_TIME_INVALID"),
+
+        body("periods").optional().isObject().withMessage("PERIODS_MUST_BE_OBJECT"),
+        body("periods.totalPeriods")
+          .optional()
+          .isInt({ min: 1 })
+          .withMessage("TOTAL_PERIODS_INVALID"),
+        body("periods.periodDuration")
+          .optional()
+          .isInt({ min: 1 })
+          .withMessage("PERIOD_DURATION_INVALID"),
+        body("periods.breakDuration")
+          .optional()
+          .isInt({ min: 0 })
+          .withMessage("BREAK_DURATION_INVALID"),
+
+        body("periods.lunchBreak").optional().isObject(),
+        body("periods.lunchBreak.isEnabled").optional().isBoolean(),
+        body("periods.lunchBreak.time")
+          .optional()
+          .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+          .withMessage("LUNCH_BREAK_TIME_INVALID"),
+        body("periods.lunchBreak.duration")
+          .optional()
+          .isInt({ min: 0 })
+          .withMessage("LUNCH_BREAK_DURATION_INVALID"),
+
+        body("academicSession").optional().isObject().withMessage("ACADEMIC_SESSION_MUST_BE_OBJECT"),
+        body("academicSession.startDate").optional().isISO8601().toDate(),
+        body("academicSession.endDate").optional().isISO8601().toDate(),
+        body("academicSession.currentSession").optional().isString(),
+
+        body("status")
+          .optional()
+          .isIn(["active", "inactive"])
+          .withMessage("STATUS_INVALID"),
+
+        validatorMiddleware
+      ]
+    }
+    case 'updateAdminSetting': {
+      return[
+        body('schoolName').optional().isString().withMessage('SCHOOL_NAME_STRING'),
+
+        body('schoolLogo').optional().isString().withMessage('SCHOOL_LOGO_STRING'),
+
+        body('address')
+          .optional()
+          .custom(value => value === null || (typeof value === 'object' && value !== null))
+          .withMessage('ADDRESS_MUST_BE_OBJECT'),
+
+        body('contact')
+          .optional()
+          .custom(value => value === null || (typeof value === 'object' && value !== null))
+          .withMessage('CONTACT_MUST_BE_OBJECT'),
+
+        body('schoolTiming')
+          .optional()
+          .custom(value => value === null || (typeof value === 'object' && value.startTime && value.endTime))
+          .withMessage('SCHOOL_TIMING_MUST_BE_OBJECT'),
+
+        body('periods')
+          .optional()
+          .custom(value => value === null || (typeof value === 'object' && value.totalPeriods && value.periodDuration))
+          .withMessage('PERIODS_MUST_BE_OBJECT'),
+
+        body('academicSession')
+          .optional()
+          .custom(value => value === null || (typeof value === 'object' && value.startDate && value.endDate && value.currentSession))
+          .withMessage('ACADEMIC_SESSION_MUST_BE_OBJECT'),
+
+        body('status')
+          .optional()
+          .isIn(['active', 'inactive'])
+          .withMessage('STATUS_INVALID'),
+
+        validatorMiddleware
+      ]
+    }
     //---------------------
     case 'registerTeacher': {
       return [
@@ -59,7 +176,7 @@ module.exports.validate = (method) => {
         body('password')
           .notEmpty()
           .withMessage('PASSWORD_EMPTY')
-          .isLength({ min: 8 })
+          .isLength({ min: 6 })
           .withMessage('PASSWORD_MIN')
           .isLength({ max: 30 })
           .withMessage('PASSWORD_MAX'),
@@ -72,7 +189,7 @@ module.exports.validate = (method) => {
           .withMessage('PHONE_VALID'),
 
         // Date of Birth
-        body('dateOfBirth')
+        body('dob')
           .notEmpty()
           .withMessage('DOB_EMPTY')
           .isISO8601()
@@ -364,269 +481,269 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
-   case 'updateAssignTeachertoClass': {
-  return [
-    // assignmentId (required, in params, ObjectId)
-    param('assignmentId')
-      .notEmpty()
-      .withMessage('ASSIGNMENT_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('ASSIGNMENT_ID_INVALID'),
+    case 'updateAssignTeachertoClass': {
+      return [
+        // assignmentId (required, in params, ObjectId)
+        param('assignmentId')
+          .notEmpty()
+          .withMessage('ASSIGNMENT_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('ASSIGNMENT_ID_INVALID'),
 
-    // classId (optional, ObjectId)
-    body('classId')
-      .optional()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('CLASS_ID_INVALID'),
+        // classId (optional, ObjectId)
+        body('classId')
+          .optional()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('CLASS_ID_INVALID'),
 
-    // teacherId (optional, ObjectId)
-    body('teacherId')
-      .optional()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('TEACHER_ID_INVALID'),
+        // teacherId (optional, ObjectId)
+        body('teacherId')
+          .optional()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('TEACHER_ID_INVALID'),
 
-    // section (optional, string)
-    body('section')
-      .optional()
-      .isString()
-      .withMessage('SECTION_MUST_BE_STRING'),
+        // section (optional, string)
+        body('section')
+          .optional()
+          .isString()
+          .withMessage('SECTION_MUST_BE_STRING'),
 
-    // subjectId (optional, ObjectId)
-    body('subjectId')
-      .optional()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('SUBJECT_ID_INVALID'),
+        // subjectId (optional, ObjectId)
+        body('subjectId')
+          .optional()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('SUBJECT_ID_INVALID'),
 
-    // startTime (optional, string, format HH:MM AM/PM)
-    body('startTime')
-      .optional()
-      .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-      .withMessage('START_TIME_INVALID'),
+        // startTime (optional, string, format HH:MM AM/PM)
+        body('startTime')
+          .optional()
+          .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('START_TIME_INVALID'),
 
-    // endTime (optional, string, format HH:MM AM/PM)
-    body('endTime')
-      .optional()
-      .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-      .withMessage('END_TIME_INVALID'),
+        // endTime (optional, string, format HH:MM AM/PM)
+        body('endTime')
+          .optional()
+          .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('END_TIME_INVALID'),
 
-    validatorMiddleware
-  ]
-}
-case 'uploadAssignment': {
-  return [
-    // teacherId (required, ObjectId)
-    body('teacherId')
-      .notEmpty()
-      .withMessage('TEACHER_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('TEACHER_ID_INVALID'),
+        validatorMiddleware
+      ]
+    }
+    case 'uploadAssignment': {
+      return [
+        // teacherId (required, ObjectId)
+        body('teacherId')
+          .notEmpty()
+          .withMessage('TEACHER_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('TEACHER_ID_INVALID'),
 
-    // classId (required, ObjectId)
-    body('classId')
-      .notEmpty()
-      .withMessage('CLASS_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('CLASS_ID_INVALID'),
+        // classId (required, ObjectId)
+        body('classId')
+          .notEmpty()
+          .withMessage('CLASS_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('CLASS_ID_INVALID'),
 
-    // subjectId (required, ObjectId)
-    body('subjectId')
-      .notEmpty()
-      .withMessage('SUBJECT_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('SUBJECT_ID_INVALID'),
+        // subjectId (required, ObjectId)
+        body('subjectId')
+          .notEmpty()
+          .withMessage('SUBJECT_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('SUBJECT_ID_INVALID'),
 
-    // title (required, string)
-    body('title')
-      .notEmpty()
-      .withMessage('TITLE_REQUIRED')
-      .bail()
-      .isString()
-      .withMessage('TITLE_MUST_BE_STRING'),
+        // title (required, string)
+        body('title')
+          .notEmpty()
+          .withMessage('TITLE_REQUIRED')
+          .bail()
+          .isString()
+          .withMessage('TITLE_MUST_BE_STRING'),
 
-    // description (optional, string)
-    body('description')
-      .optional()
-      .isString()
-      .withMessage('DESCRIPTION_MUST_BE_STRING'),
+        // description (optional, string)
+        body('description')
+          .optional()
+          .isString()
+          .withMessage('DESCRIPTION_MUST_BE_STRING'),
 
-    // dueDate (required, valid date)
-    body('dueDate')
-      .notEmpty()
-      .withMessage('DUE_DATE_REQUIRED')
-      .bail()
-      .custom((value) => !isNaN(new Date(value).getTime()))
-      .withMessage('DUE_DATE_INVALID'),
+        // dueDate (required, valid date)
+        body('dueDate')
+          .notEmpty()
+          .withMessage('DUE_DATE_REQUIRED')
+          .bail()
+          .custom((value) => !isNaN(new Date(value).getTime()))
+          .withMessage('DUE_DATE_INVALID'),
 
-    // file (optional, string filename, if using multer)
-    body('file')
-      .optional()
-      .isString()
-      .withMessage('FILE_MUST_BE_STRING'),
+        // file (optional, string filename, if using multer)
+        body('file')
+          .optional()
+          .isString()
+          .withMessage('FILE_MUST_BE_STRING'),
 
-    validatorMiddleware
-  ]
-}
-case 'updateAssignment': {
-  return [
-    // id (required, ObjectId in params)
-    param('id')
-      .notEmpty()
-      .withMessage('ASSIGNMENT_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('ASSIGNMENT_ID_INVALID'),
+        validatorMiddleware
+      ]
+    }
+    case 'updateAssignment': {
+      return [
+        // id (required, ObjectId in params)
+        param('id')
+          .notEmpty()
+          .withMessage('ASSIGNMENT_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('ASSIGNMENT_ID_INVALID'),
 
-    // title (optional, string)
-    body('title')
-      .optional()
-      .isString()
-      .withMessage('TITLE_MUST_BE_STRING'),
+        // title (optional, string)
+        body('title')
+          .optional()
+          .isString()
+          .withMessage('TITLE_MUST_BE_STRING'),
 
-    // description (optional, string)
-    body('description')
-      .optional()
-      .isString()
-      .withMessage('DESCRIPTION_MUST_BE_STRING'),
+        // description (optional, string)
+        body('description')
+          .optional()
+          .isString()
+          .withMessage('DESCRIPTION_MUST_BE_STRING'),
 
-    // file (optional, string filename if using multer)
-    body('file')
-      .optional()
-      .isString()
-      .withMessage('FILE_MUST_BE_STRING'),
+        // file (optional, string filename if using multer)
+        body('file')
+          .optional()
+          .isString()
+          .withMessage('FILE_MUST_BE_STRING'),
 
-    validatorMiddleware
-  ];
-}
-case 'markOrUpdateAttendance': {
-  return [
-    // classId (required, ObjectId)
-    body('classId')
-      .notEmpty()
-      .withMessage('CLASS_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('CLASS_ID_INVALID'),
+        validatorMiddleware
+      ];
+    }
+    case 'markOrUpdateAttendance': {
+      return [
+        // classId (required, ObjectId)
+        body('classId')
+          .notEmpty()
+          .withMessage('CLASS_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('CLASS_ID_INVALID'),
 
-    // date (required, valid date)
-    // body('date')
-    //   .notEmpty()
-    //   .withMessage('DATE_REQUIRED')
-    //   .bail()
-    //   .custom((value) => !isNaN(new Date(value).getTime()))
-    //   .withMessage('DATE_INVALID'),
+        // date (required, valid date)
+        // body('date')
+        //   .notEmpty()
+        //   .withMessage('DATE_REQUIRED')
+        //   .bail()
+        //   .custom((value) => !isNaN(new Date(value).getTime()))
+        //   .withMessage('DATE_INVALID'),
 
-    // session (required, number 1|2|3)
-    body('session')
-      .notEmpty()
-      .withMessage('SESSION_REQUIRED')
-      .bail()
-      .isInt({ min: 1, max: 3 })
-      .withMessage('SESSION_INVALID'),
+        // session (required, number 1|2|3)
+        body('session')
+          .notEmpty()
+          .withMessage('SESSION_REQUIRED')
+          .bail()
+          .isInt({ min: 1, max: 3 })
+          .withMessage('SESSION_INVALID'),
 
-    // takenBy (required, ObjectId)
-    body('takenBy')
-      .notEmpty()
-      .withMessage('TAKENBY_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('TAKENBY_INVALID'),
+        // takenBy (required, ObjectId)
+        body('takenBy')
+          .notEmpty()
+          .withMessage('TAKENBY_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('TAKENBY_INVALID'),
 
-    // records (required, array)
-    body('records')
-      .notEmpty()
-      .withMessage('RECORDS_REQUIRED')
-      .bail()
-      .isArray({ min: 1 })
-      .withMessage('RECORDS_MUST_BE_ARRAY'),
+        // records (required, array)
+        body('records')
+          .notEmpty()
+          .withMessage('RECORDS_REQUIRED')
+          .bail()
+          .isArray({ min: 1 })
+          .withMessage('RECORDS_MUST_BE_ARRAY'),
 
-    // records[].student (required, ObjectId)
-    body('records.*.student')
-      .notEmpty()
-      .withMessage('STUDENT_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('STUDENT_ID_INVALID'),
+        // records[].student (required, ObjectId)
+        body('records.*.student')
+          .notEmpty()
+          .withMessage('STUDENT_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('STUDENT_ID_INVALID'),
 
-    // records[].status (required, string)
-    body('records.*.status')
-      .notEmpty()
-      .withMessage('STATUS_REQUIRED')
-      .bail()
-      .isString()
-      .withMessage('STATUS_MUST_BE_STRING'),
+        // records[].status (required, string)
+        body('records.*.status')
+          .notEmpty()
+          .withMessage('STATUS_REQUIRED')
+          .bail()
+          .isString()
+          .withMessage('STATUS_MUST_BE_STRING'),
 
-    // records[].remarks (optional, string)
-    body('records.*.remarks')
-      .optional()
-      .isString()
-      .withMessage('REMARKS_MUST_BE_STRING'),
+        // records[].remarks (optional, string)
+        body('records.*.remarks')
+          .optional()
+          .isString()
+          .withMessage('REMARKS_MUST_BE_STRING'),
 
-    validatorMiddleware
-  ];
-}
-case 'updateAttendance': {
-  return [
-    // classId (required, ObjectId)
-    body('classId')
-      .notEmpty()
-      .withMessage('CLASS_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('CLASS_ID_INVALID'),
+        validatorMiddleware
+      ];
+    }
+    case 'updateAttendance': {
+      return [
+        // classId (required, ObjectId)
+        body('classId')
+          .notEmpty()
+          .withMessage('CLASS_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('CLASS_ID_INVALID'),
 
-    // date (required, valid date)
-    // body('date')
-    //   .notEmpty()
-    //   .withMessage('DATE_REQUIRED')
-    //   .bail()
-    //   .custom((value) => !isNaN(new Date(value).getTime()))
-    //   .withMessage('DATE_INVALID'),
+        // date (required, valid date)
+        // body('date')
+        //   .notEmpty()
+        //   .withMessage('DATE_REQUIRED')
+        //   .bail()
+        //   .custom((value) => !isNaN(new Date(value).getTime()))
+        //   .withMessage('DATE_INVALID'),
 
-    // session (required, number 1|2|3)
-    body('session')
-      .notEmpty()
-      .withMessage('SESSION_REQUIRED')
-      .bail()
-      .isInt({ min: 1, max: 3 })
-      .withMessage('SESSION_INVALID'),
+        // session (required, number 1|2|3)
+        body('session')
+          .notEmpty()
+          .withMessage('SESSION_REQUIRED')
+          .bail()
+          .isInt({ min: 1, max: 3 })
+          .withMessage('SESSION_INVALID'),
 
-    // records (required, array)
-    body('records')
-      .notEmpty()
-      .withMessage('RECORDS_REQUIRED')
-      .bail()
-      .isArray({ min: 1 })
-      .withMessage('RECORDS_MUST_BE_ARRAY'),
+        // records (required, array)
+        body('records')
+          .notEmpty()
+          .withMessage('RECORDS_REQUIRED')
+          .bail()
+          .isArray({ min: 1 })
+          .withMessage('RECORDS_MUST_BE_ARRAY'),
 
-    // records[].student (required, ObjectId)
-    body('records.*.student')
-      .notEmpty()
-      .withMessage('STUDENT_ID_REQUIRED')
-      .bail()
-      .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-      .withMessage('STUDENT_ID_INVALID'),
+        // records[].student (required, ObjectId)
+        body('records.*.student')
+          .notEmpty()
+          .withMessage('STUDENT_ID_REQUIRED')
+          .bail()
+          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+          .withMessage('STUDENT_ID_INVALID'),
 
-    // records[].status (required, string)
-    body('records.*.status')
-      .notEmpty()
-      .withMessage('STATUS_REQUIRED')
-      .bail()
-      .isString()
-      .withMessage('STATUS_MUST_BE_STRING'),
+        // records[].status (required, string)
+        body('records.*.status')
+          .notEmpty()
+          .withMessage('STATUS_REQUIRED')
+          .bail()
+          .isString()
+          .withMessage('STATUS_MUST_BE_STRING'),
 
-    // records[].remarks (optional, string)
-    body('records.*.remarks')
-      .optional()
-      .isString()
-      .withMessage('REMARKS_MUST_BE_STRING'),
+        // records[].remarks (optional, string)
+        body('records.*.remarks')
+          .optional()
+          .isString()
+          .withMessage('REMARKS_MUST_BE_STRING'),
 
-    validatorMiddleware
-  ];
-}
+        validatorMiddleware
+      ];
+    }
 
     //---------
     case 'registerStudent': {

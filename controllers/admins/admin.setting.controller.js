@@ -1,7 +1,7 @@
 const schoolSettingService = require("../../services/admins/admin.setting.service.js");
 const { responseData } = require("../../helpers/responseData.js");
 
-module.exports = {
+const schoolSettingController = {
     saveSettings: async (req, res) => {
         try {
             const data = req.body;
@@ -9,6 +9,9 @@ module.exports = {
             if (req.files && req.files.schoolLogo && req.files.schoolLogo.length > 0) {
                 data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`;
             }
+
+            console.log('Files:', req.files);
+            console.log('Data:', data);
 
             const result = await schoolSettingService.saveSettings(data);
 
@@ -36,13 +39,10 @@ module.exports = {
 
     updateSettings: async (req, res) => {
         try {
-            const { id } = req.params;
             const data = { ...req.body };
 
-            console.log('fiels : ', req.files)
-
             if (req.files?.schoolLogo && req.files.schoolLogo.length > 0) {
-                data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`
+                data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`;
             }
 
             Object.keys(data).forEach((key) => {
@@ -51,9 +51,13 @@ module.exports = {
                 }
             });
 
-            const result = await schoolSettingService.updateSettings(id, data);
-            return res.json(responseData(result.message, result.data, req, result.success));
+            const result = await schoolSettingService.updateSettings(data);
+
+            return res.json(
+                responseData(result.message, result.data || {}, req, result.success)
+            );
         } catch (error) {
+            console.error("updateSettings Error:", error);
             return res
                 .status(500)
                 .json(responseData("SERVER_ERROR", { error: error.message }, req, false));
@@ -73,3 +77,5 @@ module.exports = {
         }
     },
 };
+
+module.exports = schoolSettingController;

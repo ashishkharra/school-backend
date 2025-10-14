@@ -9,12 +9,14 @@ const TeacherTimeTable = require('../../models/class/teacher.timetable.schema')
 const teacherSchema = require('../../models/teacher/teacher.schema')
 const helper = require('../../helpers/helper')
 const mongoose = require('mongoose')
-const responseData = require('../../helpers/responseData')
+const { responseData } = require('../../helpers/responseData')
 const constant = require('../../helpers/constant')
 const {
   getTeacherAssignByLookup,
   getTeachersWithClassesLookup,
-  getAllTeachersWithClassLookup
+  getAllTeachersWithClassLookup,
+  teacherProfilePipeline,
+  teacherAttendancePipeline
 } = require('../../helpers/commonAggregationPipeline')
 const convertToMinutes = (timeStr) => {
   if (!timeStr) return null
@@ -32,7 +34,7 @@ module.exports = {
         email,
         password,
         phone,
-        dateOfBirth,
+        dob,
         gender,
         maritalStatus,
         address,
@@ -84,7 +86,7 @@ module.exports = {
         email: email.toLowerCase(),
         password: hashedPassword,
         phone,
-        dateOfBirth,
+        dob,
         gender,
         maritalStatus,
         address,
@@ -137,7 +139,7 @@ module.exports = {
       // if (updateData.password) delete updateData.password;
       if (updateData.email) updateData.email = updateData.email.toLowerCase()
 
-      const updatedTeacher = await Teacher.findByIdAndUpdate(
+      let updatedTeacher = await Teacher.findByIdAndUpdate(
         teacherId,
         { $set: updateData },
         { new: true, runValidators: true }
@@ -148,6 +150,12 @@ module.exports = {
       if (!updatedTeacher) {
         return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
       }
+
+      console.log('updatedTeacher before adding STATIC_URL:', updatedTeacher);
+
+      updatedTeacher.profilePic.fileUrl = process.env.STATIC_URL + updatedTeacher.profilePic.fileUrl
+      updatedTeacher.aadharFront.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharFront.fileUrl
+      updatedTeacher.aadharBack.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharBack.fileUrl
 
       return { success: true, message: 'TEACHER_UPDATED', data: updatedTeacher }
     } catch (error) {
@@ -261,6 +269,27 @@ module.exports = {
         success: false,
         message: error.message || 'FETCH_FAILED'
       }
+    }
+  },
+
+  getTeacherProfile: async (id) => {
+    try {
+      let profile = await Teacher.aggregate(teacherProfilePipeline(id));
+
+      console.log('Aggregated Profile:', profile[0]); // Debug log
+
+      if (!profile || profile.length === 0) {
+        return { success: false, message: 'TEACHER_NOT_FOUND' };
+      }
+
+      profile[0].profilePic = process.env.STATIC_URL + profile[0].profilePic
+      profile[0].aadharFront = process.env.STATIC_URL + profile[0].aadharFront
+      profile[0].aadharBack = process.env.STATIC_URL + profile[0].aadharBack
+
+      return { success: true, message: 'TEACHER_PROFILE_FETCHED', data: profile[0] };
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return { success: false, message: 'SERVER_ERROR' }
     }
   },
 
@@ -701,30 +730,31 @@ module.exports = {
   },
 
   markAttendance: async (teacherId, status) => {
-    // Check if already marked for today
     try {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      // UTC start of today
+      const today = new Date();
+      const utcStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
 
+      // Check if already marked for today
       const existing = await TeacherAttendance.findOne({
         teacher: teacherId,
-        date: today
-      })
+        date: utcStart
+      });
 
       if (existing) {
-        return { success: false, message: 'ATTENDANCE_MARKED_ALREADY' }
+        return { success: false, message: 'ATTENDANCE_MARKED_ALREADY' };
       }
 
       const attendance = await TeacherAttendance.create({
         teacher: teacherId,
-        date: today,
+        date: utcStart,
         status: status || 'Present'
-      })
+      });
 
-      return { success: true, message: 'ATTENDANCE_MARKED', attendance }
+      return { success: true, message: 'ATTENDANCE_MARKED', attendance };
     } catch (error) {
-      console.log('Error while marking attendance of teacher : ', error.message)
-      return { success: false, message: 'SERVER_ERROR' }
+      console.log('Error while marking attendance of teacher : ', error.message);
+      return { success: false, message: 'SERVER_ERROR' };
     }
   },
 
@@ -765,6 +795,8 @@ module.exports = {
 
       const data = await TeacherAttendance.aggregate(pipeline)
 
+      console.log('Aggregated Data:', data)
+
       const totalCountQuery = {
         teacher: new mongoose.Types.ObjectId(teacherId)
       }
@@ -773,27 +805,25 @@ module.exports = {
       if (month) {
         totalCountQuery.$expr = totalCountQuery.$expr
           ? {
-              $and: [
-                totalCountQuery.$expr,
-                { $eq: [{ $month: '$date' }, month] }
-              ]
-            }
+            $and: [
+              totalCountQuery.$expr,
+              { $eq: [{ $month: '$date' }, month] }
+            ]
+          }
           : { $eq: [{ $month: '$date' }, month] }
       }
 
       if (statusFilter) totalCountQuery.status = statusFilter
 
       const totalDocs = await TeacherAttendance.countDocuments(totalCountQuery)
+      const docs = data[0].docs
 
       return {
         success: true,
-        jsonData: data,
-        meta: {
-          page,
-          limit,
-          totalDocs,
-          totalPages: Math.ceil(totalDocs / limit)
-        }
+        message: 'TEACHER_ATTENDANCE_FETCHED',
+        data
+
+
       }
     } catch (error) {
       console.error('Error fetching teacher attendance:', error)

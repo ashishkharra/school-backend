@@ -120,6 +120,7 @@ exports.verifyToken = async (req, res, next) => {
   if (!token) {
     return res.status(401).json(responseData('NOT_AUTHORIZED', {}, req, false))
   }
+
   handleVerification(req, res, next, token)
 }
 
