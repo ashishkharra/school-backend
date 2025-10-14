@@ -651,6 +651,8 @@ const adminStudent = {
             } else {
                 pipeline = getAllStudentsPipeline(skip, limit, { ...studentFilter, ...matchStudent });
 
+                console.log('pipe line : ', pipeline)
+
                 totalStudents = await Enrollment.aggregate([
                     { $match: { ...studentFilter } },
                     {
@@ -667,14 +669,47 @@ const adminStudent = {
                 ]);
             }
 
-            const data = classId
+            let data = classId
                 ? await Class.aggregate(pipeline)
                 : await Enrollment.aggregate(pipeline);
+
+            console.log('data : ', data)
+
+            data = data.map(single => {
+                single.profilePic = single.profilePic ? process.env.STATIC_URL + single.profilePic : null;
+                single.aadharFront = single.aadharFront ? process.env.STATIC_URL + single.aadharFront : null;
+                single.aadharBack = single.aadharBack ? process.env.STATIC_URL + single.aadharBack : null;
+                single.transferCertificate = single.transferCertificate ? process.env.STATIC_URL + single.transferCertificate : null;
+
+                if (Array.isArray(single.marksheets)) {
+                    single.marksheets = single.marksheets.map(item => ({
+                        ...item,
+                        fileUrl: item.fileUrl ? process.env.STATIC_URL + item.fileUrl : null
+                    }));
+                }
+
+                if (Array.isArray(single.certificates)) {
+                    single.certificates = single.certificates.map(item => ({
+                        ...item,
+                        fileUrl: item.fileUrl ? process.env.STATIC_URL + item.fileUrl : null
+                    }));
+                }
+
+                if (Array.isArray(single.medicalRecords)) {
+                    single.medicalRecords = single.medicalRecords.map(item => ({
+                        ...item,
+                        fileUrl: item.fileUrl ? process.env.STATIC_URL + item.fileUrl : null
+                    }));
+                }
+                
+                if (single.password) delete single.password;
+                return data
+            })
 
             return {
                 success: true,
                 message: "STUDENT_FETCHED_SUCCESSFULLY",
-                docs: data,
+                docs: data[0],
                 page,
                 limit,
                 totalStudents: totalStudents.length > 0 ? totalStudents[0].total : 0,

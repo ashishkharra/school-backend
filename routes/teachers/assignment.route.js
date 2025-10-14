@@ -20,8 +20,13 @@ const { uploadAssignmanet } = require('../../middlewares/multerFile')
 router.post('/upload-assignment',uploadAssignmanet.single('file'),validationRule.validate('uploadAssignment'),assignmentController.uploadAssignmentController)
 router.get("/get-assignment", assignmentController.getAssignmentsController);
 router.delete("/delete-assignment/:assignmentId", assignmentController.deleteAssignmentController);
-router.put('/update-assignment/:id',uploadAssignmanet.single('file'), validationRule.validate('updateAssignment'),assignmentController. updateAssignmentController );
+router.put('/update-assignment/:id',uploadAssignmanet.single('file'), validationRule.validate('updateAssignment'),assignmentController.updateAssignmentController );
 
+
+router.post('/generate-grades', assignmentController.assignGradeOrMarks);
+router.put('/update-grades/:gradeId', assignmentController.updategrade);
+router.delete('/delete-grades/:gradeId', assignmentController.deleteGrade);
+router.get('/get-studedentsgrades', assignmentController.getGrades);
 
 
 module.exports = router

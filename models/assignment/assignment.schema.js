@@ -13,7 +13,7 @@ const assignmentSchema = new mongoose.Schema(
     resources: [{ type: String }],
 
     class: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
-    subject: { type: String },
+    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
 
   },

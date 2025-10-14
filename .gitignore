@@ -2,7 +2,7 @@ node_modules
 public/reports
 public/invoice
 public/files
-uploads/assignments
+uploads
 package-lock.json
 .vscode
-.env88
+.env

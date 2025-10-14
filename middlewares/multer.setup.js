@@ -21,6 +21,12 @@ const uploadTeacherDocs = createUploader({
   maxSize: 5 * 1024 * 1024 // 5MB
 })
 
+const uploadSchoolLogo = createUploader({
+  folderName: 'logo',
+  allowedMime: [...imageMime],
+  maxSize: 2 * 1024 * 1024
+})
+
 const studentDocFields = uploadStudentDocs.fields([
   { name: 'profilePic', maxCount: 1 },
   { name: 'aadharFront', maxCount: 1 },
@@ -41,4 +47,8 @@ const teacherDocFields = uploadTeacherDocs.fields([
   // { name: 'profilePic', maxCount: 1 }
 ])
 
-module.exports = { studentDocFields, teacherDocFields }
+const schoolDoc = uploadSchoolLogo.fields([
+  { name: 'schoolLogo', maxCount: 1 }
+])
+
+module.exports = { studentDocFields, teacherDocFields, schoolDoc }
