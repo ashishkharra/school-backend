@@ -1,6 +1,9 @@
+const mongoose = require('mongoose')
+
 const FeeStructure = require('../../models/fees/feeStructure.schema.js')
 const StudentFee = require('../../models/fees/studentFee.schema.js')
-const { getStudentWithDetails } = require('../../helpers/commonAggregationPipeline.js')
+const SchoolSetting = require('../../models/admin/admin.setting.schema.js')
+const { getStudentWithDetails, getAllFeesStructurePipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 module.exports = {
 
@@ -17,6 +20,9 @@ module.exports = {
                 };
             }
 
+            const setting = await SchoolSetting.findOne();
+
+            data.academicYear = setting.academicSession.currentSession
             const feeStructure = new FeeStructure(data);
             const result = await feeStructure.save();
 
@@ -44,6 +50,18 @@ module.exports = {
     assignStudentFee: async (data) => {
         try {
             const { appliedFeeHeads = [], studentId, feeStructureId, discounts = 0, payments = [] } = data;
+
+            console.log('Assigning fee to student:', studentId, 'with data:', data);
+
+            if (!studentId || !feeStructureId) {
+                return { success: false, message: "STUDENT_ID_AND_FEE_STRUCTURE_ID_REQUIRED" };
+            }
+
+            const existingFee = await StudentFee.findOne({ studentId, feeStructureId });
+
+            if (existingFee) {
+                return { success: false, message: "FEE_ALREADY_ASSIGNED" };
+            }
 
             const updatedHeads = appliedFeeHeads.map(head => ({
                 ...head,
@@ -75,9 +93,10 @@ module.exports = {
             const result = await studentFee.save();
             if (!result) return { success: false, message: "ASSIGN_FEE_FAILED" };
 
-            const populated = await StudentFee.aggregate(getStudentWithDetails(result._id));
+            const populated = await StudentFee.aggregate(getStudentWithDetails(result.studentId));
 
-            const student = populated[0].student;
+            const student = populated
+
             const feeHeadsHtml = updatedHeads
                 .map(head => `<p>${head.name}: ${head.amount}</p>`)
                 .join('');
@@ -251,4 +270,129 @@ module.exports = {
             return { success: false, message: 'STUDENT_FEE_NOT_FOUND' };
         }
     },
+
+    getFeeStructureByClass: async (identifier) => {
+        try {
+            if (!identifier) {
+                return { success: false, message: "CLASS_IDENTIFIER_REQUIRED" }
+            }
+
+            const result = await FeeStructure.findOne({ classIdentifier: identifier });
+            if (!result) {
+                return { success: false, message: "FEE_STRUCTURE_NOT_FOUND" }
+            }
+            return { success: true, message: "FEE_STRUCTURE_FETCHED_SUCCESSFULLY", result }
+        } catch (error) {
+            console.log('Error while fetching fees structure : ', error.message);
+            return { success: false, message: 'SERVER_ERROR' }
+        }
+    },
+
+    getAllFeeStructure: async () => {
+        try {
+            const result = await FeeStructure.aggregate(getAllFeesStructurePipeline());
+            if (!result) {
+                return { success: false, message: "FEE_STRUCTURE_NOT_FOUND" }
+            }
+            return { success: true, message: "FEE_STRUCTURE_FETCHED_SUCCESSFULLY", result }
+        } catch (error) {
+            console.log('Error while fetching fee structures : ', error.message);
+            return { success: false, message: 'SERVER_ERROR' }
+        }
+    },
+
+    updateFeeStructure: async (feeStructureId, data) => {
+        try {
+            console.log('Updating fee structure ID:', feeStructureId, 'with data:', data);
+
+            if (!mongoose.Types.ObjectId.isValid(feeStructureId)) {
+                return { success: false, message: "INVALID_FEE_STRUCTURE_ID" };
+            }
+
+            const feeStructure = await FeeStructure.findById(feeStructureId);
+            if (!feeStructure) {
+                return { success: false, message: "FEE_STRUCTURE_NOT_FOUND" };
+            }
+
+            if (data.feeHeads && Array.isArray(data.feeHeads)) {
+                feeStructure.feeHeads = data.feeHeads.map(head => ({
+                    type: head.type,
+                    amount: Number(head.amount) || 0,
+                    isOptional: head.isOptional || false
+                }));
+
+                feeStructure.totalAmount = feeStructure.feeHeads.reduce(
+                    (sum, head) => sum + head.amount,
+                    0
+                );
+            }
+
+            if (data.classIdentifier) feeStructure.classIdentifier = data.classIdentifier;
+            if (data.dueDate) feeStructure.dueDate = data.dueDate;
+            if (data.description) feeStructure.description = data.description;
+            if (data.academicYear) feeStructure.academicYear = data.academicYear;
+
+            if (data.totalAmount && (!data.feeHeads || data.feeHeads.length === 0)) {
+                feeStructure.totalAmount = Number(data.totalAmount);
+            }
+
+            const result = await feeStructure.save();
+            if (!result) {
+                return { success: false, message: "FEE_STRUCTURE_UPDATE_FAILED" };
+            }
+
+            return { success: true, message: "FEE_STRUCTURE_UPDATED", data: result };
+
+        } catch (error) {
+            console.error("Update Fee Structure Service Error:", error);
+            return { success: false, message: "FEE_STRUCTURE_UPDATE_ERROR" };
+        }
+    },
+
+    manageStatus: async (feeStructureId, status) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(feeStructureId)) {
+                return { success: false, message: "INVALID_FEE_STRUCTURE_ID" };
+            }
+            const feeStructure = await FeeStructure.findById(feeStructureId);
+            if (!feeStructure) {
+                return { success: false, message: "FEE_STRUCTURE_NOT_FOUND" };
+            }
+
+            status ? feeStructure.status = "active" : feeStructure.status = "inactive";
+
+            const result = await feeStructure.save();
+            if (!result) {
+                return { success: false, message: "FEE_STRUCTURE_STATUS_UPDATE_FAILED" };
+            }
+
+            return { success: true, message: `FEE_STRUCTURE_${result.status}`, data: result };
+        } catch (error) {
+            console.error("Manage Fee Structure Status Service Error:", error);
+            return { success: false, message: "FEE_STRUCTURE_STATUS_UPDATE_ERROR" };
+        }
+    },
+
+    deleteFeeStructure: async (feeStructureId) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(feeStructureId)) {
+                return { success: false, message: "INVALID_FEE_STRUCTURE_ID" };
+            }
+            const feeStructure = await FeeStructure.findById(feeStructureId);
+            if (!feeStructure) {
+                return { success: false, message: "FEE_STRUCTURE_NOT_FOUND" };
+            }
+
+            const result = await FeeStructure.findByIdAndDelete(feeStructureId);
+            if (!result) {
+                return { success: false, message: "FEE_STRUCTURE_DELETION_FAILED" };
+            }
+
+            return { success: true, message: "FEE_STRUCTURE_DELETED_SUCCESSFULLY", data: result };
+        } catch (error) {
+            console.error("Delete Fee Structure Service Error:", error);
+            return { success: false, message: "FEE_STRUCTURE_DELETION_ERROR" };
+        }
+    }
+
 };

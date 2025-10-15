@@ -11,7 +11,6 @@ module.exports = {
     }
   },
   adminLogin: async (req, res) => {
-    console.log(req.body)
     try {
       await adminService.adminLogin(req, res)
     } catch (err) {

@@ -33,6 +33,7 @@ const classSchema = new mongoose.Schema(
     isClassTeacher: { type: Boolean, enum: [true, false], default: false },
 
     studentCount: { type: Number, default: 0 },
+
     status: { type : String, enum: ['active', 'inactive'], default : 'active'}
   },
   { timestamps: true }

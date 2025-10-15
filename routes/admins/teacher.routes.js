@@ -36,7 +36,7 @@ router.delete('/delete-class-teacher/:classId', teacherController.removeClassTea
 
 
 // updateClassTeacher
-router.post('/assign-teacher', validationRule.validate('assignTeachertoClass'), teacherController.assignTeacherToClassController);
+router.post('/assign-teacher',[verifyToken], validationRule.validate('assignTeachertoClass'), teacherController.assignTeacherToClassController);
 router.put('/update-assign-teacher/:assignmentId', validationRule.validate('updateAssignTeachertoClass'), teacherController.updateAssignTeacherToController);
 router.delete('/delete-assign-teacher/:assignmentId', teacherController.deleteAssignTeacherToController);
 router.get("/get-teacher-assignments", teacherController.getAssignTeacherToController);

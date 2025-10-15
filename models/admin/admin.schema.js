@@ -49,6 +49,9 @@ const adminSchema = new mongoose.Schema(
     permission:{
       type:Array
     },
+    address: { type: String },
+    region: { type: String },
+    contact: { type: String },
     token: { type: String },
     refreshToken: { type: String }
   },

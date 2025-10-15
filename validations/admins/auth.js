@@ -3,6 +3,7 @@ const FeeStructure = require('../../models/fees/feeStructure.schema.js')
 const StudentFee = require('../../models/fees/studentFee.schema.js')
 const { validatorMiddleware } = require('../../helpers/helper')
 const responseData = require('../../helpers/responseData.js')
+const mongoose = require('mongoose')
 
 module.exports.validate = (method) => {
   switch (method) {
@@ -115,7 +116,7 @@ module.exports.validate = (method) => {
       ]
     }
     case 'updateAdminSetting': {
-      return[
+      return [
         body('schoolName').optional().isString().withMessage('SCHOOL_NAME_STRING'),
 
         body('schoolLogo').optional().isString().withMessage('SCHOOL_LOGO_STRING'),
@@ -156,123 +157,59 @@ module.exports.validate = (method) => {
     //---------------------
     case 'registerTeacher': {
       return [
-        // Name
-        body('name')
-          .notEmpty()
-          .withMessage('NAME_EMPTY')
-          .isLength({ min: 2 })
-          .withMessage('NAME_LENGTH_MIN')
-          .isLength({ max: 50 })
-          .withMessage('NAME_LENGTH_MAX'),
+        body('name').isString().notEmpty().withMessage('NAME_REQUIRED'),
+        body('email').isEmail().withMessage('VALID_EMAIL_REQUIRED'),
+        body('password').isString().notEmpty().withMessage('PASSWORD_REQUIRED'),
+        body('phone').optional().isString(),
+        body('dob').optional().isISO8601().toDate(),
+        body('gender').isIn(['Male', 'Female', 'Other']).withMessage('GENDER_INVALID'),
+        body('maritalStatus').optional().isIn(['Single', 'Married', 'Divorced', 'Widowed']),
+        body('bloodGroup').optional().isString(),
+        body('physicalDisability').optional().isBoolean(),
+        body('disabilityDetails').optional().isString(),
+        body('qualifications').optional().isArray(),
+        body('qualifications.*').optional().isString(),
 
-        // Email
-        body('email')
-          .notEmpty()
-          .withMessage('EMAIL_EMPTY')
-          .isEmail()
-          .withMessage('EMAIL_VALID'),
-
-        // Password
-        body('password')
-          .notEmpty()
-          .withMessage('PASSWORD_EMPTY')
-          .isLength({ min: 6 })
-          .withMessage('PASSWORD_MIN')
-          .isLength({ max: 30 })
-          .withMessage('PASSWORD_MAX'),
-
-        // Phone
-        body('phone')
-          .notEmpty()
-          .withMessage('PHONE_EMPTY')
-          .isMobilePhone()
-          .withMessage('PHONE_VALID'),
-
-        // Date of Birth
-        body('dob')
-          .notEmpty()
-          .withMessage('DOB_EMPTY')
-          .isISO8601()
-          .withMessage('DOB_VALID'),
-
-        // Gender
-        body('gender')
-          .notEmpty()
-          .withMessage('GENDER_EMPTY')
-          .custom((value) =>
-            ['male', 'female', 'other'].includes(value.toLowerCase())
-          )
-          .withMessage('GENDER_INVALID')
-          .bail()
-          .customSanitizer(
-            (value) =>
-              value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-          ),
-
-        // Address (object)
-        body('address')
-          .notEmpty()
-          .withMessage('ADDRESS_EMPTY')
-          .isObject()
-          .withMessage('ADDRESS_OBJECT_REQUIRED')
-          .bail()
-          .custom(
-            (addr) => addr.street && addr.city && addr.state && addr.zipCode
-          )
-          .withMessage('ADDRESS_INCOMPLETE'),
-
-        // Qualifications: array of strings, minimum 1
-        body('qualifications')
-          .isArray({ min: 1 })
-          .withMessage('QUALIFICATIONS_ARRAY_REQUIRED')
-          .custom((arr) => arr.every((q) => typeof q === 'string'))
-          .withMessage('QUALIFICATIONS_STRING_ONLY'),
-
-        // Classes: array of strings (ObjectIds as string)
-        body('classes')
-          .isArray({ min: 1 })
-          .withMessage('CLASSES_ARRAY_REQUIRED')
-          .custom((arr) => arr.every((c) => /^[0-9a-fA-F]{24}$/.test(c)))
-          .withMessage('CLASSES_INVALID_OBJECTID'),
-
-        // Specialization: array of strings (ObjectIds as string)
         body('specialization')
           .isArray({ min: 1 })
           .withMessage('SPECIALIZATION_ARRAY_REQUIRED')
-          .custom((arr) => arr.every((s) => /^[0-9a-fA-F]{24}$/.test(s)))
-          .withMessage('SPECIALIZATION_INVALID_OBJECTID'),
+          .custom(arr => arr.every(s => typeof s === 'string' && s.trim().length > 0))
+          .withMessage('SPECIALIZATION_MUST_BE_STRING'),
 
-        // SubjectsHandled: array of objects with valid classId
-        body('subjectsHandled')
-          .isArray({ min: 1 })
-          .withMessage('SUBJECTS_HANDLED_ARRAY_REQUIRED')
-          .custom((arr) =>
-            arr.every(
-              (sub) =>
-                sub.subjectName &&
-                sub.subjectCode &&
-                /^[0-9a-fA-F]{24}$/.test(sub.classId)
-            )
-          )
-          .withMessage('SUBJECTS_HANDLED_INVALID'),
+        body('experience').optional().isNumeric(),
+        body('dateOfJoining').optional().isISO8601().toDate(),
+
+        // Classes: array of ObjectIds
+        body('classes.*')
+          .optional()
+          .custom(value => mongoose.Types.ObjectId.isValid(value))
+          .withMessage('INVALID_CLASS_ID'),
+
+        // Subjects handled
+        body('subjectsHandled.*.classId')
+          .optional()
+          .custom(value => mongoose.Types.ObjectId.isValid(value))
+          .withMessage('INVALID_CLASS_ID'),
+
+        // Salary
+        body('salaryInfo').optional().isObject(),
+        body('salaryInfo.basic').optional().isNumeric(),
+        body('salaryInfo.allowances').optional().isNumeric(),
+        body('salaryInfo.deductions').optional().isNumeric(),
+        body('salaryInfo.netSalary').optional().isNumeric(),
+
+        // Address
+        body('address').optional().isObject(),
+        body('address.street').optional().isString(),
+        body('address.city').optional().isString(),
+        body('address.state').optional().isString(),
+        body('address.zip').optional().isString(),
 
         // Emergency Contact
-        body('emergencyContact')
-          .notEmpty()
-          .withMessage('EMERGENCY_CONTACT_EMPTY')
-          .isObject()
-          .withMessage('EMERGENCY_CONTACT_OBJECT_REQUIRED'),
-
-        body('emergencyContact.name')
-          .notEmpty()
-          .withMessage('EMERGENCY_CONTACT_NAME_EMPTY'),
-
-        body('emergencyContact.phone')
-          .notEmpty()
-          .withMessage('EMERGENCY_CONTACT_PHONE_EMPTY')
-          .isMobilePhone()
-          .withMessage('EMERGENCY_CONTACT_PHONE_VALID'),
-
+        body('emergencyContact').optional().isObject(),
+        body('emergencyContact.name').optional().isString(),
+        body('emergencyContact.relationship').optional().isString(),
+        body('emergencyContact.phone').optional().isString(),
         validatorMiddleware
       ]
     }
@@ -800,10 +737,10 @@ module.exports.validate = (method) => {
           .optional()
           .isString()
           .withMessage('EMERGENCY_RELATION_INVALID'),
-        body('emergencyContact.phone')
-          .optional()
-          .isMobilePhone('any')
-          .withMessage('EMERGENCY_PHONE_INVALID'),
+        // body('emergencyContact.phone')
+        //   .optional()
+        //   .isMobilePhone('any')
+        //   .withMessage('EMERGENCY_PHONE_INVALID'),
         body('emergencyContact.address')
           .optional()
           .isString()
@@ -1109,6 +1046,60 @@ module.exports.validate = (method) => {
 
         validatorMiddleware
       ]
+    }
+
+    case 'updateFeeStruture': {
+      return [
+        body('classIdentifier')
+          .optional()
+          .isLength({ min: 2, max: 50 })
+          .withMessage('CLASSIDENTIFIER_LENGTH'),
+
+        body('academicYear')
+          .optional()
+          .matches(/^\d{4}-\d{4}$/)
+          .withMessage('ACADEMIC_YEAR_FORMAT_INVALID'),
+
+        // body('feeHeads')
+        //   .isArray({ min: 1 })
+        //   .withMessage('FEEHEADS_ARRAY_REQUIRED')
+        //   .customSanitizer((arr) =>
+        //     arr.map(f => ({
+        //       ...f,
+        //       amount: Number(f.amount)
+        //     }))
+        //   )
+        //   .custom((arr) =>
+        //     arr.every(
+        //       (f) =>
+        //         f.type &&
+        //         typeof f.type === 'string' &&
+        //         typeof f.amount === 'number' &&
+        //         !isNaN(f.amount)
+        //     )
+        //   )
+        //   .withMessage('FEEHEADS_INVALID'),
+
+
+        body('totalAmount')
+          .optional()
+          .isNumeric()
+          .withMessage('TOTAL_AMOUNT_INVALID')
+          .custom((value, { req }) => {
+            if (req.body.feeHeads) {
+              const sum = req.body.feeHeads.reduce(
+                (acc, head) => acc + head.amount,
+                0
+              );
+              if (value !== sum) {
+                throw new Error('TOTAL_AMOUNT_MISMATCH');
+              }
+            }
+            return true;
+          }),
+
+        validatorMiddleware
+      ];
     }
 
     case 'assignStudentFee': {

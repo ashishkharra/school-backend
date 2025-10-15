@@ -64,13 +64,18 @@ module.exports = {
 
       // 🔹 Convert classes array to ObjectId
       if (data.classes && Array.isArray(data.classes)) {
-        data.classes = data.classes.map((id) => mongoose.Types.ObjectId(id))
+        data.classes = data.classes
+          .filter(c => mongoose.Types.ObjectId.isValid(c)) // remove invalid ids
+          .map(c => mongoose.Types.ObjectId(c));          // cast to ObjectId
       }
-      if (data.specialization && Array.isArray(data.specialization)) {
-        data.specialization = data.specialization.map((id) =>
-          mongoose.Types.ObjectId(id)
-        )
+
+      if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
+        data.subjectsHandled = data.subjectsHandled.map(s => ({
+          ...s,
+          classId: mongoose.Types.ObjectId.isValid(s.classId) ? mongoose.Types.ObjectId(s.classId) : null
+        })).filter(s => s.classId !== null);
       }
+
       // 🔹 Convert subjectsHandled.classId to ObjectId
       if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
         const mongoose = require('mongoose')
@@ -561,7 +566,7 @@ module.exports = {
         status: status || null
       });
 
-    
+
       if (!result.success) {
         return res.status(400).json(responseData(result.message, {}, req, result?.success || false));
       }

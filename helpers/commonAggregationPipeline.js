@@ -425,6 +425,8 @@ const teacherProfilePipeline = (teacherId) => {
         bloodGroup: 1,
         physicalDisability: 1,
         disabilityDetails: 1,
+        zipCode: 1,
+        country: 1,
  
         // professional info
         department: 1,
@@ -865,8 +867,7 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
         studentCount: 1,
         classTeacher: 1,
         createdAt: 1,
-        startTime: 1,
-        endTime: 1
+        classIdentifier: 1
       }
     },
     { $sort: { createdAt: -1 } },
@@ -1553,6 +1554,29 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
   ];
 };
 
+const getAllFeesStructurePipeline = () => {
+  return [
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classIdentifier',
+        foreignField: 'classIdentifier',
+        as: 'classData'
+      }
+    },
+    { $unwind: { path: '$classData', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        "classData.name": 1,
+        "classData.section": 1,
+        feeHeads: 1,
+        totalAmount: 1,
+        academicYear: 1,
+      }
+    }
+  ]
+}
+
 module.exports = {
   getAttendanceLookup
 };
@@ -1580,14 +1604,16 @@ module.exports = {
   getStudentsPipeline,
   getSubmissionsPipeline,
 
-
   //teacher
   getAssignmentLookup,
   getTeacherAssignByLookup,
   getAllTeachersWithClassLookup,
   getAttendanceLookup,
   teacherAttendancePipeline,
-  getGradeLookupPipeline
+  getGradeLookupPipeline,
+
+  // fees
+  getAllFeesStructurePipeline
 }
 
 

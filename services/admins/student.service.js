@@ -5,7 +5,6 @@ const { generateOTP, sendEmail } = require('../../helpers/helper.js')
 
 const Student = require("../../models/students/student.schema.js");
 const Class = require("../../models/class/class.schema.js");
-const Attendance = require('../../models/students/attendance.schema.js')
 // const Fees = require('../../models/fees')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
@@ -69,6 +68,7 @@ const adminStudent = {
 
             classObj.studentCount += 1;
             await classObj.save();
+
 
             try {
                 const mail = await sendEmail("student-registration-success", {
@@ -701,7 +701,7 @@ const adminStudent = {
                         fileUrl: item.fileUrl ? process.env.STATIC_URL + item.fileUrl : null
                     }));
                 }
-                
+
                 if (single.password) delete single.password;
                 return data
             })
