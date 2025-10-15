@@ -6,13 +6,15 @@ module.exports = {
 
    getProfile: async (req, res) => {
     try {
-        const teacherId = req.user._id
+        const {teacherId} = req.user._id
+        // const {teacherId} = req.params
       const profile = await teacherService.getProfile(teacherId);
- 
+ console.log(profile.message,"====")
       return res
         .status(200)
         .json(responseData(profile?.message, profile, req, profile?.success||true));
     } catch (error) {
+      console.log(error,"=-==-=")
       return res
         .status(400)
         .json(responseData("FETCH_PROFILE_FAILED", { error: error.message }, req, false));

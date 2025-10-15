@@ -1,31 +1,9 @@
+const { sendEmail } = require('../../helpers/helper');
 const Salary = require('../../models/admin/salary.schema');
 const Teacher = require('../../models/teacher/teacher.schema');
 
 
 module.exports ={
-// createInitialSalary : async ({ teacherId, baseSalary, totalWorkingDays }) => {
-
-//   if (!teacherId || !baseSalary) throw new Error('teacherId and baseSalary are required');
-
-//   // Check if salary record already exists
-//   const existing = await Salary.findOne({ teacherId });
-//   if (existing) throw new Error('Salary record already exists for this teacher');
-
-//   // Create initial salary record
-//   const salaryRecord = new Salary({
-//     teacherId,
-//     baseSalary,
-//     totalWorkingDays: totalWorkingDays || 30,
-//     totalLeaves: 0,
-//     perDaySalary: null,
-//     totalDeductions: null,
-//     finalSalary: null,
-//     status: 'Pending'
-//   });
-
-//   await salaryRecord.save();
-//   return salaryRecord;
-// },
  generateSalary: async ({ teacherId, month, leaves = 0 }) => {
     if (!teacherId || !month) throw new Error('teacherId and month are required');
 
@@ -66,8 +44,58 @@ module.exports ={
       },
       { upsert: true, new: true }
     );
+   const dataBody = {
+        TEACHER_NAME: teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+        MONTH: month,
+        TEACHER_ID: teacher._id.toString(),
+        BASE_SALARY: `₹${totalSalary.toFixed(2)}`,
+        WORKING_DAYS: totalWorkingDays,
+        LEAVES: totalLeaves,
+        PER_DAY_SALARY: `₹${perDaySalary.toFixed(2)}`,
+        DEDUCTIONS: `₹${leaveDeductions.toFixed(2)}`,
+        FINAL_SALARY: `₹${finalSalary.toFixed(2)}`,
+        STATUS: 'Paid',
+        LOGIN_URL: `${process.env.FRONTEND_URL || 'https://yourapp.com'}/teacher/login`
+      };
 
+      const isMailSent = await sendEmail('salary-paid', dataBody)
+      if (!isMailSent) return { success: false, message: 'EMAIL_NOT_SENT' }
     return salaryRecord;
+  },
+  getAllSalaries: async (page = 1, limit = 10) => {
+    const skip = (page - 1) * limit;
+
+    // Fetch salary records with pagination
+    const salaryRecords = await Salary.find().skip(skip).limit(limit);
+
+    // Total count for pagination
+    const total = await Salary.countDocuments();
+
+    // Populate teacher info using for...of
+    const result = [];
+    for (const salary of salaryRecords) {
+      const teacher = await Teacher.findById(salary.teacherId);
+      result.push({
+        TEACHER_NAME: teacher?.name || `${teacher?.firstName || ''} ${teacher?.lastName || ''}`.trim(),
+        MONTH: salary.month,
+        TEACHER_ID: salary.teacherId.toString(),
+        BASE_SALARY: `₹${salary.baseSalary.toFixed(2)}`,
+        WORKING_DAYS: salary.totalWorkingDays,
+        LEAVES: salary.totalLeaves,
+        PER_DAY_SALARY: `₹${salary.perDaySalary.toFixed(2)}`,
+        DEDUCTIONS: `₹${salary.totalDeductions.toFixed(2)}`,
+        FINAL_SALARY: `₹${salary.finalSalary.toFixed(2)}`,
+        STATUS: salary.status,
+        LOGIN_URL: `${process.env.FRONTEND_URL || 'https://yourapp.com'}/teacher/login`
+      });
+    }
+
+    return {
+      total,
+      page,
+      limit,
+      salaries: result
+    };
   }
 }
 

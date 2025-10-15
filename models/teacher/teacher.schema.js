@@ -19,7 +19,7 @@ const teacherSchema = new mongoose.Schema(
     loginAttempts: { type: Number, default: 0 },
     // 📞 Personal Info
     phone: { type: String },
-    dateOfBirth: { type: Date },
+    dob: { type: Date },
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     maritalStatus: {
       type: String,
@@ -29,7 +29,8 @@ const teacherSchema = new mongoose.Schema(
       street: String,
       city: String,
       state: String,
-      zipCode: String
+      zip: String,
+      country: String
     },
     bloodGroup: { type: String },
     // 🏥 Disability Info
@@ -40,7 +41,7 @@ const teacherSchema = new mongoose.Schema(
     // department: { type: String }, // e.g., "Mathematics"
     designation: { type: String }, // e.g., "Senior Teacher"
     qualifications: [{ type: String }],
-    specialization: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }], // main subject expertise
+    specialization: [String], // main subject expertise
     experience: { type: Number }, // in years
     dateOfJoining: { type: Date, default: Date.now },
     classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
@@ -85,8 +86,9 @@ const teacherSchema = new mongoose.Schema(
     // 👨‍👩‍👦 Emergency Contact
     emergencyContact: {
       name: String,
-      relationship: String,
-      phone: String
+      relation: String,
+      phone: String,
+      address: String
     },
     // 📊 Work & Performance
     attendance: [
@@ -151,13 +153,6 @@ const teacherSchema = new mongoose.Schema(
         body: String,
         read: { type: Boolean, default: false },
         createdAt: { type: Date, default: Date.now }
-      }
-    ],
-    logs: [
-      {
-        action: String,
-        by: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
-        at: { type: Date, default: Date.now }
       }
     ],
     // ⚙️ Status & Security

@@ -32,7 +32,8 @@ const studentController = {
 
     downloadAssignment: async (req, res) => {
         try {
-            const { studentId, assignmentId } = req.params;
+            const { assignmentId } = req.params;
+            const studentId  = req.user?._id;
 
             if (!studentId || !assignmentId) {
                 return res.status(400).json(responseData("INVALID_CREDENTIALS", {}, req));
@@ -62,7 +63,7 @@ const studentController = {
 
     viewProfile: async (req, res) => {
         try {
-            const { studentId } = req.params;
+            const studentId  = req.user?._id;
 
             if (!studentId) {
                 return res.status(400).json(responseData("STUDENT_ID_REQUIRED", {}, req));
@@ -88,7 +89,7 @@ const studentController = {
 
     viewAttendanceByClass: async (req, res) => {
         try {
-            const { studentId } = req.params;
+            const studentId  = req.user?._id;
             const { month, date, year, page = 1, limit = 10, teacher } = req.query;
 
             if (!studentId) {
@@ -120,7 +121,7 @@ const studentController = {
 
     requestUpdateProfile: async (req, res) => {
         try {
-            const { studentId } = req.params
+            const studentId  = req.user?._id;
             const { requestedFields } = req.body
             // const { id } = req.user;
             const result = await studentService.requestUpdateProfile(studentId, requestedFields);
@@ -141,8 +142,8 @@ const studentController = {
 
     submitAssignment: async (req, res) => {
         try {
-            const { assignmentId, studentId, classId } = req.body;
-            // const studentId = req.user._id;
+            const { assignmentId,  classId } = req.body;
+            const studentId = req.user._id;
 
             const files = [];
             if (req.file) files.push(req.file);

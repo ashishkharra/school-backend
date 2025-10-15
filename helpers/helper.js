@@ -358,7 +358,7 @@ module.exports = {
   },
   validatorMiddleware: (req, res, next) => {
     const errors = validationResult(req)
-    console.log("VALIDTION ERROR",errors)
+    console.log("VALIDTION ERROR", errors)
     if (!errors.isEmpty()) {
       return res
         .status(200)
@@ -609,46 +609,46 @@ module.exports = {
       }
     ]
   },
-    getPaginationArrayJs: function (page, limit) {
-  return [
-    {
-      $facet: {
-        paginatedResults: [
-          { $skip: (page - 1) * limit },
-          { $limit: limit }
-        ],
-        totalCount: [
-          { $count: 'value' }
-        ]
-      }
-    },
-    {
-      $unwind: {
-        path: '$totalCount',
-        preserveNullAndEmptyArrays: true
-      }
-    },
-    {
-      $addFields: {
-        docs: '$paginatedResults',
-        totalDocs: { $ifNull: ['$totalCount.value', 0] },
-        limit,
-        page,
-        totalPages: {
-          $ceil: {
-            $divide: [{ $ifNull: ['$totalCount.value', 0] }, limit]
+  getPaginationArrayJs: function (page, limit) {
+    return [
+      {
+        $facet: {
+          paginatedResults: [
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ],
+          totalCount: [
+            { $count: 'value' }
+          ]
+        }
+      },
+      {
+        $unwind: {
+          path: '$totalCount',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          docs: '$paginatedResults',
+          totalDocs: { $ifNull: ['$totalCount.value', 0] },
+          limit,
+          page,
+          totalPages: {
+            $ceil: {
+              $divide: [{ $ifNull: ['$totalCount.value', 0] }, limit]
+            }
           }
         }
+      },
+      {
+        $project: {
+          paginatedResults: 0,
+          totalCount: 0
+        }
       }
-    },
-    {
-      $project: {
-        paginatedResults: 0,
-        totalCount: 0
-      }
-    }
-  ]
-},
+    ]
+  },
   getEmailTemplateDynamically: async (emailSlug) => {
     const emailTemplateRecord = await EmailTemplate.find({ slug: emailSlug })
     return emailTemplateRecord[0]
@@ -1192,6 +1192,12 @@ module.exports = {
       console.error("Error deleting file:", err);
     }
   },
+
+  formatMinutesToTime: (totalMinutes) => {
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  }
 }
 // generateZoomToken : async () => {
 
@@ -1208,7 +1214,6 @@ const generateZoomToken = async () => {
       },
     });
 
-    console.log('token --------- ', res.data.access_token)
 
     return { success: true, message: 'ZOOM_TOKEN_GENERATED_SUCCESSFULLY', zoom_token: res.data.access_token };
   } catch (error) {

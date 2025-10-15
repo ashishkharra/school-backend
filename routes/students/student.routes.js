@@ -5,24 +5,24 @@ const { uploadSubmission } = require('../../middlewares/multerFile.js')
 const studentController = require('../../controllers/students/student.controller.js');
 
 router.get(
-  "/view/attendance/:studentId", [verifyToken],
+  "/view/attendance", [verifyToken],
   studentController.viewAttendanceByClass
 );
 
 router.get(
-  "/view/profile/:studentId", [verifyToken],
+  "/view/profile", [verifyToken],
   studentController.viewProfile
 );
 
-router.get("/:studentId/assignments/:assignmentId/download", [verifyToken],
+router.get("/assignments/:assignmentId/download", [verifyToken],
   studentController.downloadAssignment
 );
 
-router.post('/update-profile-request/:studentId/', [verifyToken],
+router.post('/update-profile-request', [verifyToken],
   studentController.requestUpdateProfile
 );
 
-router.post("/submit/:studentId/:assignmentId", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
+router.post("/submit/:assignmentId", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
 
 // router.put("/grade/:submissionId", studentController.gradeSubmission);
 

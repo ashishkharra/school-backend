@@ -34,9 +34,6 @@ module.exports = {
   // },
 
   registerTeacher: async (req, res) => {
-
-    console.log('teaher body : ', req.body);
-    console.log('teacher files ; ', req.files)
     try {
       const data = req.body
       const files = req.files || {}
@@ -62,15 +59,19 @@ module.exports = {
           }
       }
 
-      // 🔹 Convert classes array to ObjectId
       if (data.classes && Array.isArray(data.classes)) {
-        data.classes = data.classes.map((id) => mongoose.Types.ObjectId(id))
+        data.classes = data.classes
+          .filter(c => mongoose.Types.ObjectId.isValid(c)) // remove invalid ids
+          .map(c => mongoose.Types.ObjectId(c));          // cast to ObjectId
       }
-      if (data.specialization && Array.isArray(data.specialization)) {
-        data.specialization = data.specialization.map((id) =>
-          mongoose.Types.ObjectId(id)
-        )
+
+      if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
+        data.subjectsHandled = data.subjectsHandled.map(s => ({
+          ...s,
+          classId: mongoose.Types.ObjectId.isValid(s.classId) ? mongoose.Types.ObjectId(s.classId) : null
+        })).filter(s => s.classId !== null);
       }
+
       // 🔹 Convert subjectsHandled.classId to ObjectId
       if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
         const mongoose = require('mongoose')
@@ -82,9 +83,7 @@ module.exports = {
 
       // data.frontAdhar = data.aadharFront
 
-      // 🔹 Call service function (no changes needed here)
       const result = await adminTeacherService.registerTeacher(data)
-      console.log('---------')
       if (!result.success) {
         return res
           .status(400)
@@ -138,30 +137,6 @@ module.exports = {
             fileUrl: getRelativePath(files.aadharBack[0].path)
           }
         }
-
-        // if (files.certificates?.length) {
-        //   if (Array.isArray(existingTeacher.certificates)) {
-        //     existingTeacher.certificates.forEach((c) =>
-        //       deleteFileIfExists(c.fileUrl)
-        //     )
-        //   }
-        //   updateData.certificates = files.certificates.map((f) => ({
-        //     name: f.originalname,
-        //     fileUrl: getRelativePath(f.path)
-        //   }))
-        // }
-
-        // if (files.resume?.[0]) {
-        //   deleteFileIfExists(existingTeacher.resume)
-        //   updateData.resume = getRelativePath(files.resume[0].path)
-        // }
-
-        // if (files.joiningLetter?.[0]) {
-        //   deleteFileIfExists(existingTeacher.joiningLetter)
-        //   updateData.joiningLetter = getRelativePath(
-        //     files.joiningLetter[0].path
-        //   )
-        // }
       }
 
       const updatedTeacher = await adminTeacherService.updateTeacher(
@@ -423,11 +398,9 @@ module.exports = {
   deleteAssignTeacherToController: async (req, res) => {
     try {
       const { assignmentId } = req.params
-      console.log(req.params, "req.params----")
       const deletedAssignment = await adminTeacherService.deleteTeacherAssign({
         assignmentId
       })
-      console.log(deletedAssignment, "deletedAssignment-----")
       return res
         .status(deletedAssignment.success ? 200 : 400)
         .json(
@@ -440,7 +413,6 @@ module.exports = {
         )
 
     } catch (error) {
-      console.log("catch", error)
       return res
         .status(400)
         .json(
@@ -457,15 +429,12 @@ module.exports = {
   getAssignTeacherToController: async (req, res) => {
     try {
       const { classId, teacherId, page = 1, limit = 10 } = req.query;
-      console.log('req.query', req.query)
       const queryResult = await adminTeacherService.getTeacherAssign({
         classId, teacherId,
 
         page: parseInt(page),
         limit: parseInt(limit)
       });
-      console.log(queryResult, "queryResult------");
-
 
       return res.json(
         responseData(
@@ -502,7 +471,6 @@ module.exports = {
 
       return res.status(result.success ? 200 : 400).json(responseData(result?.message, result, req, result?.success || true));
     } catch (error) {
-      console.error("markAttendance error:", error);
       return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false))
     }
   },
@@ -518,7 +486,6 @@ module.exports = {
 
       res.status(result.success ? 200 : 400).json(responseData(result?.message, result, req, result?.success || true));
     } catch (error) {
-      console.error("updateAttendance error:", error);
       return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false))
     }
   },
@@ -561,14 +528,13 @@ module.exports = {
         status: status || null
       });
 
-    
+
       if (!result.success) {
         return res.status(400).json(responseData(result.message, {}, req, result?.success || false));
       }
 
       return res.status(200).json(responseData(result?.message, result.data[0], req, result?.success || true));
     } catch (error) {
-      console.error("Error in getAttendance:", error);
       return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
   },
@@ -584,7 +550,6 @@ module.exports = {
 
       return res.status(200).json(responseData("TEACHER_PROFILE_FETCHED", result.data, req, true));
     } catch (error) {
-      console.error("Error in getTeacherProfile:", error);
       return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
   },

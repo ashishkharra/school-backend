@@ -324,7 +324,7 @@ const teacherProfilePipeline = (teacherId) => {
   return [
     // 1️⃣ Match the teacher
     { $match: { _id: new mongoose.Types.ObjectId(teacherId) } },
- 
+
     // 2️⃣ Extract file URLs from nested objects
     {
       $addFields: {
@@ -342,7 +342,7 @@ const teacherProfilePipeline = (teacherId) => {
         }
       }
     },
- 
+
     // 3️⃣ Populate class details
     {
       $lookup: {
@@ -352,8 +352,26 @@ const teacherProfilePipeline = (teacherId) => {
         as: 'classData'
       }
     },
- 
-    // 4️⃣ Project only required fields
+
+    // 4️⃣ Populate subjects based on specialization
+    {
+      $lookup: {
+        from: 'subjects',
+        localField: 'specialization', // field in teacher document
+        foreignField: 'name',          // field in subjects collection
+        as: 'subjectsInfo'
+      }
+    },
+
+    // 5️⃣ Optional: unwind specialization if you want a flat array
+    {
+      $unwind: {
+        path: "$specialization",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+
+    // 6️⃣ Project only required fields
     {
       $project: {
         // basic info
@@ -370,7 +388,6 @@ const teacherProfilePipeline = (teacherId) => {
         bloodGroup: 1,
         physicalDisability: 1,
         disabilityDetails: 1,
- 
         // professional info
         department: 1,
         designation: 1,
@@ -381,7 +398,7 @@ const teacherProfilePipeline = (teacherId) => {
         subjectsHandled: 1,
         classes: 1,
         salaryInfo: 1,
- 
+
         // file fields
         profilePic: 1,
         aadharFront: 1,
@@ -389,24 +406,21 @@ const teacherProfilePipeline = (teacherId) => {
         certificates: 1,
         resume: 1,
         joiningLetter: 1,
- 
+
         // emergency / achievements
         emergencyContact: 1,
         achievements: 1,
         clubsInCharge: 1,
         eventsHandled: 1,
- 
+
         // meta fields
         status: 1,
         createdAt: 1,
         updatedAt: 1,
- 
-        // populated class info
-        classData: {
-          _id: 1,
-          name: 1,
-          section: 1
-        }
+
+        // populated info
+        classData: 1,
+        subjectsInfo: 1 // <-- new subjects populated
       }
     }
   ];
@@ -810,8 +824,7 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
         studentCount: 1,
         classTeacher: 1,
         createdAt: 1,
-        startTime: 1,
-        endTime: 1
+        classIdentifier: 1
       }
     },
     { $sort: { createdAt: -1 } },
@@ -1381,6 +1394,17 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
       }
     },
 
+    // Lookup class details
+    {
+      $lookup: {
+        from: "classes",        // replace with your class collection name
+        localField: "class",  // assuming attendance has classId field
+        foreignField: "_id",
+        as: "classData"
+      }
+    },
+    
+
     // Map the records array with required student fields only
     {
       $addFields: {
@@ -1420,12 +1444,13 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
               }
             }
           }
-        }
+        },
+        class: { $arrayElemAt: ["$classData", 0] } // attach first class object
       }
     },
 
-    // Remove the temporary studentData array
-    { $project: { studentData: 0 } },
+    // Remove temporary arrays
+    { $project: { studentData: 0, classData: 0 } },
 
     // Sort by date descending
     { $sort: { date: -1 } },
@@ -1483,7 +1508,29 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
     {
       $unwind: { path: '$assignmentData.subjectData', preserveNullAndEmptyArrays: true }
     },
-
+ {
+      $project: {
+        _id: 1,
+        grade: 1,
+        marks: 1,
+        remark: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        classId: 1,
+        student: 1,
+        assignment: 1,
+        'studentData._id': 1,
+        'studentData.name': 1,
+        'studentData.admissionNo': 1,
+        'assignmentData._id': 1,
+        'assignmentData.title': 1,
+        'assignmentData.dueDate': 1,
+        'assignmentData.maxMarks': 1,
+        'assignmentData.subjectId': 1,
+        'assignmentData.subjectData._id': 1,
+        'assignmentData.subjectData.name': 1
+      }
+    },
     // Facet for pagination
     {
       $facet: {
@@ -1497,6 +1544,29 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
     }
   ];
 };
+
+const getAllFeesStructurePipeline = () => {
+  return [
+    {
+      $lookup: {
+        from: 'classes',
+        localField: 'classIdentifier',
+        foreignField: 'classIdentifier',
+        as: 'classData'
+      }
+    },
+    { $unwind: { path: '$classData', preserveNullAndEmptyArrays: true } },
+    {
+      $project: {
+        "classData.name": 1,
+        "classData.section": 1,
+        feeHeads: 1,
+        totalAmount: 1,
+        academicYear: 1,
+      }
+    }
+  ]
+}
 
 module.exports = {
   getAttendanceLookup
@@ -1525,14 +1595,16 @@ module.exports = {
   getStudentsPipeline,
   getSubmissionsPipeline,
 
-
   //teacher
   getAssignmentLookup,
   getTeacherAssignByLookup,
   getAllTeachersWithClassLookup,
   getAttendanceLookup,
   teacherAttendancePipeline,
-  getGradeLookupPipeline
+  getGradeLookupPipeline,
+
+  // fees
+  getAllFeesStructurePipeline
 }
 
 

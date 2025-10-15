@@ -26,7 +26,7 @@ const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js
 const adminEmailTemplateRouter = require('./routes/admins/emailTemplate.route')
 const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
 const adminFeeRoutes = require('./routes/admins/fees.route.js')
-const adminteachersalaryRoutes = require('./routes/admins/teacher.salary.js')
+const adminteachersalaryRoutes = require('./routes/admins/teacher.salary.route.js')
 const parentRoutes = require('./routes/admins/parent.route.js')
 const adminSettingRoute = require('./routes/admins/admin.setting.route.js')
 
@@ -41,7 +41,7 @@ const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
 
 // middlewares
 const corsOption = {
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://192.168.2.157:5173'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };

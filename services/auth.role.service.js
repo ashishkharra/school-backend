@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs')
 const {generateAuthToken} = require('../helpers/responseData.js')
 
 const Teacher = require('../models/teacher/teacher.schema.js')
-const Student = require('../models/students/student.schema.js')
+const Student = require('../models/students/student.schema.js');
+const { token } = require('morgan');
 
 module.exports = {
   login: async (email, password) => {
@@ -13,6 +14,7 @@ module.exports = {
 
       if (!user) {
         user = await Teacher.findOne({ email });
+        console.log(user,"user")
         if (user) role = "teacher";
       }
 
@@ -34,13 +36,14 @@ module.exports = {
       }
 
       const safeData = user.toObject();
+      console.log(safeData,"===")
       delete safeData.password;
       safeData.role = role;
 
       console.log("safe data : ", safeData)
 
       const tokens = generateAuthToken(safeData);
-
+console.log(token,"token")
       return { success: true, message: `${role.toUpperCase()}_LOGIN_SUCCESS`, results: { ...safeData, ...tokens } };
 
     } catch (err) {

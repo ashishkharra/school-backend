@@ -10,9 +10,6 @@ const schoolSettingController = {
                 data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`;
             }
 
-            console.log('Files:', req.files);
-            console.log('Data:', data);
-
             const result = await schoolSettingService.saveSettings(data);
 
             return res

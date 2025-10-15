@@ -1,4 +1,3 @@
-// controllers/teachers/assignment.controller.js
 const assignmentService = require('../../services/teachers/assignment.service')
 const { responseData } = require('../../helpers/responseData')
 const mongoose = require('mongoose');
@@ -6,62 +5,63 @@ const { constant } = require('lodash');
 
 module.exports = {
 
- uploadAssignmentController: async (req, res) => {
+  uploadAssignmentController: async (req, res) => {
     try {
-      const { teacherId, classId, subjectId, title, description, dueDate } =
-        req.body
-      const file = req.file ? req.file.filename : ''
-      if (!teacherId || !classId || !subjectId || !title || !dueDate) {
+      const { teacherId, classId, subject, title, description, dueDate } = req.body;
+      const file = req.file ? req.file.filename : '';
+      if (!teacherId || !classId || !subject || !title || !dueDate) {
         return res
           .status(400)
-          .json(responseData('INVALID_INPUT_DATA', {}, req, false))
+          .json(responseData('INVALID_INPUT_DATA', {}, req, false));
       }
 
-      const parsedDueDate = new Date(dueDate)
+      const parsedDueDate = new Date(dueDate);
       if (isNaN(parsedDueDate.getTime())) {
         return res
           .status(400)
-          .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
+          .json(responseData('INVALID_DATE_FORMAT', {}, req, false));
       }
       const response = await assignmentService.uploadAssignment(
         teacherId,
         classId,
-        subjectId,
+        subject,
         title,
         description,
         parsedDueDate,
         file
-      )
+      );
       if (!response.success) {
         return res
           .status(400)
-          .json(responseData(response.message, {}, req, false))
+          .json(
+            responseData(
+              typeof response.message === 'string' ? response.message : response.message,
+              {},
+              req,
+              false
+            )
+          );
       }
 
-      return res
-        .status(200)
-        .json(
-          responseData(
-            'ASSIGNMENT_UPLOADED_SUCCESSFULLY',
-            response.results,
-            req,
-            true
-          )
+      return res.status(200).json(
+        responseData(
+          'ASSIGNMENT_UPLOADED_SUCCESSFULLY',
+          response.results,
+          req,
+          true
         )
+      );
     } catch (error) {
-      return res
-        .status(500)
-        .json(
-          responseData(
-            'ASSIGNMENT_UPLOAD_FAILED',
-            { error: error.message },
-            req,
-            false
-          )
+      return res.status(500).json(
+        responseData(
+          'ASSIGNMENT_UPLOAD_FAILED',
+          { error: error.message },
+          req,
+          false
         )
+      );
     }
   },
-
   getAssignmentsController: async (req, res) => {
     try {
       const { classId, subject, uploadedBy } = req.body
@@ -176,104 +176,94 @@ module.exports = {
  assignGradeOrMarks: async (req, res) => {
     try {
       const { classId, gradesData } = req.body;
+
       if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid classId is required'
-        });
+        return res
+          .status(400)
+          .json(responseData('VALID_CLASS_ID_REQUIRED', {}, req, false));
       }
 
       if (!gradesData || !Array.isArray(gradesData) || !gradesData.length) {
-        return res.status(400).json({
-          success: false,
-          message: 'gradesData array is required'
-        });
+        return res
+          .status(400)
+          .json(responseData('GRADES_DATA_ARRAY_REQUIRED', {}, req, false));
       }
 
-      const result = await assignmentService.assignGradesToClassPerStudent({ classId, gradesData });
-
-      res.status(200).json({
-        success: true,
-        message: 'Grades assigned successfully',
-        data: result
+      const result = await assignmentService.assignGradesToClassPerStudent({
+        classId,
+        gradesData,
       });
 
+      return res
+        .status(200)
+        .json(responseData('GRADES_ASSIGNED_SUCCESSFULLY', result, req, true));
     } catch (error) {
-      res.status(400).json({
-        success: false,
-        message: error.message
-      });
+      return res
+        .status(500)
+        .json(responseData(error.message, {}, req, false));
     }
   }
 ,
 
- updategrade: async (req, res) => {
+  updateGrade: async (req, res) => {
     try {
       const { gradeId } = req.params;
       const { marks, grade, remark } = req.body;
 
       if (!gradeId || !mongoose.Types.ObjectId.isValid(gradeId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid gradeId is required'
-        });
+        return res
+          .status(400)
+          .json(responseData('VALID_GRADE_ID_REQUIRED', {}, req, false));
       }
 
-      const updatedGrade = await assignmentService.updateGradeById({ gradeId, marks, grade, remark });
+      const updatedGrade = await assignmentService.updateGradeById({
+        gradeId,
+        marks,
+        grade,
+        remark,
+      });
 
       if (!updatedGrade) {
-        return res.status(404).json({
-          success: false,
-          message: 'Grade not found'
-        });
+        return res
+          .status(404)
+          .json(responseData('GRADE_NOT_FOUND', {}, req, false));
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'Grade updated successfully',
-        data: updatedGrade
-      });
-
+      return res
+        .status(200)
+        .json(responseData('GRADE_UPDATED_SUCCESSFULLY', updatedGrade, req, true));
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
+      return res
+        .status(500)
+        .json(responseData(error.message, {}, req, false));
     }
-  }
-,
+  },
 
- deleteGrade: async (req, res) => {
+  deleteGrade: async (req, res) => {
     try {
       const { gradeId } = req.params;
 
       if (!gradeId || !mongoose.Types.ObjectId.isValid(gradeId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid gradeId is required'
-        });
+        return res
+          .status(400)
+          .json(responseData('VALID_GRADE_ID_REQUIRED', {}, req, false));
       }
 
       const deletedGrade = await assignmentService.deleteGrade(gradeId);
 
       if (!deletedGrade) {
-        return res.status(404).json({
-          success: false,
-          message: 'Grade not found'
-        });
+        return res
+          .status(404)
+          .json(responseData('GRADE_NOT_FOUND', {}, req, false));
       }
 
-      res.status(200).json({
-        success: true,
-        message: 'Grade deleted successfully',
-        data: deletedGrade
-      });
-
+      return res
+        .status(200)
+        .json(responseData('GRADE_DELETED_SUCCESSFULLY', deletedGrade, req, true));
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      });
+      return res
+        .status(500)
+        .json(responseData(error.message, {}, req, false));
     }
   },
 

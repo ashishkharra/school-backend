@@ -1594,7 +1594,7 @@
     "en": "Attendance marked or updated successfully",
     "ar": ""
   },
-  "ATTENDANCE_FETCHED_SUCCESSFULLY":{
+  "ATTENDANCE_FETCHED_SUCCESSFULLY": {
     "en": "Teacher attendance fetched successfully",
     "ar": ""
   },
@@ -1622,45 +1622,82 @@
     "en": "Parent phone is invalid",
     "ar": ""
   },
-    "MISSING_REQUIRED_FIELDS":
-   { "en": "Missing required fields", "ar": "" },
-  "RECORDS_MUST_BE_ARRAY": 
-  { "en": "Records must be an array", "ar": "" },
-  "ATTENDANCE_UPDATE_FAILED": 
-  { "en": "Attendance update failed", "ar": "" },
-  "ATTENDANCE_FETCHED_OR_UPDATED": 
-  { "en": "Attendance fetched or updated successfully", "ar": "" },
-  "MISSING_ATTENDANCE_ID": 
-  { "en": "Attendance ID is missing", "ar": "" },
-  "ATTENDANCE_RECORD_NOT_FOUND":
-   { "en": "Attendance record not found", "ar": "" },
-  "ATTENDANCE_UPDATED_SUCCESSFULLY": 
-  { "en": "Attendance updated successfully", "ar": "" },
-  "NO_ATTENDANCE_RECORDS_FOUND": 
-  { "en": "No attendance records found", "ar": "" },
-  "ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY":
-   { "en": "Attendance records fetched successfully", "ar": "" },
-  "ATTENDANCE_NOT_FOUND":
-   { "en": "Attendance not found", "ar": "" },
+  "MISSING_REQUIRED_FIELDS": {
+    "en": "Missing required fields",
+    "ar": ""
+  },
+  "RECORDS_MUST_BE_ARRAY": {
+    "en": "Records must be an array",
+    "ar": ""
+  },
+  "ATTENDANCE_UPDATE_FAILED": {
+    "en": "Attendance update failed",
+    "ar": ""
+  },
+  "ATTENDANCE_FETCHED_OR_UPDATED": {
+    "en": "Attendance fetched or updated successfully",
+    "ar": ""
+  },
+  "MISSING_ATTENDANCE_ID": {
+    "en": "Attendance ID is missing",
+    "ar": ""
+  },
+  "ATTENDANCE_RECORD_NOT_FOUND": {
+    "en": "Attendance record not found",
+    "ar": ""
+  },
+  "ATTENDANCE_UPDATED_SUCCESSFULLY": {
+    "en": "Attendance updated successfully",
+    "ar": ""
+  },
+  "NO_ATTENDANCE_RECORDS_FOUND": {
+    "en": "No attendance records found",
+    "ar": ""
+  },
+  "ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY": {
+    "en": "Attendance records fetched successfully",
+    "ar": ""
+  },
+  "ATTENDANCE_NOT_FOUND": {
+    "en": "Attendance not found",
+    "ar": ""
+  },
   "ATTENDANCE_DELETED_SUCCESSFULLY": {
-  "en": "Attendance deleted successfully",
-   "ar": "" },
-  "ASSIGNMENT_UPLOADED_SUCCESSFULLY": 
-  { "en": "Assignment uploaded successfully", "ar": "" },
-  "ASSIGNMENT_UPLOAD_FAILED": 
-  { "en": "Assignment upload failed", "ar": "" },
-  "GET_ASSIGNMENT_FAILED":
-   { "en": "Fetching assignments failed", "ar": "" },
-  "ASSIGNMENT_ID_REQUIRED":
-   { "en": "Assignment ID is required", "ar": "" },
-  "ASSIGNMENT_UPDATED": 
-  { "en": "Assignment updated successfully", "ar": "" },
-  "ASSIGNMENT_UPDATE_FAILED": 
-  { "en": "Assignment update failed", "ar": "" },
-  "ASSIGNMENT_DELETED_SUCCESSFULLY": 
-  { "en": "Assignment deleted successfully", "ar": "" },
-  "DELETE_ASSIGNMENT_FAILED": 
-  { "en": "Assignment deletion failed", "ar": "" },
+    "en": "Attendance deleted successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_UPLOADED_SUCCESSFULLY": {
+    "en": "Assignment uploaded successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_UPLOAD_FAILED": {
+    "en": "Assignment upload failed",
+    "ar": ""
+  },
+  "GET_ASSIGNMENT_FAILED": {
+    "en": "Fetching assignments failed",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_REQUIRED": {
+    "en": "Assignment ID is required",
+    "ar": ""
+  },
+  "ASSIGNMENT_UPDATED": {
+    "en": "Assignment updated successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_UPDATE_FAILED": {
+    "en": "Assignment update failed",
+    "ar": ""
+  },
+  "ASSIGNMENT_DELETED_SUCCESSFULLY": {
+    "en": "Assignment deleted successfully",
+    "ar": ""
+  },
+  "DELETE_ASSIGNMENT_FAILED": {
+    "en": "Assignment deletion failed",
+    "ar": ""
+  },
   "TEACHER_PROFILE_FETCHED": {
     "en": "Teacher not found",
     "ar": ""
@@ -1691,6 +1728,157 @@
   },
   "FETCHING_TEACHER_PROFILE_SUCCESSFULLY": {
     "en": "Fetching teacher profile successfully",
+    "ar": ""
+  },
+  "TEACHER_ID_NOT_VALID": {
+    "en": "Teacher id is not valid",
+    "ar": ""
+  },
+  "FEE_ALREADY_ASSIGNED": {
+    "en": "Fee already assigned to this student for this academic year",
+    "ar": ""
+  },
+  "STUDENT_ID_AND_FEE_STRUCTURE_ID_REQUIRED": {
+    "en": "Student ID and Fee Structure ID are required",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_FETCHED_SUCCESSFULLY": {
+    "en": "Fee structure fetched successfully",
+    "ar": ""
+  },
+  "CLASS_IDENTIFIER_REQUIRED": {
+    "en": "Class identifier is required",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_UPDATE_ERROR": {
+    "en": "Error occurred while updating fee structure",
+    "ar": ""
+  },
+  "INVALID_FEE_STRUCTURE_ID": {
+    "en": "Invalid Fee Structure ID",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_DELETED_SUCCESSFULLY": {
+    "en": "Fee structure deleted successfully",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_DELETION_FAILED": {
+    "en": "Fee structure deletion failed",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_STATUS_UPDATE_FAILED": {
+    "en": "Fee structure status update failed",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_active": {
+    "en": "Fee structure active",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_inactive": {
+    "en": "Fee structure inactive",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_STATUS_UPDATE_ERROR": {
+    "en": "Error occurred while updating fee structure status",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_ALREADY_EXISTS": {
+    "en": "Fee structure already exists for this class and academic year",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_DELETION_ERROR": {
+    "en": "Error occurred while deleting fee structure",
+    "ar": ""
+  },
+  "FEE_STRUCTURE_UPDATED": {
+    "en": "Fee structure updated",
+    "ar": ""
+  }
+  ,
+   "VALID_CLASS_ID_REQUIRED": {
+    "en": "Valid classId is required",
+    "ar": ""
+  },
+  "GRADES_DATA_ARRAY_REQUIRED": {
+    "en": "gradesData array is required",
+    "ar": ""
+  },
+  "GRADES_ASSIGNED_SUCCESSFULLY": {
+    "en": "Grades assigned successfully",
+    "ar": ""
+  },
+  "VALID_GRADE_ID_REQUIRED": {
+    "en": "Valid gradeId is required",
+    "ar": ""
+  },
+  "GRADE_NOT_FOUND": {
+    "en": "Grade not found",
+    "ar": ""
+  },
+  "GRADE_UPDATED_SUCCESSFULLY": {
+    "en": "Grade updated successfully",
+    "ar": ""
+  },
+  "GRADE_DELETED_SUCCESSFULLY": {
+    "en": "Grade deleted successfully",
+    "ar": ""
+  },
+
+  
+  "UNAUTHORIZED_ACCESS": {
+    "en": "Unauthorized access",
+    "ar": ""
+  },
+  "DATA_FETCHED_SUCCESSFULLY": {
+    "en": "Data fetched successfully",
+    "ar": ""
+  },
+  "DATA_SAVED_SUCCESSFULLY": {
+    "en": "Data saved successfully",
+    "ar": ""
+  },
+  "DATA_UPDATED_SUCCESSFULLY": {
+    "en": "Data updated successfully",
+    "ar": ""
+  },
+  "DATA_DELETED_SUCCESSFULLY": {
+    "en": "Data deleted successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_NOT_VALID": {
+    "en": "Assignment is not valid",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_INVALID": {
+    "en": "Assignment id not valid",
+    "ar": ""
+  },
+  "TITLE_MUST_BE_STRING": {
+    "en": "Title must string",
+    "ar": ""
+  },
+  "DESCRIPTION_MUST_BE_STRING": {
+    "en": "Description must be string",
+    "ar": ""
+  },
+  "FILE_MUST_BE_STRING": {
+    "en": "File must be string",
+    "ar": ""
+  },
+  "SALARY_GENERATED_SUCCESSFULLY":{
+     "en": "salary generated",
+    "ar": ""
+  },
+  "SALARY_GENERATION_FAILED":{
+     "en": "salary generated failed",
+    "ar": ""
+  },
+  "SALARIES_FETCHED_SUCCESSFULLY":{
+  "en": "salary fetched failed",
+    "ar": ""
+  },
+  "FETCH_SALARIES_FAILED":{
+  "en": "salary fetched failed",
     "ar": ""
   }
 }

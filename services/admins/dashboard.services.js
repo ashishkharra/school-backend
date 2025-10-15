@@ -65,14 +65,26 @@ module.exports = {
         { $project: { _id: 0, name: "$_id", value: "$count" } }
       ]);
 
-      const genderCounts = await Student.aggregate([
+      const studentGenderCounts = await Student.aggregate([
         { $match: { isRemoved: 0 } },
         { $group: { _id: "$gender", count: { $sum: 1 } } }
       ]);
+
+      const teacherGenderCounts = await Teacher.aggregate([
+        { $match: { isRemoved: 0 } },
+        { $group: { _id: "$gender", count: { $sum: 1 } } }
+      ]);
+
       const genderStats = { male: 0, female: 0 };
-      genderCounts.forEach(g => {
-        if (g._id.toLowerCase() === "male") genderStats.male = g.count;
-        if (g._id.toLowerCase() === "female") genderStats.female = g.count;
+
+      studentGenderCounts.forEach(g => {
+        if (g._id?.toLowerCase() === "male") genderStats.male += g.count;
+        if (g._id?.toLowerCase() === "female") genderStats.female += g.count;
+      });
+
+      teacherGenderCounts.forEach(g => {
+        if (g._id?.toLowerCase() === "male") genderStats.male += g.count;
+        if (g._id?.toLowerCase() === "female") genderStats.female += g.count;
       });
 
       const dashboardObj = {

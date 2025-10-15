@@ -9,8 +9,7 @@ const TeacherTimeTable = require('../../models/class/teacher.timetable.schema')
 const teacherSchema = require('../../models/teacher/teacher.schema')
 const helper = require('../../helpers/helper')
 const mongoose = require('mongoose')
-const { responseData } = require('../../helpers/responseData')
-const constant = require('../../helpers/constant')
+const { formatMinutesToTime } = require('../../helpers/helper.js')
 const {
   getTeacherAssignByLookup,
   getTeachersWithClassesLookup,
@@ -26,6 +25,7 @@ const convertToMinutes = (timeStr) => {
   if (ampm && ampm.toUpperCase() === 'AM' && hours === 12) hours = 0
   return hours * 60 + minutes
 }
+
 module.exports = {
   registerTeacher: async (data) => {
     try {
@@ -156,7 +156,22 @@ module.exports = {
       updatedTeacher.profilePic.fileUrl = process.env.STATIC_URL + updatedTeacher.profilePic.fileUrl
       updatedTeacher.aadharFront.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharFront.fileUrl
       updatedTeacher.aadharBack.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharBack.fileUrl
+const dataBody = {
+      TEACHER_NAME: updatedTeacher.name || 'Teacher',
+      TEACHER_ID: updatedTeacher._id.toString(),
+      UPDATED_EMAIL: updatedTeacher.email || 'N/A',
+      UPDATED_PHONE: updatedTeacher.phone || 'N/A',
+      DEPARTMENT: updatedTeacher.department || 'N/A',
+      UPDATED_AT: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+    }
 
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: updatedTeacher }
+    }
       return { success: true, message: 'TEACHER_UPDATED', data: updatedTeacher }
     } catch (error) {
       return {
@@ -274,17 +289,11 @@ module.exports = {
 
   getTeacherProfile: async (id) => {
     try {
-      let profile = await Teacher.aggregate(teacherProfilePipeline(id));
-
-      console.log('Aggregated Profile:', profile[0]); // Debug log
+      const profile = await Teacher.aggregate(teacherProfilePipeline(id));
 
       if (!profile || profile.length === 0) {
         return { success: false, message: 'TEACHER_NOT_FOUND' };
       }
-
-      profile[0].profilePic = process.env.STATIC_URL + profile[0].profilePic
-      profile[0].aadharFront = process.env.STATIC_URL + profile[0].aadharFront
-      profile[0].aadharBack = process.env.STATIC_URL + profile[0].aadharBack
 
       return { success: true, message: 'TEACHER_PROFILE_FETCHED', data: profile[0] };
     } catch (error) {
@@ -330,6 +339,18 @@ module.exports = {
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
       const savedClass = await classData.save()
+
+          const dataBody = {
+      TEACHER_NAME: teacherData.name,
+      TEACHER_ID: teacherData._id.toString(),
+      CLASS_NAME: classData.name || 'N/A',
+      ASSIGNED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login',
+      TEACHER_EMAIL: teacherData.email  // required by sendEmailWithSlug
+    };
+
+    const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody);
+    if (!mailSent) return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass };
 
       return {
         success: true,
@@ -564,7 +585,154 @@ module.exports = {
       })
 
       const savedAssignment = await newAssignment.save()
-      let dataBody = {
+    const dataBody = {
+  TEACHER_NAME: teacherData.name,                  // Teacher's full name
+  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+  SECTION: section || assignment.section || 'N/A', // Class section
+  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+}
+
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: savedAssignment }
+    }
+
+      return {
+        success: true,
+        message: 'TEACHER_ASSIGNED_TO_CLASS',
+        data: savedAssignment
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'ASSIGNMENT_FAILED',
+        data: {}
+      }
+    }
+  },
+
+  assignTeacherToClass: async function ({
+    classId,
+    teacherId,
+    section,
+    subjectId,
+    startTime,
+    endTime
+  }) {
+    try {
+      if (!classId || !teacherId || !section || !subjectId || !startTime || !endTime) {
+        return { success: false, message: 'MISSING_REQUIRED_FIELDS', data: {} }
+      }
+
+      const startMinutes = convertToMinutes(startTime)
+      const endMinutes = convertToMinutes(endTime)
+      if (endMinutes <= startMinutes) {
+        return {
+          success: false,
+          message: 'END_TIME_MUST_BE_AFTER_START_TIME',
+          data: {}
+        }
+      }
+
+      const schoolSettings = await SchoolSettings.findOne()
+      if (!schoolSettings) {
+        return { success: false, message: 'SCHOOL_SETTINGS_NOT_FOUND', data: {} }
+      }
+
+      const schoolStartMinutes = convertToMinutes(schoolSettings.schoolTiming.startTime)
+      const schoolEndMinutes = convertToMinutes(schoolSettings.schoolTiming.endTime)
+
+      if (startMinutes < schoolStartMinutes || endMinutes > schoolEndMinutes) {
+        return {
+          success: false,
+          message: `CLASS_TIME_MUST_BE_WITHIN_SCHOOL_TIMINGS (${schoolSettings.schoolTiming.startTime} - ${schoolSettings.schoolTiming.endTime})`,
+          data: {}
+        }
+      }
+
+      if (schoolSettings.periods.lunchBreak.isEnabled && schoolSettings.periods.lunchBreak.time) {
+        const lunchStartMinutes = convertToMinutes(schoolSettings.periods.lunchBreak.time)
+        const lunchEndMinutes = lunchStartMinutes + (schoolSettings.periods.lunchBreak.duration || 0)
+
+        const isOverlapWithLunch =
+          (startMinutes < lunchEndMinutes && endMinutes > lunchStartMinutes)
+
+        if (isOverlapWithLunch) {
+          return {
+            success: false,
+            message: `CLASS_TIME_OVERLAPS_LUNCH_BREAK (${schoolSettings.periods.lunchBreak.time} - ${formatMinutesToTime(lunchEndMinutes)})`,
+            data: {}
+          }
+        }
+      }
+
+      const classData = await Class.findById(classId)
+      if (!classData)
+        return { success: false, message: 'CLASS_NOT_FOUND', data: {} }
+
+      const teacherData = await Teacher.findById(teacherId)
+      if (!teacherData)
+        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
+
+      const subjectData = await Subject.findById(subjectId)
+      if (!subjectData) {
+        return { success: false, message: 'SUBJECT_NOT_FOUND', data: {} }
+      }
+
+      const teacherConflict = await TeacherTimeTable.findOne({
+        teacher: teacherId,
+        $and: [
+          { startMinutes: { $lt: endMinutes } },
+          { endMinutes: { $gt: startMinutes } }
+        ]
+      })
+      if (teacherConflict) {
+        return {
+          success: false,
+          message:
+            'TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT',
+          data: {}
+        }
+      }
+
+      const classConflict = await TeacherTimeTable.findOne({
+        class: classId,
+        $and: [
+          { startMinutes: { $lt: endMinutes } },
+          { endMinutes: { $gt: startMinutes } }
+        ]
+      })
+      if (classConflict) {
+        return {
+          success: false,
+          message: 'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
+          data: {}
+        }
+      }
+
+      const newAssignment = new TeacherTimeTable({
+        class: classId,
+        section,
+        subject: subjectId,
+        teacher: teacherId,
+        startTime,
+        endTime,
+        startMinutes,
+        endMinutes
+      })
+
+      const savedAssignment = await newAssignment.save()
+
+      const dataBody = {
         email: teacherData.email,
         TeacherName: teacherData.name,
         ClassName: classData.name,
@@ -588,6 +756,7 @@ module.exports = {
         data: savedAssignment
       }
     } catch (error) {
+      console.error('assignTeacherToClass Error:', error)
       return {
         success: false,
         message: error.message || 'ASSIGNMENT_FAILED',
@@ -659,6 +828,27 @@ module.exports = {
       assignment.startMinutes = startMinutes
       assignment.endMinutes = endMinutes
       const saved = await assignment.save()
+
+    const dataBody = {
+  TEACHER_NAME: teacherData.name,                  // Teacher's full name
+  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+  SECTION: section || assignment.section || 'N/A', // Class section
+  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+}
+
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('update-assigned-to-class', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: saved  }
+    }
       return {
         success: true,
         message: 'TEACHER_ASSIGNMENT_UPDATED',

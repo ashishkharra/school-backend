@@ -161,7 +161,13 @@ const studentService = {
     getStudentProfile: async (studentId) => {
         try {
             const pipeline = studentProfilePipeline(studentId);
-            const result = await Student.aggregate(pipeline);
+            let result = await Student.aggregate(pipeline);
+
+            result[0].profilePic = process.env.STATIC_URL + result[0].profilePic
+            result[0].aadharFront = process.env.STATIC_URL + result[0].aadharFront
+            result[0].aadharBack = process.env.STATIC_URL + result[0].aadharBack
+
+            console.log('rsult : ', result[0])
             return result[0] || null;
         } catch (error) {
             console.error("Error in getStudentProfile service:", error);

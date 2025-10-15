@@ -3,9 +3,9 @@ const { responseData } = require('../../helpers/responseData')
 const { constant } = require('lodash')
 
 module.exports = {
-  // MARK OR UPDATE ATTENDANCE
   markOrUpdateAttendance: async (req, res) => {
     try {
+      
       const { classId, session, takenBy, records } = req.body
 
       if (!classId || !session || !takenBy || !records) {
@@ -51,7 +51,6 @@ module.exports = {
           )
         )
     } catch (error) {
-      console.error(error)
       return res
         .status(500)
         .json(
@@ -64,7 +63,6 @@ module.exports = {
     try {
       const { attendanceId } = req.params
       const { records } = req.body
-
       if (!attendanceId) {
         return res
           .status(400)
@@ -80,18 +78,16 @@ module.exports = {
         attendanceId,
         records
       })
-
       if (!updatedAttendance || !updatedAttendance.success) {
         return res
           .status(404)
           .json(responseData('ATTENDANCE_RECORD_NOT_FOUND', {}, req, false))
       }
 
-      // Only pass the actual attendance document, not the entire service response
       return res.status(200).json(
         responseData(
           'ATTENDANCE_UPDATED_SUCCESSFULLY',
-          updatedAttendance.results, // <--- fixed here
+          updatedAttendance.results, 
           req,
           true
         )
@@ -105,15 +101,15 @@ module.exports = {
     }
   },
   getAttendance: async (req, res) => {
-    const { date, page = 1, limit = 10 } = req.query
+    const { date,month ,page = 1, limit = 10 } = req.query
     try {
       const queryResult = await attendanceService.getAttendanceData(
         date,
+        month,
         parseInt(page),
         parseInt(limit)
       )
 
-      // check if docs exist
       if (!queryResult.results || queryResult.results.docs.length === 0) {
         return res
           .status(404)
@@ -145,7 +141,7 @@ module.exports = {
   },
   deleteAttendance: async (req, res) => {
     try {
-      const { attendanceId } = req.params // get _id from URL
+      const { attendanceId } = req.params 
 
       if (!attendanceId) {
         return res
@@ -163,7 +159,6 @@ module.exports = {
           .json(responseData('ATTENDANCE_NOT_FOUND', {}, req, false))
       }
 
-      // Only pass the actual deleted document to results
       return res
         .status(200)
         .json(

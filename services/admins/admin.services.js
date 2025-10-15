@@ -73,12 +73,12 @@ module.exports = {
           delete adminData['password'];
           delete adminData['token'];
           delete adminData['refreshToken'];
-    
+
           adminData.fullName = `${adminData.firstName} ${adminData.lastName}`;
 
           const deviceTokens = generateAuthToken(adminData);
 
-          const result = await Admin.findOneAndUpdate(
+          let result = await Admin.findOneAndUpdate(
             { _id: admin._id },
             {
               forceLogout: false,
@@ -86,6 +86,8 @@ module.exports = {
               refreshToken: deviceTokens.refreshToken
             }
           );
+
+          result.profilePic = process.env.STATIC_URL + result.profilePic
 
           return res.json(
             responseData(
@@ -120,7 +122,7 @@ module.exports = {
       await Admin.findByIdAndUpdate(adminId, {
         forceLogout: true,
         accessToken: "",
-        refreshToken: "" 
+        refreshToken: ""
       });
 
       return { success: true, message: 'LOGOUT_SUCCESSFUL' };
@@ -132,8 +134,9 @@ module.exports = {
   adminProfile: async (req, res) => {
     try {
       const { _id } = req.user
-      const adminData = await Admin.findOne({ _id }).select({ password: 0 })
+      let adminData = await Admin.findOne({ _id }).select({ password: 0 })
       if (!isEmpty(adminData)) {
+        adminData.profilePic = process.env.STATIC_URL + adminData.profilePic
         return res.json(responseData('PROFILE_DETAILS', adminData, req, true))
       } else {
         return res.json(responseData('PROFILE_DETAILS', {}, req, false))
@@ -247,25 +250,26 @@ module.exports = {
   },
   editAdmin: async (req, res) => {
     try {
-      const { fullName } = req.body;
+      const { firstName, lastName, contact, region, address, email } = req.body;
       const { _id } = req.user;
       const updateValues = {};
 
-      if (req.file) {
+      if (req.files?.profilePic && req.files.profilePic.length > 0) {
+        const file = req.files.profilePic[0];
         const relativePath = path.relative(
-          path.join(__dirname, '..'),
-          req.file.path
+          path.join(__dirname),
+          file.path
         ).replace(/\\/g, '/');
         updateValues.profilePic = relativePath;
       }
 
       console.log('updated values : ', updateValues.profilePic)
-
-      if (fullName) {
-        const [firstName, ...rest] = fullName.trim().split(' ');
-        updateValues.firstName = firstName;
-        updateValues.lastName = rest.join(' ');
-      }
+      if (firstName) updateValues.firstName = firstName;
+      if (lastName) updateValues.lastName = lastName;
+      if (contact) updateValues.contact = contact;
+      if (region) updateValues.region = region;
+      if (address) updateValues.address = address;
+      if (email) updateValues.email = email;
 
       updateValues.lastUpdate = new Date();
 
@@ -293,7 +297,7 @@ module.exports = {
       );
     } catch (err) {
       console.error('editAdmin error:', err);
-      return res.json(responseData('ERROR_OCCUR', {}, req, false));
+      return res.json(responseData('ERROR_OCCUR', { error: err.message }, req, false));
     }
   },
   notificationToggle: async (req, res) => {
@@ -311,7 +315,7 @@ module.exports = {
         return res.json(responseData('ERROR_OCCUR', {}, req, false))
       }
     } catch (error) {
-      return res.json(responseData('ERROR_OCCUR', error.message, req, false))
+      return res.json(responseData('ERROR_OCCUR', { error: error.message }, req, false))
     }
   },
   changeStatus: async (req, res) => {
@@ -348,7 +352,7 @@ module.exports = {
 
       return await updateStatus(model, req.params.id, status, req, res)
     } catch (error) {
-      return res.json(responseData('ERROR_OCCUR', error.message, req, false))
+      return res.json(responseData('ERROR_OCCUR', { error: error.message }, req, false))
     }
   },
   generatePresignedURL: async (req, res) => {
@@ -395,11 +399,7 @@ module.exports = {
         })
       }
     } catch (error) {
-      res.json({
-        success: false,
-        msg: error.message,
-        results: error
-      })
+      res.json(responseData('ERROR_OCCUR', { error: error.message }, req, false))
     }
   },
   countryList: async (req, res) => {
@@ -407,7 +407,7 @@ module.exports = {
       const countryList = await Country.find()
       return res.json(responseData('GET_LIST', countryList, req, true))
     } catch (error) {
-      return res.json(responseData('ERROR_OCCUR', error.message, req, false))
+      return res.json(responseData('ERROR_OCCUR', { error: error.message }, req, false))
     }
   }
 }
@@ -433,7 +433,7 @@ const updateStatus = async (model, id, status, req, res) => {
   if (resp.modifiedCount) {
     return res.json(responseData('STATUS_UPDATE', {}, req, true))
   } else {
-    return res.json(responseData('NOT_FOUND', {}, req, false))
+    return res.json(responseData('NOT_FOUND', { error: error.message }, req, false))
   }
 }
 const updateVisibilityStatus = async (model, id, visibility, req, res) => {

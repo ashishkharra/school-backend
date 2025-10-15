@@ -29,17 +29,17 @@ router.put('/soft-delete/:id', [verifyToken], teacherController.softDeleteTeache
 router.get("/deletedTeachersHistory", [verifyToken], teacherController.getDeletedTeachersHistory);
 
 
-router.post('/class-teacherOf', validationRule.validate('classTeacherOf'), teacherController.assignClassTeacher);
-router.put('/update-classteacherOf', validationRule.validate('updateClassTeacherOf'), teacherController.updateClassTeacher);
+router.post('/class-teacherOf',[verifyToken], validationRule.validate('classTeacherOf'), teacherController.assignClassTeacher);
+router.put('/update-classteacherOf', [verifyToken],validationRule.validate('updateClassTeacherOf'), teacherController.updateClassTeacher);
 router.get('/getAll-class-teacher', teacherController.getAllTeachersWithClassData);
 router.delete('/delete-class-teacher/:classId', teacherController.removeClassTeacher);
 
 
 // updateClassTeacher
-router.post('/assign-teacher', validationRule.validate('assignTeachertoClass'), teacherController.assignTeacherToClassController);
-router.put('/update-assign-teacher/:assignmentId', validationRule.validate('updateAssignTeachertoClass'), teacherController.updateAssignTeacherToController);
-router.delete('/delete-assign-teacher/:assignmentId', teacherController.deleteAssignTeacherToController);
-router.get("/get-teacher-assignments", teacherController.getAssignTeacherToController);
+router.post('/assign-teacher', [verifyToken],validationRule.validate('assignTeachertoClass'), teacherController.assignTeacherToClassController);
+router.put('/update-assign-teacher/:assignmentId',[verifyToken], validationRule.validate('updateAssignTeachertoClass'), teacherController.updateAssignTeacherToController);
+router.delete('/delete-assign-teacher/:assignmentId', [verifyToken],teacherController.deleteAssignTeacherToController);
+router.get("/get-teacher-assignments", [verifyToken],teacherController.getAssignTeacherToController);
 
 router.post('/attendance', [verifyToken], validationRule.validate('markAttendance'), teacherController.markAttendance);
 router.put('/attendance-update', [verifyToken], teacherController.updateAttendance);
