@@ -7,6 +7,7 @@ const subject = require('../../models/class/subjects.schema')
 const Class = require('../../models/class/class.schema')
 const TeacherTimeTable = require('../../models/class/teacher.timetable.schema')
 const teacherSchema = require('../../models/teacher/teacher.schema')
+const SchoolSettings = require('../../models/admin/admin.setting.schema.js')
 const helper = require('../../helpers/helper')
 const mongoose = require('mongoose')
 const { formatMinutesToTime } = require('../../helpers/helper.js')
@@ -279,6 +280,8 @@ module.exports = {
       if (!profile || profile.length === 0) {
         return { success: false, message: 'TEACHER_NOT_FOUND' };
       }
+
+      console.log('Teacher Profile:', profile[0]);
 
       return { success: true, message: 'TEACHER_PROFILE_FETCHED', data: profile[0] };
     } catch (error) {

@@ -6,7 +6,8 @@ module.exports = {
 
    getProfile: async (req, res) => {
     try {
-        const {teacherId} = req.user._id
+        const teacherId = req.user._id
+        console.log("teacherId",teacherId);
         // const {teacherId} = req.params
       const profile = await teacherService.getProfile(teacherId);
  

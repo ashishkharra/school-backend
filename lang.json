@@ -1793,5 +1793,313 @@
   "FEE_STRUCTURE_UPDATED": {
     "en": "Fee structure updated",
     "ar": ""
+  },
+  "CLASS_STATUS_UPDATED_TO_ACTIVE": {
+    "en": "Class status active",
+    "ar": ""
+  },
+  "CLASS_STATUS_UPDATED_TO_INACTIVE": {
+    "en": "Class status inactive",
+    "ar": ""
+  },
+  "SUBJECT_STATUS_UPDATED_TO_ACTIVE": {
+    "en": "Subject status active",
+    "ar": ""
+  },
+  "SUBJECT_STATUS_UPDATED_TO_INACTIVE": {
+    "en": "Subject status inactive",
+    "ar": ""
+  },
+  "SECTION_ALREADY_EXIST": {
+    "en": "Class section already exists",
+    "ar": ""
+  },
+  "CLASS_UPDATED": {
+    "en": "Class updated successfully",
+    "ar": ""
+  },
+  "CLASS_UPDATE_FAILED": {
+    "en": "Class update failed",
+    "ar": ""
+  },
+  "CLASS_DELETED_SUCCESSFULLY": {
+    "en": "Class deleted successfully",
+    "ar": ""
+  },
+  "CLASS_DELETION_FAILED": {
+    "en": "Class deletion failed",
+    "ar": ""
+  },
+  "SUBJECT_REGISTRATION_FAILED": {
+    "en": "Subject registration failed",
+    "ar": ""
+  },
+  "SCHOOL_NAME_MUST_BE_STRING": {
+    "en": "School name must be a string",
+    "ar": ""
+  },
+  "SCHOOL_NAME_LENGTH_INVALID": {
+    "en": "School name length must be between 2 and 100",
+    "ar": ""
+  },
+  "ADDRESS_MUST_BE_OBJECT": {
+    "en": "Address must be an object",
+    "ar": ""
+  },
+  "CONTACT_MUST_BE_OBJECT": {
+    "en": "Contact must be an object",
+    "ar": ""
+  },
+  "CONTACT_EMAIL_INVALID": {
+    "en": "Contact email is invalid",
+    "ar": ""
+  },
+  "SCHOOL_TIMING_MUST_BE_OBJECT": {
+    "en": "School timing must be an object",
+    "ar": ""
+  },
+  "SCHOOL_START_TIME_INVALID": {
+    "en": "School start time is invalid",
+    "ar": ""
+  },
+  "SCHOOL_END_TIME_INVALID": {
+    "en": "School end time is invalid",
+    "ar": ""
+  },
+  "PERIODS_MUST_BE_OBJECT": {
+    "en": "Periods must be an object",
+    "ar": ""
+  },
+  "TOTAL_PERIODS_INVALID": {
+    "en": "Total periods must be numeric",
+    "ar": ""
+  },
+  "PERIOD_DURATION_INVALID": {
+    "en": "Period duration must be numeric",
+    "ar": ""
+  },
+  "BREAK_DURATION_INVALID": {
+    "en": "Break duration must be numeric",
+    "ar": ""
+  },
+  "LUNCH_BREAK_TIME_INVALID": {
+    "en": "Lunch break time is invalid",
+    "ar": ""
+  },
+  "LUNCH_BREAK_DURATION_INVALID": {
+    "en": "Lunch break duration must be numeric",
+    "ar": ""
+  },
+  "ACADEMIC_SESSION_MUST_BE_OBJECT": {
+    "en": "Academic session must be an object",
+    "ar": ""
+  },
+  "STATUS_INVALID": {
+    "en": "Status is invalid",
+    "ar": ""
+  },
+  "NAME_REQUIRED": {
+    "en": "Name is required",
+    "ar": ""
+  },
+  "VALID_EMAIL_REQUIRED": {
+    "en": "A valid email is required",
+    "ar": ""
+  },
+  "SPECIALIZATION_ARRAY_REQUIRED": {
+    "en": "Specialization must be an array of strings",
+    "ar": ""
+  },
+  "SPECIALIZATION_MUST_BE_STRINGS": {
+    "en": "Each specialization must be a string",
+    "ar": ""
+  },
+  "INVALID_CLASS_ID": {
+    "en": "Invalid class ID",
+    "ar": ""
+  },
+  "CLASS_ID_REQUIRED": {
+    "en": "Class ID is required",
+    "ar": ""
+  },
+  "SECTION_REQUIRED":  {
+    "en": "Section is required",
+    "ar": ""
+  },
+  "SECTION_MUST_BE_STRING": {
+    "en": "Section must be a string",
+    "ar": ""
+  },
+  "SUBJECT_ID_REQUIRED": {
+    "en": "Subject ID is required",
+    "ar": ""
+  },
+  "SUBJECT_ID_INVALID": {
+    "en": "Invalid subject ID",
+    "ar": ""
+  },
+  "START_TIME_REQUIRED": {
+    "en": "Start time is required",
+    "ar": ""
+  },
+  "START_TIME_INVALID": {
+    "en": "Start time is invalid",
+    "ar": ""
+  },
+  "END_TIME_REQUIRED": {
+    "en": "End time is required",
+    "ar": ""
+  },
+  "END_TIME_INVALID": {
+    "en": "End time is invalid",
+    "ar": ""
+  },
+  "TITLE_REQUIRED": {
+    "en": "Title is required",
+    "ar": ""
+  },
+  "TITLE_MUST_BE_STRING": {
+    "en": "Title must be a string",
+    "ar": ""
+  },
+  "DESCRIPTION_MUST_BE_STRING": {
+    "en": "Description must be a string",
+    "ar": ""
+  },
+  "DUE_DATE_REQUIRED": {
+    "en": "Due date is required",
+    "ar": ""
+  },
+  "DUE_DATE_INVALID": {
+    "en": "Due date is invalid",
+    "ar": ""
+  },
+  "FILE_MUST_BE_STRING": {
+    "en": "File must be a string",
+    "ar": ""
+  },
+  "TAKENBY_REQUIRED": {
+    "en": "TakenBy is required",
+    "ar": ""
+  },
+  "TAKENBY_INVALID": {
+    "en": "TakenBy must be an array of valid teacher IDs",
+    "ar": ""
+  },
+  "RECORDS_REQUIRED": {
+    "en": "Records are required",
+    "ar": ""
+  },
+  "STATUS_MUST_BE_STRING": {
+    "en": "Status must be a string",
+    "ar": ""
+  },
+  "PARENT_OCCUPATION_INVALID": {
+    "en": "Parent occupation is invalid",
+    "ar": ""
+  },
+  "PARENT_EMAIL_INVALID": {
+    "en": "Parent email is invalid",
+    "ar": ""
+  },
+  "EMERGENCY_CONTACT_INVALID": {
+    "en": "Emergency contact is invalid",
+    "ar": ""
+  },
+  "EMERGENCY_NAME_INVALID": {
+    "en": "Emergency name is invalid",
+    "ar": ""
+  },
+  "EMERGENCY_RELATION_INVALID": {
+    "en": "Emergency relation is invalid",
+    "ar": ""
+  },
+  "EMERGENCY_ADDRESS_INVALID": {
+    "en": "Emergency address is invalid",
+    "ar": ""
+  },
+  "SUBJECT_NAME_LENGTH": {
+    "en": "Subject name length must be between 2 and 100",
+    "ar": ""
+  },
+  "SUBJECT_CODE_REQUIRED": {
+    "en": "Subject code is required",
+    "ar": ""
+  },
+  "DESCRIPTION_MAX_300": {
+    "en": "Description can have maximum 300 characters",
+    "ar": ""
+  },
+  "CLASSIDENTIFIER_REQUIRED": {
+    "en": "Class identifier is required",
+    "ar": ""
+  },
+  "CLASSIDENTIFIER_LENGTH": {
+    "en": "Class identifier length must be between 2 and 50",
+    "ar": ""
+  },
+  "ACADEMIC_YEAR_FORMAT_INVALID": {
+    "en": "Academic year format is invalid. It should be in 'YYYY-YYYY' format",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD_tution_fee": {
+    "en": "Invalid fee head: tution_fee",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD_transportation_fee": {
+    "en": "Invalid fee head: transportation_fee",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD_hostel_fee": {
+    "en": "Invalid fee head: hostel_fee",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD_other_fee": {
+    "en": "Invalid fee head: other_fee",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD": {
+    "en": "Invalid fee head",
+    "ar": ""
+  },
+  "INVALID_FEE_HEAD_exam_fee": {
+    "en": "Invalid fee head: exam_fee",
+    "ar": ""
+  },
+  "MANDATORY_FEE_HEAD_MISSING_tution_fee": {
+    "en": "Mandatory fee head missing: tution_fee",
+    "ar": ""
+  },
+  "MANDATORY_FEE_HEAD_MISSING_exam_fee": {
+    "en": "Mandatory fee head missing: exam_fee",
+    "ar": ""
+  },
+  "HOST_ID_REQUIRED": {
+    "en": "Host ID is required",
+    "ar": ""
+  },
+  "HOST_ID_INVALID": {
+    "en": "Host ID is invalid",
+    "ar": ""
+  },
+  "MEETING_DATE_REQUIRED": {
+    "en": "Meeting date is required",
+    "ar": ""
+  },
+  "MEETING_DATE_INVALID": {
+    "en": "Meeting date is invalid",
+    "ar": ""
+  },
+  "MEETING_REASON_REQUIRED": {
+    "en": "Meeting reason is required",
+    "ar": ""
+  },
+  "MEETING_REASON_INVALID": {
+    "en": "Meeting reason is invalid",
+    "ar": ""
+  },
+  "NOTES_INVALID": {
+    "en": "Notes is invalid",
+    "ar": ""
   }
 }

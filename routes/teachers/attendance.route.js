@@ -7,9 +7,9 @@ const validationRule = require('../../validations/admins/auth');
 // const { teacherLogin } = require('../../services/teachers/teachers.service');
 const attendanceController = require('../../controllers/teachers/attendance.controller');
 
-router.post('/mark-attendance', validationRule.validate('markOrUpdateAttendance'),attendanceController.markOrUpdateAttendance);
-router.get('/getstudent-attendance',attendanceController.getAttendance)
-router.delete('/delete-attendance/:attendanceId', attendanceController.deleteAttendance);
-router.put('/update-attendance/:attendanceId', validationRule.validate('updateAttendance'),attendanceController.updateAttendanceController);
+router.post('/mark-attendance', [verifyToken], validationRule.validate('markOrUpdateAttendance'),attendanceController.markOrUpdateAttendance);
+router.get('/getstudent-attendance', [verifyToken], attendanceController.getAttendance);
+router.delete('/delete-attendance/:attendanceId', [verifyToken], attendanceController.deleteAttendance);
+router.put('/update-attendance/:attendanceId', [verifyToken], validationRule.validate('updateAttendance'),attendanceController.updateAttendanceController);
 
 module.exports = router;

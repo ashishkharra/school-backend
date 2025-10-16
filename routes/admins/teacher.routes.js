@@ -24,7 +24,7 @@ const jsonFieldsForTeacher = [
 router.post('/register', [verifyToken], teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('registerTeacher'), teacherController.registerTeacher);
 router.put('/update-teacher/:id', [verifyToken], teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('updateTeacher'), teacherController.updateTeacher);
 router.get('/getAllTeacher', [verifyToken], teacherController.getAllTeachers);
-router.get('/getProfile/:teacherId', [verifyToken], teacherController.getTeacherProfile);
+router.get('/get-Profile', [verifyToken], teacherController.getTeacherProfile);
 router.put('/soft-delete/:id', [verifyToken], teacherController.softDeleteTeacher);
 router.get("/deletedTeachersHistory", [verifyToken], teacherController.getDeletedTeachersHistory);
 

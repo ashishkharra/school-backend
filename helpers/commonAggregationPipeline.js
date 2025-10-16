@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper.js')
 const Student = require('../models/students/student.schema.js')
 
+
 const studentAssignmentPipeline = (assignmentId) => {
   return [
     {
@@ -425,7 +426,7 @@ const teacherProfilePipeline = (teacherId) => {
         bloodGroup: 1,
         physicalDisability: 1,
         disabilityDetails: 1,
-        zipCode: 1,
+        zip: 1,
         country: 1,
  
         // professional info
@@ -828,8 +829,10 @@ const getStudentWithDetails = (studentId) => [
 ];
 // pipeline for getting all classes from db
 const getAllClassesPipeline = (className, page = 1, limit = 10) => {
-  const match = { status: "active" };
-  if (className) match.name = { $regex: className, $options: "i" };
+  const match = {};
+  if (className && className.trim() !== "") {
+    match.name = { $regex: className.trim(), $options: "i" };
+  }
 
   return [
     { $match: match },
@@ -845,17 +848,17 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
     {
       $addFields: {
         classTeacher: {
-          $cond: [
-            { $eq: ["$isClassTeacher", true] },
-            {
+          $cond: {
+            if: { $ifNull: ["$teacherDoc", false] },
+            then: {
               _id: "$teacherDoc._id",
               name: "$teacherDoc.name",
               email: "$teacherDoc.email",
               department: "$teacherDoc.department",
-              specialization: "$teacherDoc.specialization"
+              subjectsHandled: "$teacherDoc.subjectsHandled"
             },
-            null
-          ]
+            else: null
+          }
         }
       }
     },

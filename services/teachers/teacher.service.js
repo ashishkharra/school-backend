@@ -61,9 +61,6 @@ module.exports = {
         profile.aadharBack = process.env.STATIC_URL + profile.aadharBack
         profile.resume = process.env.STATIC_URL + profile.resume
 
-        profile.certificates = profile.certificates.map(cert => process.env.STATIC_URL + cert)
-
-
             return { success: true, message: 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY', profile }
         } catch (err) {
             console.error("Get Teacher Profile Error:", err.message);
