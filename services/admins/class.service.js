@@ -97,9 +97,7 @@ const adminClassService = {
         try {
             const { name, code, description, credits } = subjectData;
 
-            const existing = await Subject.findOne({
-                $or: [{ name: name.trim() }, { code: code.trim() }]
-            });
+            const existing = await Subject.findOne({ name: name.trim() , code: code.trim() });
             if (existing) {
                 return { success: false, message: "SUBJECT_ALREADY_EXISTS" };
             }
@@ -118,7 +116,7 @@ const adminClassService = {
             };
         } catch (error) {
             console.error("Error while registering subject:", error);
-            return { success: false, message: error.message };
+            return { success: false, message: 'SUBJECT_REGISTRATION_FAILED' };
         }
     },
 
@@ -185,7 +183,7 @@ const adminClassService = {
             page = Math.max(parseInt(page, 10) || 1, 1);
             limit = Math.max(parseInt(limit, 10) || 10, 1);
 
-            const filter = { status: "active" };
+            const filter = { };
             if (name) {
                 filter.name = { $regex: name, $options: "i" };
             }
@@ -210,7 +208,7 @@ const adminClassService = {
             };
         } catch (error) {
             console.error("Error while getting subjects:", error);
-            return { success: false, message: "SERVER_ERROR" };
+            return { success: false, message: "SUBJECT_REGISTRATION_FAILED" };
         }
     },
 

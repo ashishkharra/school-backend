@@ -1060,25 +1060,25 @@ module.exports.validate = (method) => {
           .matches(/^\d{4}-\d{4}$/)
           .withMessage('ACADEMIC_YEAR_FORMAT_INVALID'),
 
-        // body('feeHeads')
-        //   .isArray({ min: 1 })
-        //   .withMessage('FEEHEADS_ARRAY_REQUIRED')
-        //   .customSanitizer((arr) =>
-        //     arr.map(f => ({
-        //       ...f,
-        //       amount: Number(f.amount)
-        //     }))
-        //   )
-        //   .custom((arr) =>
-        //     arr.every(
-        //       (f) =>
-        //         f.type &&
-        //         typeof f.type === 'string' &&
-        //         typeof f.amount === 'number' &&
-        //         !isNaN(f.amount)
-        //     )
-        //   )
-        //   .withMessage('FEEHEADS_INVALID'),
+        body('feeHeads')
+          .isArray({ min: 1 })
+          .withMessage('FEEHEADS_ARRAY_REQUIRED')
+          .customSanitizer((arr) =>
+            arr.map(f => ({
+              ...f,
+              amount: Number(f.amount)
+            }))
+          )
+          .custom((arr) =>
+            arr.every(
+              (f) =>
+                f.type &&
+                typeof f.type === 'string' &&
+                typeof f.amount === 'number' &&
+                !isNaN(f.amount)
+            )
+          )
+          .withMessage('FEEHEADS_INVALID'),
 
 
         body('totalAmount')

@@ -59,7 +59,7 @@ const adminClassController = {
                 return res.status(400).json({ success: false, message: result.message });
             }
 
-            return res.status(200).json({ success: true, message: result.message, subject: result.subject });
+            return res.status(200).json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.error("subjectStatus error:", error);
             return res.status(500).json(responseData("TOGGLE_STATUS_FAILED", { error: error.message }, req, false));
@@ -77,7 +77,7 @@ const adminClassController = {
                 return res.status(400).json({ success: false, message: result.message });
             }
 
-            return res.status(200).json({ success: true, message: result.message, class: result.class });
+            return res.status(200).json(responseData(result?.message, result, req, true));
         } catch (error) {
             console.error("classStatus error:", error);
             return res.status(500).json(responseData("TOGGLE_STATUS_FAILED", { error: error.message }, req, false));
@@ -168,7 +168,7 @@ const adminClassController = {
     deleteSubject: async (req, res) => {
         try {
             const { subjectId } = req.params
-            const result = await adminClassService.deleteSubject(data, subjectId);
+            const result = await adminClassService.deleteSubject(subjectId);
             if (!result.success) {
                 return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
             }
