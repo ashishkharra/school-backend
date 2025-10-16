@@ -34,23 +34,23 @@ const feeController = {
         }
     },
 
-    updateStudentFee: async (req, res) => {
-        try {
-            const studentFeeId = req.params.id;
-            const updateData = req.body;
+    // updateStudentFee: async (req, res) => {
+    //     try {
+    //         const studentFeeId = req.params.id;
+    //         const updateData = req.body;
 
-            const result = await feeService.updateStudentFee(studentFeeId, updateData);
+    //         const result = await feeService.updateStudentFee(studentFeeId, updateData);
 
-            if (!result.success) {
-                return res.status(400).json(responseData(result.message, {}, req, false));
-            }
+    //         if (!result.success) {
+    //             return res.status(400).json(responseData(result.message, {}, req, false));
+    //         }
 
-            return res.status(200).json(responseData(result.message, result.data, req, true));
-        } catch (error) {
-            console.error("Update Student Fee Controller Error:", error);
-            return res.status(500).json(responseData(result?.message || "UPDATE_FEE_ERROR", {error : error.message }, req, false));
-        }
-    },
+    //         return res.status(200).json(responseData(result.message, result.data, req, true));
+    //     } catch (error) {
+    //         console.error("Update Student Fee Controller Error:", error);
+    //         return res.status(500).json(responseData(result?.message || "UPDATE_FEE_ERROR", {error : error.message }, req, false));
+    //     }
+    // },
 
     addPayment: async (req, res) => {
         try {

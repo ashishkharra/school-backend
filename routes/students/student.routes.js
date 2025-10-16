@@ -4,6 +4,8 @@ const validationRule = require('../../validations/student/auth.js')
 const { uploadSubmission } = require('../../middlewares/multerFile.js')
 const studentController = require('../../controllers/students/student.controller.js');
 
+
+router.get('/dashboard', [verifyToken], studentController.studentDashboard);
 router.get(
   "/view/attendance", [verifyToken],
   studentController.viewAttendanceByClass

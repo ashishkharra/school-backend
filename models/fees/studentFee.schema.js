@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 const paymentSchema = new mongoose.Schema({
-  transactionId: { type: String, required: true },
+  transactionId: { type: String },
   amountPaid: { type: Number, required: true },
   mode: { type: String, enum: ["Cash", "Card", "UPI", "BankTransfer", "Cheque"], required: true },
   date: { type: Date, default: Date.now },
@@ -14,13 +14,13 @@ const studentFeeSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student", required: true },
   feeStructureId: { type: mongoose.Schema.Types.ObjectId, ref: "FeeStructure", required: true },
 
-  appliedFeeHeads: [
-    {
-      type: { type: String, required: true },
-      amount: { type: Number, required: true },
-      paidTillNow: { type: Number, default: 0 }
-    }
-  ],
+  // appliedFeeHeads: [
+  //   {
+  //     type: { type: String, required: true },
+  //     amount: { type: Number, required: true },
+  //     paidTillNow: { type: Number, default: 0 }
+  //   }
+  // ],
 
   totalFee: { type: Number, required: true },
   discounts: { type: Number, default: 0 },

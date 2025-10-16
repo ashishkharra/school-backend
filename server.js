@@ -41,7 +41,7 @@ const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
 
 // middlewares
 const corsOption = {
-  origin: ['http://localhost:5173', 'http://192.168.2.157:5173'],
+  origin: ['http://localhost:5173', 'http://192.168.2.157:5173', 'http://192.168.2.84:5173'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };

@@ -378,9 +378,9 @@ const assignmentWithClassPipeline = (classId) => [
 // };
 const teacherProfilePipeline = (teacherId) => {
   return [
-    // 1️⃣ Match the teacher
+    // 1️⃣ Match teacher
     { $match: { _id: new mongoose.Types.ObjectId(teacherId) } },
- 
+
     // 2️⃣ Extract file URLs from nested objects
     {
       $addFields: {
@@ -398,73 +398,123 @@ const teacherProfilePipeline = (teacherId) => {
         }
       }
     },
- 
-    // 3️⃣ Populate class details
+
+    // 3️⃣ Populate classes where teacher teaches
     {
       $lookup: {
-        from: 'classes',
-        localField: 'classes',
-        foreignField: '_id',
-        as: 'classData'
+        from: "classes",
+        localField: "classes",
+        foreignField: "_id",
+        as: "teachingClasses"
       }
     },
- 
-    // 4️⃣ Project only required fields
+
+    // 4️⃣ Populate class where teacher is class teacher
+    {
+      $lookup: {
+        from: "classes",
+        localField: "classTeacherOf.classId",
+        foreignField: "_id",
+        as: "classTeacherClass"
+      }
+    },
+
+    // 5️⃣ Merge class teacher class into teachingClasses
+    {
+      $addFields: {
+        classData: {
+          $setUnion: ["$teachingClasses", "$classTeacherClass"]
+        }
+      }
+    },
+
+    // 6️⃣ Lookup teacher info for each class.teacher
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "classData.teacher",
+        foreignField: "_id",
+        as: "classTeacherInfo"
+      }
+    },
+
+    // 7️⃣ Add teacher name/email inside classData
+    {
+      $addFields: {
+        classData: {
+          $map: {
+            input: "$classData",
+            as: "cls",
+            in: {
+              _id: "$$cls._id",
+              name: "$$cls.name",
+              section: "$$cls.section",
+              status: "$$cls.status",
+              studentCount: "$$cls.studentCount",
+              createdAt: "$$cls.createdAt",
+              classIdentifier: "$$cls.classIdentifier",
+              teacher: {
+                $let: {
+                  vars: {
+                    teacherObj: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$classTeacherInfo",
+                            as: "t",
+                            cond: { $eq: ["$$t._id", "$$cls.teacher"] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: {
+                    _id: "$$teacherObj._id",
+                    name: "$$teacherObj.name",
+                    email: "$$teacherObj.email"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    // 8️⃣ Project final fields
     {
       $project: {
-        // basic info
         name: 1,
         email: 1,
         phone: 1,
         dob: 1,
         gender: 1,
         maritalStatus: 1,
-        spouseName: 1,
-        children: 1,
         address: 1,
-        country: 1,
         bloodGroup: 1,
         physicalDisability: 1,
         disabilityDetails: 1,
-        zip: 1,
-        country: 1,
- 
-        // professional info
-        department: 1,
         designation: 1,
         qualifications: 1,
         specialization: 1,
         experience: 1,
         dateOfJoining: 1,
-        subjectsHandled: 1,
-        classes: 1,
         salaryInfo: 1,
- 
-        // file fields
+        emergencyContact: 1,
+        achievements: 1,
+        clubsInCharge: 1,
+        eventsHandled: 1,
+        status: 1,
+        createdAt: 1,
+        updatedAt: 1,
         profilePic: 1,
         aadharFront: 1,
         aadharBack: 1,
         certificates: 1,
         resume: 1,
         joiningLetter: 1,
- 
-        // emergency / achievements
-        emergencyContact: 1,
-        achievements: 1,
-        clubsInCharge: 1,
-        eventsHandled: 1,
- 
-        // meta fields
-        status: 1,
-        createdAt: 1,
-        updatedAt: 1,
- 
-        // populated class info
-        classData: {
-          _id: 1,
-          name: 1,
-          section: 1
-        }
+        classData: 1
       }
     }
   ];
@@ -1580,6 +1630,71 @@ const getAllFeesStructurePipeline = () => {
   ]
 }
 
+const studentDashboardPipeline = (studentId) => {
+  return [
+    { $match: { student: studentObjectId } },
+
+    // 2️⃣ Join assignments to get subjectId, maxMarks, passingMarks
+    {
+      $lookup: {
+        from: "assignments",
+        localField: "assignment",
+        foreignField: "_id",
+        as: "assignmentDetails"
+      }
+    },
+    { $unwind: "$assignmentDetails" },
+
+    // 3️⃣ Group by subject to calculate performance
+    {
+      $group: {
+        _id: "$assignmentDetails.subjectId",
+        totalMarksObtained: { $sum: "$marksObtained" },
+        totalMaxMarks: { $sum: "$assignmentDetails.maxMarks" },
+        assignmentsCount: { $sum: 1 },
+        submittedAssignments: {
+          $sum: { $cond: [{ $eq: ["$status", "Submitted"] }, 1, 0] }
+        },
+        lateSubmissions: {
+          $sum: { $cond: ["$isLate", 1, 0] }
+        }
+      }
+    },
+
+    // 4️⃣ Add subject name using lookup from subjects collection
+    {
+      $lookup: {
+        from: "subjects",
+        localField: "_id",
+        foreignField: "_id",
+        as: "subjectInfo"
+      }
+    },
+    { $unwind: "$subjectInfo" },
+
+    // 5️⃣ Final projection
+    {
+      $project: {
+        _id: 0,
+        subjectId: "$_id",
+        subjectName: "$subjectInfo.name",
+        totalMarksObtained: 1,
+        totalMaxMarks: 1,
+        percentage: {
+          $cond: [
+            { $eq: ["$totalMaxMarks", 0] },
+            0,
+            { $multiply: [{ $divide: ["$totalMarksObtained", "$totalMaxMarks"] }, 100] }
+          ]
+        },
+        assignmentsCount: 1,
+        submittedAssignments: 1,
+        lateSubmissions: 1
+      }
+    }
+  ]
+}
+
 module.exports = {
   getAttendanceLookup
 };
@@ -1597,6 +1712,8 @@ module.exports = {
   buildAssignmentPipeline,
   buildAttendancePipeline,
   getAllClassesPipeline,
+  studentDashboardPipeline,
+
   // classinstudentPipeline
   assignmentWithClassPipeline,
   studentFeesLookup,
