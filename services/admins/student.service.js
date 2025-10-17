@@ -8,46 +8,189 @@ const Class = require("../../models/class/class.schema.js");
 // const Fees = require('../../models/fees')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Enrollment = require('../../models/students/studentEnrollment.schema.js');
+const StudentFee = require('../../models/fees/studentFee.schema.js')
 
 const { getAllStudentsPipeline, getClassWithStudentsPipeline, getStudentWithDetails, getStudentsByClassNamePipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 
 const adminStudent = {
+    // addStudent: async (studentData) => {
+    //     try {
+    //         const { email, phone, password, classId, academicYear, name, address, feeStructureId, appliedFeeHeads = [], discounts = 0, payments = [] } = studentData;
+
+    //         if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
+    //             return { status: 404, success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
+    //         }
+
+    //         const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
+    //         if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
+
+    //         const classObj = await Class.findById(classId);
+    //         if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
+
+    //         const hashedPassword = await bcrypt.hash(password, 12);
+    //         const assignedSection = classObj.section;
+
+    //         let classCode;
+    //         const numericPart = classObj.name.replace(/\D/g, "");
+    //         classCode = numericPart ? numericPart : classObj.name.toUpperCase().replace(/\s+/g, "");
+
+    //         const lastEnrollment = await Enrollment
+    //             .findOne({ class: classId, academicYear })
+    //             .sort({ rollNo: -1 })
+    //             .lean();
+
+    //         let serial = 1;
+    //         if (lastEnrollment?.rollNo) {
+    //             const match = lastEnrollment.rollNo.match(/-(\d+)$/);
+    //             if (match) serial = parseInt(match[1], 10) + 1;
+    //         }
+
+    //         const rollNo = `${classCode}${assignedSection ? '-' + assignedSection : ''}-${String(serial).padStart(3, "0")}`;
+    //         const admissionNo = "ADM-" + Date.now().toString().slice(-6);
+
+    //         const student = await Student.create({
+    //             admissionNo,
+    //             admissionDate: new Date(),
+    //             ...studentData,
+    //             password: hashedPassword,
+    //             classId,
+    //             status: "active",
+    //             address: address
+    //         });
+
+    //         await Enrollment.create({
+    //             student: student._id,
+    //             class: classId,
+    //             academicYear,
+    //             section: assignedSection,
+    //             rollNo
+    //         });
+
+    //         classObj.studentCount += 1;
+    //         await classObj.save();
+
+    //         const existingFee = await StudentFee.findOne({ studentId: student._id, feeStructureId });
+
+    //         if (existingFee) {
+    //             return { success: false, message: "FEE_ALREADY_ASSIGNED" };
+    //         }
+
+    //         const updatedHeads = appliedFeeHeads.map(head => ({
+    //             ...head,
+    //             paidTillNow: head.paidTillNow || 0
+    //         }));
+
+    //         const totalFee = appliedFeeHeads.reduce((sum, head) => sum + head.amount, 0);
+    //         const paidTillNow = updatedHeads.reduce((sum, head) => sum + head.paidTillNow, 0);
+    //         const payableAmount = totalFee - discounts;
+    //         const remaining = payableAmount - paidTillNow;
+
+    //         let status = "Pending";
+    //         if (paidTillNow >= payableAmount) status = "Paid";
+    //         else if (paidTillNow > 0) status = "Partial";
+
+    //         const studentFee = new StudentFee({
+    //             studentId: student._id,
+    //             feeStructureId,
+    //             appliedFeeHeads: updatedHeads,
+    //             totalFee,
+    //             discounts,
+    //             payableAmount,
+    //             paidTillNow,
+    //             remaining,
+    //             status,
+    //             payments,
+    //         });
+
+    //         const assignFee = await studentFee.save();
+    //         if (!assignFee) return { success: false, message: "ASSIGN_FEE_FAILED" };
+
+
+    //         try {
+    //             const mail = await sendEmail("student-registration-success", {
+    //                 Name: name,
+    //                 Email: email,
+    //                 Password: password,
+    //                 AdmissionNo: admissionNo,
+    //                 ClassName: classObj.name,
+    //                 Section: assignedSection || "N/A",
+    //                 RollNo: rollNo,
+    //                 AcademicYear: academicYear,
+    //                 SchoolName: "Springfield International School",
+    //                 LoginURL: `${process.env.STUDENT_PORTAL_URL}/login`,
+    //                 to: email
+    //             });
+
+    //             console.log('mail --------> ', mail)
+    //         } catch (mailErr) {
+    //             console.error("Failed to send registration email:", mailErr);
+    //         }
+
+    //         return {
+    //             status: 201,
+    //             success: true,
+    //             message: "STUDENT_REGISTERED_SUCCESSFULLY",
+    //             docs: {
+    //                 studentId: student._id,
+    //                 admissionNo,
+    //                 rollNo,
+    //                 section: assignedSection,
+    //                 class: classObj.name,
+    //                 assignFee
+    //             }
+    //         };
+
+    //     } catch (err) {
+    //         console.error("Student register error:", err);
+    //         return { success: false, message: "REGISTRATION_FAILED" };
+    //     }
+    // },
+
     addStudent: async (studentData) => {
         try {
-            const { email, phone, password, classId, academicYear, name, address } = studentData;
+            const { email, phone, password, classId, academicYear, name, address, feeStructureId, appliedFeeHeads = [], discounts = 0, payments = [] } = studentData;
 
+            // ✅ Validate classId
             if (!classId || !mongoose.Types.ObjectId.isValid(classId)) {
                 return { status: 404, success: false, message: "CLASS_ID_REQUIRED_OR_INVALID" };
             }
 
-            const existingStudent = await Student.findOne({ $or: [{ email }, { phone }] });
-            if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
+            // ✅ Fetch existing student and class in parallel
+            const [existingStudent, classObj] = await Promise.all([
+                Student.findOne({ $or: [{ email }, { phone }] }),
+                Class.findById(classId)
+            ]);
 
-            const classObj = await Class.findById(classId);
+            if (existingStudent) return { success: false, message: "STUDENT_ALREADY_EXISTS" };
             if (!classObj) return { success: false, message: "CLASS_NOT_FOUND" };
 
+            // ✅ Hash password
             const hashedPassword = await bcrypt.hash(password, 12);
             const assignedSection = classObj.section;
 
-            let classCode;
+            // ✅ Generate class code
             const numericPart = classObj.name.replace(/\D/g, "");
-            classCode = numericPart ? numericPart : classObj.name.toUpperCase().replace(/\s+/g, "");
+            const classCode = numericPart ? numericPart : classObj.name.toUpperCase().replace(/\s+/g, "");
 
-            const lastEnrollment = await Enrollment
-                .findOne({ class: classId, academicYear })
-                .sort({ rollNo: -1 })
-                .lean();
+            // ✅ Fetch last enrollment and check existing fee in parallel
+            const [lastEnrollment, existingFee] = await Promise.all([
+                Enrollment.findOne({ class: classId, academicYear }).sort({ rollNo: -1 }).lean(),
+                StudentFee.findOne({ studentId: null, feeStructureId }) // placeholder, will check after student creation
+            ]);
 
+            // ✅ Generate roll number
             let serial = 1;
             if (lastEnrollment?.rollNo) {
                 const match = lastEnrollment.rollNo.match(/-(\d+)$/);
                 if (match) serial = parseInt(match[1], 10) + 1;
             }
-
             const rollNo = `${classCode}${assignedSection ? '-' + assignedSection : ''}-${String(serial).padStart(3, "0")}`;
+
+            // ✅ Generate admission number
             const admissionNo = "ADM-" + Date.now().toString().slice(-6);
 
+            // ✅ Create student
             const student = await Student.create({
                 admissionNo,
                 admissionDate: new Date(),
@@ -55,41 +198,80 @@ const adminStudent = {
                 password: hashedPassword,
                 classId,
                 status: "active",
-                address: address
+                address
             });
 
-            await Enrollment.create({
-                student: student._id,
-                class: classId,
-                academicYear,
-                section: assignedSection,
-                rollNo
-            });
+            // ✅ Check fee again after student creation
+            const feeCheck = await StudentFee.findOne({ studentId: student._id, feeStructureId });
+            if (feeCheck) return { success: false, message: "FEE_ALREADY_ASSIGNED" };
 
-            classObj.studentCount += 1;
-            await classObj.save();
+            // ✅ Prepare student fee
+            const updatedHeads = appliedFeeHeads.map(head => ({
+                ...head,
+                paidTillNow: head.paidTillNow || 0
+            }));
 
+            const totalFee = appliedFeeHeads.reduce((sum, head) => sum + head.amount, 0);
+            const paidTillNow = updatedHeads.reduce((sum, head) => sum + head.paidTillNow, 0);
+            const payableAmount = totalFee - discounts;
+            const remaining = payableAmount - paidTillNow;
 
-            try {
-                const mail = await sendEmail("student-registration-success", {
-                    Name: name,
-                    Email: email,
-                    Password: password,
-                    AdmissionNo: admissionNo,
-                    ClassName: classObj.name,
-                    Section: assignedSection || "N/A",
-                    RollNo: rollNo,
-                    AcademicYear: academicYear,
-                    SchoolName: "Springfield International School",
-                    LoginURL: `${process.env.STUDENT_PORTAL_URL}/login`,
-                    to: email
-                });
+            let status = "Pending";
+            if (paidTillNow >= payableAmount) status = "Paid";
+            else if (paidTillNow > 0) status = "Partial";
 
-                console.log('mail --------> ', mail)
-            } catch (mailErr) {
-                console.error("Failed to send registration email:", mailErr);
-            }
+            // ✅ Prepare DB operations to run in parallel
+            const dbOperations = [
+                // Create Enrollment
+                Enrollment.create({
+                    student: student._id,
+                    class: classId,
+                    academicYear,
+                    section: assignedSection,
+                    rollNo
+                }),
+                // Increment class student count
+                (async () => {
+                    classObj.studentCount += 1;
+                    await classObj.save();
+                })(),
+                // Save Student Fee
+                new StudentFee({
+                    studentId: student._id,
+                    feeStructureId,
+                    appliedFeeHeads: updatedHeads,
+                    totalFee,
+                    discounts,
+                    payableAmount,
+                    paidTillNow,
+                    remaining,
+                    status,
+                    payments
+                }).save()
+            ];
 
+            // ✅ Run all DB operations in parallel
+            const [enrollmentResult, _, assignFee] = await Promise.all(dbOperations);
+
+            if (!assignFee) return { success: false, message: "ASSIGN_FEE_FAILED" };
+
+            // ✅ Send email asynchronously (no need to block response)
+            sendEmail("student-registration-success", {
+                Name: name,
+                Email: email,
+                Password: password,
+                AdmissionNo: admissionNo,
+                ClassName: classObj.name,
+                Section: assignedSection || "N/A",
+                RollNo: rollNo,
+                AcademicYear: academicYear,
+                SchoolName: "Springfield International School",
+                LoginURL: `${process.env.STUDENT_PORTAL_URL}/login`,
+                to: email
+            }).then(mail => console.log('mail sent:', mail))
+                .catch(err => console.error("Failed to send registration email:", err));
+
+            // ✅ Return success
             return {
                 status: 201,
                 success: true,
@@ -99,7 +281,8 @@ const adminStudent = {
                     admissionNo,
                     rollNo,
                     section: assignedSection,
-                    class: classObj.name
+                    class: classObj.name,
+                    assignFee
                 }
             };
 

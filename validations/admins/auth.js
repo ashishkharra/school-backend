@@ -801,6 +801,54 @@ module.exports.validate = (method) => {
           return true
         }),
 
+        body('feeStructureId')
+          .notEmpty()
+          .withMessage('FEE_STRUCTURE_ID_REQUIRED')
+          .isMongoId()
+          .withMessage('FEE_STRUCTURE_ID_INVALID')
+          .custom(async (feeStructureId, { req }) => {
+            const feeStruct = await FeeStructure.findById(feeStructureId)
+            if (!feeStruct) return Promise.reject('FEE_STRUCTURE_NOT_FOUND')
+
+            const appliedHeads = req.body.appliedFeeHeads || []
+
+            // Validate that each applied head exists in the fee structure
+            for (let head of appliedHeads) {
+              const matched = feeStruct.feeHeads.find(
+                (f) => f.type === head.type
+              )
+              if (!matched)
+                return Promise.reject(`INVALID_FEE_HEAD_${head.type}`)
+            }
+
+            // Check that all mandatory heads are included
+            for (let f of feeStruct.feeHeads.filter((f) => !f.isOptional)) {
+              if (!appliedHeads.some((a) => a.type === f.type)) {
+                return Promise.reject(`MANDATORY_FEE_HEAD_MISSING_${f.type}`)
+              }
+            }
+
+            return true
+          }),
+
+        body('appliedFeeHeads')
+          .isArray({ min: 1 })
+          .withMessage('APPLIED_FEEHEADS_ARRAY_REQUIRED')
+          .custom((arr) =>
+            arr.every(
+              (f) =>
+                f.type &&
+                typeof f.type === 'string' &&
+                typeof f.amount === 'number'
+            )
+          )
+          .withMessage('APPLIED_FEEHEADS_INVALID'),
+
+        body('discounts')
+          .optional()
+          .isNumeric()
+          .withMessage('DISCOUNTS_INVALID'),
+
         validatorMiddleware
       ]
     }

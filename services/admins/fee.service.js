@@ -125,101 +125,115 @@ module.exports = {
         }
     },
 
-    updateStudentFee: async (studentFeeId, data) => {
-        try {
-            const studentFee = await StudentFee.findById(studentFeeId);
-            if (!studentFee) {
-                return { success: false, message: "STUDENT_FEE_NOT_FOUND" };
-            }
+    // updateStudentFee: async (studentFeeId, data) => {
+    //     try {
+    //         const studentFee = await StudentFee.findById(studentFeeId);
+    //         if (!studentFee) {
+    //             return { success: false, message: "STUDENT_FEE_NOT_FOUND" };
+    //         }
 
-            if (data.appliedFeeHeads) {
-                studentFee.appliedFeeHeads = data.appliedFeeHeads.map(head => ({
-                    type: head.type,
-                    amount: head.amount,
-                    paidTillNow: head.paidTillNow || 0
-                }));
+    //         if (data.appliedFeeHeads) {
+    //             studentFee.appliedFeeHeads = data.appliedFeeHeads.map(head => ({
+    //                 type: head.type,
+    //                 amount: head.amount,
+    //                 paidTillNow: head.paidTillNow || 0
+    //             }));
 
-                const totalFee = studentFee.appliedFeeHeads.reduce((sum, head) => sum + head.amount, 0);
-                const paidTillNow = studentFee.appliedFeeHeads.reduce((sum, head) => sum + head.paidTillNow, 0);
+    //             const totalFee = studentFee.appliedFeeHeads.reduce((sum, head) => sum + head.amount, 0);
+    //             const paidTillNow = studentFee.appliedFeeHeads.reduce((sum, head) => sum + head.paidTillNow, 0);
 
-                studentFee.totalFee = totalFee;
-                studentFee.payableAmount = totalFee - (studentFee.discounts || 0);
-                studentFee.paidTillNow = paidTillNow;
-                studentFee.remaining = studentFee.payableAmount - paidTillNow;
+    //             studentFee.totalFee = totalFee;
+    //             studentFee.payableAmount = totalFee - (studentFee.discounts || 0);
+    //             studentFee.paidTillNow = paidTillNow;
+    //             studentFee.remaining = studentFee.payableAmount - paidTillNow;
 
-                studentFee.status = studentFee.paidTillNow >= studentFee.payableAmount
-                    ? "Paid"
-                    : studentFee.paidTillNow > 0
-                        ? "Partial"
-                        : "Pending";
-            }
+    //             studentFee.status = studentFee.paidTillNow >= studentFee.payableAmount
+    //                 ? "Paid"
+    //                 : studentFee.paidTillNow > 0
+    //                     ? "Partial"
+    //                     : "Pending";
+    //         }
 
-            if (data.discounts !== undefined) {
-                studentFee.discounts = data.discounts;
-                studentFee.payableAmount = studentFee.totalFee - data.discounts;
-                studentFee.remaining = studentFee.payableAmount - (studentFee.paidTillNow || 0);
-            }
+    //         if (data.discounts !== undefined) {
+    //             studentFee.discounts = data.discounts;
+    //             studentFee.payableAmount = studentFee.totalFee - data.discounts;
+    //             studentFee.remaining = studentFee.payableAmount - (studentFee.paidTillNow || 0);
+    //         }
 
-            if (data.paidTillNow !== undefined) {
-                studentFee.paidTillNow = data.paidTillNow;
-                studentFee.remaining = studentFee.payableAmount - data.paidTillNow;
+    //         if (data.paidTillNow !== undefined) {
+    //             studentFee.paidTillNow = data.paidTillNow;
+    //             studentFee.remaining = studentFee.payableAmount - data.paidTillNow;
 
-                studentFee.status =
-                    studentFee.paidTillNow >= studentFee.payableAmount
-                        ? "Paid"
-                        : studentFee.paidTillNow > 0
-                            ? "Partial"
-                            : "Pending";
-            }
-            const result = await studentFee.save();
-            const [populated] = await StudentFee.aggregate(getStudentWithDetails(result._id));
-            const student = populated.student;
-            const feeHeadsHtml = studentFee.appliedFeeHeads
-                .map(head => `<p>${head.type}: ${head.amount} (Paid: ${head.paidTillNow})</p>`)
-                .join('');
+    //             studentFee.status =
+    //                 studentFee.paidTillNow >= studentFee.payableAmount
+    //                     ? "Paid"
+    //                     : studentFee.paidTillNow > 0
+    //                         ? "Partial"
+    //                         : "Pending";
+    //         }
+    //         const result = await studentFee.save();
+    //         const [populated] = await StudentFee.aggregate(getStudentWithDetails(result._id));
+    //         const student = populated.student;
+    //         const feeHeadsHtml = studentFee.appliedFeeHeads
+    //             .map(head => `<p>${head.type}: ${head.amount} (Paid: ${head.paidTillNow})</p>`)
+    //             .join('');
 
-            const emailData = {
-                PARENT_NAME: student.parents?.[0]?.name || "Parent",
-                STUDENT_NAME: student.name,
-                CLASS: student.class?.name || "",
-                ACADEMIC_YEAR: studentFee.academicYear || "",
-                FEE_HEADS: feeHeadsHtml,
-                TOTAL_FEE: studentFee.totalFee,
-                DISCOUNTS: studentFee.discounts || 0,
-                PAYABLE_AMOUNT: studentFee.payableAmount,
-                DUE_DATE: studentFee.dueDate?.toLocaleDateString() || "",
-                SCHOOL_NAME: process.env.SCHOOL_NAME || "Your School",
-                email: student.parents?.[0]?.email || student.email,
-            };
+    //         const emailData = {
+    //             PARENT_NAME: student.parents?.[0]?.name || "Parent",
+    //             STUDENT_NAME: student.name,
+    //             CLASS: student.class?.name || "",
+    //             ACADEMIC_YEAR: studentFee.academicYear || "",
+    //             FEE_HEADS: feeHeadsHtml,
+    //             TOTAL_FEE: studentFee.totalFee,
+    //             DISCOUNTS: studentFee.discounts || 0,
+    //             PAYABLE_AMOUNT: studentFee.payableAmount,
+    //             DUE_DATE: studentFee.dueDate?.toLocaleDateString() || "",
+    //             SCHOOL_NAME: process.env.SCHOOL_NAME || "Your School",
+    //             email: student.parents?.[0]?.email || student.email,
+    //         };
 
-            const emailSent = await sendEmail("student-fee-assignment", emailData);
-            if (!emailSent) console.warn("⚠️ Fee update email failed to send");
+    //         const emailSent = await sendEmail("student-fee-assignment", emailData);
+    //         if (!emailSent) console.warn("⚠️ Fee update email failed to send");
 
-            return { success: true, message: "STUDENT_FEE_UPDATED", data: populated };
-        } catch (error) {
-            console.error("Update Student Fee Service Error:", error);
-            return { success: false, message: "UPDATE_FEE_FAILED" };
-        }
-    },
+    //         return { success: true, message: "STUDENT_FEE_UPDATED", data: populated };
+    //     } catch (error) {
+    //         console.error("Update Student Fee Service Error:", error);
+    //         return { success: false, message: "UPDATE_FEE_FAILED" };
+    //     }
+    // },
 
     addPayment: async (studentFeeId, paymentData) => {
         try {
             const resultArray = await StudentFee.aggregate(getStudentWithDetails(studentFeeId));
             const studentFee = resultArray[0];
 
-            if (!studentFee) return { success: false, message: "STUDENT_FEE_NOT_FOUND" };
+            if (!studentFee) {
+                return { success: false, message: "STUDENT_FEE_NOT_FOUND" };
+            }
 
-            const updatedPaid = studentFee.paidTillNow + paymentData.amountPaid;
-            const status = updatedPaid >= studentFee.payableAmount ? "Paid" : "Partial";
+            const currentPaidTillNow = studentFee.paidTillNow;
+            const newPaidTillNow = currentPaidTillNow + paymentData.amountPaid;
+
+            const transactionId = paymentData.transactionId || `CASH-${Date.now()}`;
+
+            let status = "Partial";
+            if (newPaidTillNow >= studentFee.payableAmount) {
+                status = "Paid";
+            } else if (newPaidTillNow === 0) {
+                status = "Pending";
+            }
 
             const updatedStudentFee = await StudentFee.findByIdAndUpdate(
                 studentFeeId,
                 {
                     $inc: { paidTillNow: paymentData.amountPaid },
-                    $set: { status },
+                    $set: {
+                        status,
+                        remaining: studentFee.payableAmount - newPaidTillNow
+                    },
                     $push: {
                         payments: {
-                            transactionId: paymentData.transactionId,
+                            transactionId,
                             amountPaid: paymentData.amountPaid,
                             mode: paymentData.mode,
                             status: paymentData.status || "Success",
@@ -232,31 +246,36 @@ module.exports = {
             );
 
             const populated = await StudentFee.aggregate(getStudentWithDetails(studentFeeId));
-
             const student = populated[0].student;
+
             const emailData = {
                 PARENT_NAME: student.parents?.[0]?.name || "Parent",
                 STUDENT_NAME: student.name,
                 CLASS: student.class?.name || "",
-                ACADEMIC_YEAR: studentFee.academicYear || "",
+                ACADEMIC_YEAR: populated[0].academicYear || "",
                 AMOUNT_PAID: paymentData.amountPaid,
                 PAYABLE_AMOUNT: studentFee.payableAmount,
-                PAID_TILL_NOW: updatedPaid,
-                REMAINING: studentFee.payableAmount - updatedPaid,
+                PAID_TILL_NOW: newPaidTillNow,
+                REMAINING: studentFee.payableAmount - newPaidTillNow,
                 STATUS: status,
-                TRANSACTION_ID: paymentData.transactionId,
+                TRANSACTION_ID: transactionId,
                 PAYMENT_MODE: paymentData.mode,
                 PAYMENT_DATE: new Date().toLocaleDateString(),
                 SCHOOL_NAME: process.env.SCHOOL_NAME || "Your School",
                 email: student.parents?.[0]?.email || student.email,
             };
 
-            const emailSent = await sendEmail("student-payment-notification", emailData);
-            if (!emailSent) console.warn("Payment email failed to send");
+            await sendEmail("student-payment-notification", emailData)
+                .catch(() => console.warn("⚠️ Payment email failed to send"));
 
-            return { success: true, message: "PAYMENT_ADDED_SUCCESSFULLY", data: populated[0] };
+            return {
+                success: true,
+                message: "PAYMENT_ADDED_SUCCESSFULLY",
+                data: populated[0],
+            };
+
         } catch (error) {
-            console.log("Add Payment Service Error:", error.message);
+            console.error("Add Payment Service Error:", error.message);
             return { success: false, message: "ADD_PAYMENT_ERROR" };
         }
     },
