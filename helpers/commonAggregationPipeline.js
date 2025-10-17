@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper.js')
 const Student = require('../models/students/student.schema.js')
 
+
 const studentAssignmentPipeline = (assignmentId) => {
   return [
     {
@@ -322,7 +323,7 @@ const assignmentWithClassPipeline = (classId) => [
 
 const teacherProfilePipeline = (teacherId) => {
   return [
-    // 1️⃣ Match the teacher
+    // 1️⃣ Match teacher
     { $match: { _id: new mongoose.Types.ObjectId(teacherId) } },
 
     // 2️⃣ Extract file URLs from nested objects
@@ -343,13 +344,13 @@ const teacherProfilePipeline = (teacherId) => {
       }
     },
 
-    // 3️⃣ Populate class details
+    // 3️⃣ Populate classes where teacher teaches
     {
       $lookup: {
-        from: 'classes',
-        localField: 'classes',
-        foreignField: '_id',
-        as: 'classData'
+        from: "classes",
+        localField: "classes",
+        foreignField: "_id",
+        as: "teachingClasses"
       }
     },
 
@@ -374,17 +375,13 @@ const teacherProfilePipeline = (teacherId) => {
     // 6️⃣ Project only required fields
     {
       $project: {
-        // basic info
         name: 1,
         email: 1,
         phone: 1,
         dob: 1,
         gender: 1,
         maritalStatus: 1,
-        spouseName: 1,
-        children: 1,
         address: 1,
-        country: 1,
         bloodGroup: 1,
         physicalDisability: 1,
         disabilityDetails: 1,
@@ -395,8 +392,6 @@ const teacherProfilePipeline = (teacherId) => {
         specialization: 1,
         experience: 1,
         dateOfJoining: 1,
-        subjectsHandled: 1,
-        classes: 1,
         salaryInfo: 1,
 
         // file fields
@@ -785,8 +780,10 @@ const getStudentWithDetails = (studentId) => [
 ];
 // pipeline for getting all classes from db
 const getAllClassesPipeline = (className, page = 1, limit = 10) => {
-  const match = { status: "active" };
-  if (className) match.name = { $regex: className, $options: "i" };
+  const match = {};
+  if (className && className.trim() !== "") {
+    match.name = { $regex: className.trim(), $options: "i" };
+  }
 
   return [
     { $match: match },
@@ -802,17 +799,17 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
     {
       $addFields: {
         classTeacher: {
-          $cond: [
-            { $eq: ["$isClassTeacher", true] },
-            {
+          $cond: {
+            if: { $ifNull: ["$teacherDoc", false] },
+            then: {
               _id: "$teacherDoc._id",
               name: "$teacherDoc.name",
               email: "$teacherDoc.email",
               department: "$teacherDoc.department",
-              specialization: "$teacherDoc.specialization"
+              subjectsHandled: "$teacherDoc.subjectsHandled"
             },
-            null
-          ]
+            else: null
+          }
         }
       }
     },
@@ -1379,12 +1376,12 @@ const teacherAttendancePipeline = ({
 };
 
 
-const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
+const getAttendanceLookup = (matchQuery, teacherId, page = 1, limit = 10) => {
+  const teacherObjId = new mongoose.Types.ObjectId(teacherId);
   return [
-    // Match documents
     { $match: matchQuery },
 
-    // Lookup student details
+    // Lookup students
     {
       $lookup: {
         from: "students",
@@ -1394,20 +1391,20 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
       }
     },
 
-    // Lookup class details
+    // Lookup classes
     {
       $lookup: {
-        from: "classes",        // replace with your class collection name
-        localField: "class",  // assuming attendance has classId field
+        from: "classes",
+        localField: "class",
         foreignField: "_id",
         as: "classData"
       }
     },
-    
 
-    // Map the records array with required student fields only
+    // Map records & attach class
     {
       $addFields: {
+        class: { $arrayElemAt: ["$classData", 0] },
         records: {
           $map: {
             input: "$records",
@@ -1444,13 +1441,20 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
               }
             }
           }
-        },
-        class: { $arrayElemAt: ["$classData", 0] } // attach first class object
+        }
       }
     },
 
     // Remove temporary arrays
     { $project: { studentData: 0, classData: 0 } },
+
+    // Filter only class teacher records for logged-in teacher
+    {
+      $match: {
+        "class.isClassTeacher": true,
+        "class.teacher": teacherObjId
+      }
+    },
 
     // Sort by date descending
     { $sort: { date: -1 } },
@@ -1467,58 +1471,58 @@ const getAttendanceLookup = (matchQuery, page = 1, limit = 10) => {
     }
   ];
 };
-
 const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
   return [
+    // 🔹 Unwind grades first to access nested fields like grades.status
+    { $unwind: '$grades' },
+
+    // 🔹 Then apply filtering
     { $match: whereStatement },
 
-    // Lookup student data
+    // 🔹 Lookup student data
     {
       $lookup: {
         from: 'students',
-        localField: 'student',
+        localField: 'grades.student',
         foreignField: '_id',
         as: 'studentData'
       }
     },
     { $unwind: { path: '$studentData', preserveNullAndEmptyArrays: true } },
 
-    // Lookup assignment data
+    // 🔹 Lookup assignment data
     {
       $lookup: {
         from: 'assignments',
-        localField: 'assignment',
+        localField: 'grades.assignment',
         foreignField: '_id',
         as: 'assignmentData'
       }
     },
     { $unwind: { path: '$assignmentData', preserveNullAndEmptyArrays: true } },
 
-    // Lookup subject inside assignmentData
+    // 🔹 Lookup subject inside assignmentData
     {
       $lookup: {
         from: 'subjects',
-        localField: 'assignmentData.subjectId', // field in assignments collection
+        localField: 'assignmentData.subjectId',
         foreignField: '_id',
         as: 'assignmentData.subjectData'
       }
     },
+    { $unwind: { path: '$assignmentData.subjectData', preserveNullAndEmptyArrays: true } },
 
-    // Optional: unwind subjectData if you want only one subject object
+    // 🔹 Project only required fields
     {
-      $unwind: { path: '$assignmentData.subjectData', preserveNullAndEmptyArrays: true }
-    },
- {
       $project: {
         _id: 1,
-        grade: 1,
-        marks: 1,
-        remark: 1,
-        createdAt: 1,
-        updatedAt: 1,
         classId: 1,
-        student: 1,
-        assignment: 1,
+        'grades.marks': 1,
+        'grades.grade': 1,
+        'grades.remark': 1,
+        'grades.status': 1,
+        'grades.createdAt': 1,
+        'grades.updatedAt': 1,
         'studentData._id': 1,
         'studentData.name': 1,
         'studentData.admissionNo': 1,
@@ -1526,16 +1530,16 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
         'assignmentData.title': 1,
         'assignmentData.dueDate': 1,
         'assignmentData.maxMarks': 1,
-        'assignmentData.subjectId': 1,
         'assignmentData.subjectData._id': 1,
         'assignmentData.subjectData.name': 1
       }
     },
-    // Facet for pagination
+
+    // 🔹 Pagination
     {
       $facet: {
         docs: [
-          { $sort: { createdAt: -1 } },
+          { $sort: { 'grades.createdAt': -1 } },
           { $skip: (page - 1) * limit },
           { $limit: limit }
         ],
@@ -1544,6 +1548,7 @@ const getGradeLookupPipeline = ({ whereStatement, page, limit }) => {
     }
   ];
 };
+
 
 const getAllFeesStructurePipeline = () => {
   return [
@@ -1568,6 +1573,71 @@ const getAllFeesStructurePipeline = () => {
   ]
 }
 
+const studentDashboardPipeline = (studentId) => {
+  return [
+    { $match: { student: studentObjectId } },
+
+    // 2️⃣ Join assignments to get subjectId, maxMarks, passingMarks
+    {
+      $lookup: {
+        from: "assignments",
+        localField: "assignment",
+        foreignField: "_id",
+        as: "assignmentDetails"
+      }
+    },
+    { $unwind: "$assignmentDetails" },
+
+    // 3️⃣ Group by subject to calculate performance
+    {
+      $group: {
+        _id: "$assignmentDetails.subjectId",
+        totalMarksObtained: { $sum: "$marksObtained" },
+        totalMaxMarks: { $sum: "$assignmentDetails.maxMarks" },
+        assignmentsCount: { $sum: 1 },
+        submittedAssignments: {
+          $sum: { $cond: [{ $eq: ["$status", "Submitted"] }, 1, 0] }
+        },
+        lateSubmissions: {
+          $sum: { $cond: ["$isLate", 1, 0] }
+        }
+      }
+    },
+
+    // 4️⃣ Add subject name using lookup from subjects collection
+    {
+      $lookup: {
+        from: "subjects",
+        localField: "_id",
+        foreignField: "_id",
+        as: "subjectInfo"
+      }
+    },
+    { $unwind: "$subjectInfo" },
+
+    // 5️⃣ Final projection
+    {
+      $project: {
+        _id: 0,
+        subjectId: "$_id",
+        subjectName: "$subjectInfo.name",
+        totalMarksObtained: 1,
+        totalMaxMarks: 1,
+        percentage: {
+          $cond: [
+            { $eq: ["$totalMaxMarks", 0] },
+            0,
+            { $multiply: [{ $divide: ["$totalMarksObtained", "$totalMaxMarks"] }, 100] }
+          ]
+        },
+        assignmentsCount: 1,
+        submittedAssignments: 1,
+        lateSubmissions: 1
+      }
+    }
+  ]
+}
+
 module.exports = {
   getAttendanceLookup
 };
@@ -1585,6 +1655,8 @@ module.exports = {
   buildAssignmentPipeline,
   buildAttendancePipeline,
   getAllClassesPipeline,
+  studentDashboardPipeline,
+
   // classinstudentPipeline
   assignmentWithClassPipeline,
   studentFeesLookup,

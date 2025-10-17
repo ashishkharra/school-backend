@@ -13,7 +13,6 @@ ensureFolderExists(submissionUploadPath);
 function ensureFolderExists(folderPath) {
     if (!fs.existsSync(folderPath)) {
         fs.mkdirSync(folderPath, { recursive: true });
-        console.log(`✅ '${folderPath}' folder created`);
     }
 };
 

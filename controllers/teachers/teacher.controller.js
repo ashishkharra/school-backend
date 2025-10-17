@@ -1,20 +1,18 @@
 
 const teacherService = require('../../services/teachers/teacher.service');
 const { responseData } = require('../../helpers/responseData'); // Assume you have this utility for consistent responses
+const { constant } = require('lodash');
 
 module.exports = {
 
    getProfile: async (req, res) => {
     try {
-        const {teacherId} = req.user._id
-        // const {teacherId} = req.params
+        const teacherId = req.user._id
       const profile = await teacherService.getProfile(teacherId);
- console.log(profile.message,"====")
       return res
         .status(200)
         .json(responseData(profile?.message, profile, req, profile?.success||true));
     } catch (error) {
-      console.log(error,"=-==-=")
       return res
         .status(400)
         .json(responseData("FETCH_PROFILE_FAILED", { error: error.message }, req, false));
@@ -53,7 +51,6 @@ module.exports = {
           )
         );
     } catch (error) {
-      console.error('Error in requestProfileUpdate controller:', error);
       return res
         .status(500)
         .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
@@ -99,9 +96,39 @@ module.exports = {
 
             return res.status(200).json(responseData("ATTENDANCE_FETCHED", attendance, req, true));
         } catch (err) {
-            console.error("Error:", err.message);
             return res.status(500).json(responseData("ERROR_OCCUR", {error : err.message}, req, false));
         }
+    },
+  
+downloadMySalaryInvoice: async (req, res) => {
+    try {
+      const teacherId = req.user?._id; // From logged-in user
+      const { month } = req.params;
+
+      if (!teacherId) {
+        return res.status(401).json({ success: false, message: 'UNAUTHORIZED_ACCESS' });
+      }
+
+      const response = await teacherService.downloadMySalaryInvoice(teacherId, month);
+
+      if (!response.success) {
+        return res.status(400).json({ success: false, message: response.message });
+      }
+
+      // Send PDF as download
+      res.download(response.filePath, `Salary_Invoice_${month}.pdf`, (err) => {
+        if (err) {
+          console.error('Error downloading file:', err);
+          return res.status(500).json({ success: false, message: 'DOWNLOAD_FAILED' });
+        }
+      });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ success: false, message: 'SERVER_ERROR' });
     }
+  },
+
+
 }
 

@@ -30,9 +30,6 @@ module.exports = {
         status: "Present"
       });
 
-      const percentageTeachersPresentToday = Math.floor((totalNumberOfTeachers > 0
-        ? ((teachersPresentToday / totalNumberOfTeachers) * 100).toFixed(2)
-        : 0))
 
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -92,7 +89,6 @@ module.exports = {
         totalNumberOfTeachers,
         totalNumberOfClasses,
         teachersPresentToday,
-        percentageTeachersPresentToday: Number(percentageTeachersPresentToday),
         dailyTeacherAttendance: {
           xAxis: Array.from({ length: totalDays }, (_, i) => i + 1),
           yAxis: dailyAttendance

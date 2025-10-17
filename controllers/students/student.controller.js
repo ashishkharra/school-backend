@@ -187,6 +187,27 @@ const studentController = {
             console.error(error);
             return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
         }
+    },
+
+    studentDashboard: async (req, res) => {
+        try {
+            const studentId = req.user._id;
+            
+            if (!studentId) {
+                return res.status(400).json(responseData("STUDENT_ID_REQUIRED", {}, req, false));
+            }
+
+            const result = await studentService.getStudentDashboard(studentId);
+
+            if (!result.success) {
+                return res.status(result.message.includes("not found") ? 404 : 400).json(responseData(result.message, {}, req, false));
+            }
+
+            return res.status(200).json(responseData(result.message, result.data, req, true));
+        } catch (error) {
+            console.error('Error while fetching student dashboard:', error);
+            return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
+        }
     }
 
 }

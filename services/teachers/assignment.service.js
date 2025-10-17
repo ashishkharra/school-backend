@@ -15,6 +15,9 @@ const {
 } = require('../../helpers/helper')
 const Class = require('../../models/class/class.schema')
 module.exports = {
+
+
+  
   uploadAssignment: async (
     teacherId,
     classId,
@@ -82,6 +85,7 @@ module.exports = {
     }
   },
 
+
   updateAssignment: async (id, title, description, file = null) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -130,7 +134,8 @@ module.exports = {
     }
   },
 
- getAssignments: async (classId, subject, uploadedBy, page = 1, limit = 10) => {
+
+  getAssignments: async (classId, subject, uploadedBy, page = 1, limit = 10) => {
     try {
       if (classId && !mongoose.Types.ObjectId.isValid(classId)) {
         return {
@@ -181,6 +186,8 @@ module.exports = {
       };
     }
   },
+
+
   deleteAssignment: async (assignmentId) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(assignmentId)) {
@@ -215,169 +222,230 @@ module.exports = {
     }
   },
 
+// 🧾 services/assignmentService.js
   assignGradesToClassPerStudent: async ({ classId, gradesData }) => {
-    try {
-      const result = []
-      const submissions = await Submission.find({ classId })
-      if (!submissions.length) {
-        return {
-          success: false,
-          message: { en: 'NO_SUBMISSIONS_FOUND_FOR_THIS_CLASS' },
-          results: []
-        }
+  try {
+    // 🔹 Validate classId
+    if (!mongoose.Types.ObjectId.isValid(classId)) {
+      return {
+        success: false,
+        message: { en: 'INVALID_CLASS_ID' },
+        results: []
+      };
+    }
+
+    // 🔹 Fetch all submissions of this class (with status field)
+    const submissions = await Submission.find({ classId }).select(
+      'student assignment status isLate' // 🟢 Added status and isLate
+    );
+
+    if (!submissions.length) {
+      return {
+        success: false,
+        message: { en: 'NO_SUBMISSIONS_FOUND_FOR_THIS_CLASS' },
+        results: []
+      };
+    }
+
+    const gradeEntries = [];
+
+    // 🔹 Loop through gradesData from frontend
+    for (const item of gradesData) {
+      const { studentId, marks, grade, remark } = item;
+
+      if (!mongoose.Types.ObjectId.isValid(studentId)) continue;
+
+      // 🔹 Get all submissions for this student in this class
+      const studentSubmissions = submissions.filter(
+        (sub) => sub.student.toString() === studentId
+      );
+
+      for (const sub of studentSubmissions) {
+        const gradeValue =
+          grade && ['A', 'B', 'C', 'D', 'F'].includes(grade) ? grade : null;
+
+        // 🔹 Build grade entry including submission status
+        gradeEntries.push({
+          student: sub.student,
+          assignment: sub.assignment,
+          marks: marks ?? null,
+          grade: gradeValue,
+          remark: remark || '',
+          status: sub.status || 'Pending', // 🟢 Include submission status
+          isLate: sub.isLate || false, // 🟢 Include isLate info for clarity
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
       }
-      for (const item of gradesData) {
-        const { studentId, marks, grade, remark } = item
+    }
 
-        if (!mongoose.Types.ObjectId.isValid(studentId)) continue
-        const studentSubmissions = submissions.filter(
-          (sub) => sub.student.toString() === studentId
-        )
+    // 🔹 Check if a Grade document already exists for this class
+    const existingGrades = await Grade.findOne({ classId });
 
-        for (const sub of studentSubmissions) {
-          const gradeValue =
-            grade && ['A', 'B', 'C', 'D', 'F'].includes(grade) ? grade : null
-          const gradeRecord = await Grade.findOneAndUpdate(
-            {
-              classId: sub.classId,
-              student: sub.student,
-              assignment: sub.assignment
-            },
-            {
-              $set: {
-                marks: marks !== undefined ? marks : null,
-                grade: gradeValue,
-                remark: remark || '',
-                updatedAt: new Date()
-              },
-              $setOnInsert: { createdAt: new Date() }
-            },
-            { upsert: true, new: true }
-          )
-
-          result.push(gradeRecord)
-        }
-      }
+    if (!existingGrades) {
+      // 🆕 CREATE new document for this class
+      const newGradeDoc = await Grade.create({
+        classId,
+        grades: gradeEntries
+      });
 
       return {
         success: true,
         message: { en: 'GRADES_ASSIGNED_SUCCESSFULLY' },
-        results: result
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: err.message
-      }
-    }
-  },
-  updateGradeById: async ({ gradeId, marks, grade, remark }) => {
-    try {
-      const gradeRecord = await Grade.findById(gradeId)
+        results: newGradeDoc
+      };
+    } else {
+      // 🔄 UPDATE existing document
+      for (const entry of gradeEntries) {
+        const index = existingGrades.grades.findIndex(
+          (g) =>
+            g.student.toString() === entry.student.toString() &&
+            g.assignment.toString() === entry.assignment.toString()
+        );
 
-      if (!gradeRecord) {
-        return {
-          success: false,
-          message: { en: 'GRADE_NOT_FOUND' },
-          results: {}
+        if (index >= 0) {
+          // 🟡 Update existing student-assignment grade
+          existingGrades.grades[index] = {
+            ...existingGrades.grades[index]._doc,
+            ...entry
+          };
+        } else {
+          // 🟢 Push new student grade entry
+          existingGrades.grades.push(entry);
         }
       }
 
-      if (marks !== undefined) gradeRecord.marks = marks
-      if (grade && ['A', 'B', 'C', 'D', 'F'].includes(grade))
-        gradeRecord.grade = grade
-      if (remark !== undefined) gradeRecord.remark = remark
-
-      gradeRecord.updatedAt = new Date()
-
-      await gradeRecord.save()
+      existingGrades.updatedAt = new Date();
+      await existingGrades.save();
 
       return {
         success: true,
-        message: { en: 'GRADE_UPDATED_SUCCESSFULLY' },
-        results: gradeRecord
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: err.message
-      }
+        message: { en: 'GRADES_UPDATED_SUCCESSFULLY' },
+        results: existingGrades
+      };
     }
-  },
+  } catch (err) {
+    // ❌ Handle server errors gracefully
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: err.message
+    };
+  }
+},
+
+ // services/assignmentService.js
+  updateGradeById: async ({ gradeId, marks, grade, remark }) => {
+  try {
+    // Find parent document that contains this grade subdocument
+    const parent = await Grade.findOne({ "grades._id": gradeId });
+    if (!parent) {
+      return { success: false, message: { en: "GRADE_NOT_FOUND" }, results: {} };
+    }
+
+    // Find the specific subdocument
+    const target = parent.grades.id(gradeId);
+    if (!target) {
+      return { success: false, message: { en: "GRADE_NOT_FOUND" }, results: {} };
+    }
+
+    // Update fields if provided
+    if (marks !== undefined) target.marks = marks;
+    if (grade && ["A", "B", "C", "D", "F"].includes(grade)) target.grade = grade;
+    if (remark !== undefined) target.remark = remark;
+
+    target.updatedAt = new Date();
+    parent.updatedAt = new Date();
+
+    await parent.save();
+
+    return { success: true, message: { en: "Grade updated successfully" }, results: target };
+  } catch (err) {
+    return { success: false, message: { en: "SERVER_ERROR" }, results: err.message };
+  }
+},
+
 
   deleteGrade: async (gradeId) => {
-    try {
-      const deletedGrade = await Grade.findByIdAndDelete(gradeId)
-
-      if (!deletedGrade) {
-        return {
-          success: false,
-          message: { en: 'GRADE_NOT_FOUND' },
-          results: {}
-        }
-      }
-
-      return {
-        success: true,
-        message: { en: 'GRADE_DELETED_SUCCESSFULLY' },
-        results: deletedGrade
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: err.message
-      }
+  try {
+    // Find parent document containing this grade
+    const parent = await Grade.findOne({ "grades._id": gradeId });
+    if (!parent) {
+      return { success: false, message: { en: 'GRADE_NOT_FOUND' }, results: {} };
     }
-  },
 
-  getGrades: async ({ classId, keyword, page = 1, limit = 10 }) => {
-    try {
-      let whereStatement = {}
-      if (classId) {
-        if (!mongoose.Types.ObjectId.isValid(classId)) {
-          return {
-            success: false,
-            message: { en: 'CLASS_ID_NOT_VALID' },
-            results: {}
-          }
-        }
-        whereStatement.classId = new mongoose.Types.ObjectId(classId)
-      }
-      if (keyword) {
-        keyword = keyword.trim()
-        whereStatement.$or = [
-          { 'studentData.firstName': { $regex: keyword, $options: 'i' } },
-          { 'studentData.lastName': { $regex: keyword, $options: 'i' } },
-          { 'studentData.name': { $regex: keyword, $options: 'i' } }
-        ]
-      }
-
-      const pipeline = getGradeLookupPipeline({ whereStatement, page, limit })
-      const result = await Grade.aggregate(pipeline)
-
-      const totalDocs = result[0]?.totalCount[0]?.count || 0
-      const totalPages = Math.ceil(totalDocs / limit)
-
-      return {
-        success: true,
-        message: { en: 'GRADES_FETCHED_SUCCESSFULLY' },
-        results: {
-          docs: result[0]?.docs || [],
-          totalDocs,
-          limit,
-          page,
-          totalPages
-        }
-      }
-    } catch (err) {
-      return {
-        success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: err.message
-      }
+    // Remove the subdocument
+    const target = parent.grades.id(gradeId);
+    if (!target) {
+      return { success: false, message: { en: 'GRADE_NOT_FOUND' }, results: {} };
     }
+
+    target.remove(); // remove subdocument
+    parent.updatedAt = new Date();
+
+    await parent.save();
+
+    return {
+      success: true,
+      message: { en: 'GRADE_DELETED_SUCCESSFULLY' },
+      results: target // return deleted subdocument
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: err.message
+    };
   }
+},
+
+
+  getGrades: async ({ classId, keyword, status, page = 1, limit = 10 }) => {
+  try {
+    // ✅ Always convert classId to ObjectId
+    let whereStatement = { classId: new mongoose.Types.ObjectId(classId) };
+
+    // 🔍 Apply keyword filter if provided
+    if (keyword) {
+      keyword = keyword.trim();
+      whereStatement.$or = [
+        { 'studentData.firstName': { $regex: keyword, $options: 'i' } },
+        { 'studentData.lastName': { $regex: keyword, $options: 'i' } },
+        { 'studentData.name': { $regex: keyword, $options: 'i' } }
+      ];
+    }
+
+    // ✅ Apply status filter (Pending / Submitted / Graded)
+    if (status && typeof status === 'string') {
+      whereStatement['grades.status'] = new RegExp(`^${status}$`, 'i');
+    }
+
+    const pipeline = getGradeLookupPipeline({ whereStatement, page, limit });
+    const result = await Grade.aggregate(pipeline);
+
+    const totalDocs = result[0]?.totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(totalDocs / limit);
+
+    return {
+      success: true,
+      message: { en: 'GRADES_FETCHED_SUCCESSFULLY' },
+      results: {
+        docs: result[0]?.docs || [],
+        totalDocs,
+        limit,
+        page,
+        totalPages
+      }
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: err.message
+    };
+  }
+},
+
+
+
 }

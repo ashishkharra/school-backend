@@ -1,6 +1,7 @@
 
 
-    const salaryService = require('../../services/admins/teacher.salaryservice');
+const { responseData } = require('../../helpers/responseData')
+const salaryService = require('../../services/admins/teacher.salaryservice');
 
 module.exports = {
  
@@ -58,47 +59,42 @@ module.exports = {
 //     }
 //   }
 
-generateSalary: async (req, res) => {
+generateSalary : async (req, res) => {
   try {
     const { teacherId, month, leaves } = req.body;
 
     if (!teacherId || !month) {
-      return res
-        .status(400)
-        .json(
-          responseData(
-            'INVALID_INPUT',
-            { error: 'teacherId and month are required' },
-            req,
-            false
-          )
-        );
+      return res.status(400).json(
+        responseData(
+          'INVALID_INPUT',
+          { error: 'teacherId and month are required' },
+          req,
+          false
+        )
+      );
     }
 
-    const salary = await salaryService.generateSalary({ teacherId, month, leaves });
+    const result = await salaryService.generateSalary({ teacherId, month, leaves });
 
     return res.json(
       responseData(
         'SALARY_GENERATED_SUCCESSFULLY',
-        salary,
+        result,
         req,
         true
       )
     );
   } catch (error) {
-    return res
-      .status(400)
-      .json(
-        responseData(
-          'SALARY_GENERATION_FAILED',
-          { error: error.message },
-          req,
-          false
-        )
-      );
+    return res.status(400).json(
+      responseData(
+        'SALARY_GENERATION_FAILED',
+        { error: error.message },
+        req,
+        false
+      )
+    );
   }
 },
-
 getTeahcerSalary: async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;

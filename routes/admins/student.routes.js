@@ -18,6 +18,8 @@ const adminStudentController = require('../../controllers/admins/student.control
     'address',
     'transferCertificate',
     'parents',
+    'appliedFeeHeads',
+    'discounts'
   ];
 
 

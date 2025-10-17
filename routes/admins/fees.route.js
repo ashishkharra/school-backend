@@ -19,12 +19,12 @@ router.post(
         feeController.assignStudentFee
     )
 
-    .put(
-        "/student/:id",
-        [verifyToken],
-        validationRule.validate("updateStudentFee"),
-        feeController.updateStudentFee
-    )
+    // .put(
+    //     "/student/:id",
+    //     [verifyToken],
+    //     validationRule.validate("updateStudentFee"),
+    //     feeController.updateStudentFee
+    // )
 
     .put(
         "/student/:id/payment",

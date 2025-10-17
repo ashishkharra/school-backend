@@ -15,7 +15,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 
-const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline, getSubmissionWithDetails } = require('../../helpers/commonAggregationPipeline.js')
+const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline, getSubmissionWithDetails, studentDashboardPipeline } = require('../../helpers/commonAggregationPipeline.js')
 
 const studentService = {
     studentForgotPassword: async (req, res) => {
@@ -343,6 +343,54 @@ const studentService = {
         } catch (err) {
             console.error("Get Submission Details Error:", err.message);
             return { success: false, message: "FETCH_FAILED" };
+        }
+    },
+
+    getStudentDashboard: async (studentId) => {
+        try {
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
+                return { success: false, message: "STUDENT_ID_NOT_VALID" }
+            }
+
+            const pipeline = studentDashboardPipeline(studentId);
+            const result = await Submission.aggregate(pipeline);
+
+            if (result.length === 0) {
+                return { success: false, message: "STUDENT_NOT_FOUND" }
+            }
+
+            const overall = data.reduce(
+                (acc, subj) => {
+                    acc.totalMarksObtained += subj.totalMarksObtained;
+                    acc.totalMaxMarks += subj.totalMaxMarks;
+                    acc.totalAssignments += subj.assignmentsCount;
+                    acc.totalSubmitted += subj.submittedAssignments;
+                    acc.totalLate += subj.lateSubmissions;
+                    return acc;
+                },
+                { totalMarksObtained: 0, totalMaxMarks: 0, totalAssignments: 0, totalSubmitted: 0, totalLate: 0 }
+            );
+
+            const overallPercentage = overall.totalMaxMarks
+                ? (overall.totalMarksObtained / overall.totalMaxMarks) * 100
+                : 0;
+
+
+            return {
+                success: true,
+                message: "DASHBOARD_DATA_FETCHED",
+                data: {
+                    subjects: data,
+                    overall: {
+                        ...overall,
+                        overallPercentage: Number(overallPercentage.toFixed(2))
+                    }
+                }
+            };
+
+        } catch (error) {
+            console.error("Error in getStudentDashboard service:", error);
+            return { success: false, message: "SERVER_ERROR" };
         }
     }
 }

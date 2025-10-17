@@ -100,45 +100,85 @@ module.exports = {
         )
     }
   },
-  getAttendance: async (req, res) => {
-    const { date,month ,page = 1, limit = 10 } = req.query
-    try {
-      const queryResult = await attendanceService.getAttendanceData(
-        date,
-        month,
-        parseInt(page),
-        parseInt(limit)
-      )
+  // getAttendance: async (req, res) => {
+  //   const { date,month ,page = 1, limit = 10 } = req.query
+  //    const teacherId = req.user.id;
+  //   try {
+  //     const queryResult = await attendanceService.getAttendanceData(
+  //       date,
+  //       month,
+  //        teacherId,
+  //       parseInt(page),
+  //       parseInt(limit)
+  //     )
 
-      if (!queryResult.results || queryResult.results.docs.length === 0) {
-        return res
-          .status(404)
-          .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
-      }
+  //     if (!queryResult.results || queryResult.results.docs.length === 0) {
+  //       return res
+  //         .status(404)
+  //         .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
+  //     }
 
+  //     return res
+  //       .status(200)
+  //       .json(
+  //         responseData(
+  //           'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
+  //           queryResult.results,
+  //           req,
+  //           queryResult.success
+  //         )
+  //       )
+  //   } catch (error) {
+  //     if (error.message === 'Invalid date format') {
+  //       return res
+  //         .status(400)
+  //         .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
+  //     }
+  //     res
+  //       .status(500)
+  //       .json(
+  //         responseData('SERVER_ERROR', { error: error.message }, req, false)
+  //       )
+  //   }
+  // },
+ 
+ getAttendance :async (req, res) => {
+  const { date, month, page = 1, limit = 10, classId } = req.query;
+  console.log(req.query,"=====", classId)
+  const teacherId = req.user._id; // Logged-in teacher ID
+console.log(teacherId,"=======+++++++")
+  try {
+    const queryResult = await attendanceService.getAttendanceData(
+      date,
+      month,
+      parseInt(page),
+      parseInt(limit),
+      teacherId,
+      classId
+    );
+    console.log(queryResult)
+    if (!queryResult.results || queryResult.results.docs.length === 0) {
       return res
-        .status(200)
-        .json(
-          responseData(
-            'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
-            queryResult.results,
-            req,
-            queryResult.success
-          )
-        )
-    } catch (error) {
-      if (error.message === 'Invalid date format') {
-        return res
-          .status(400)
-          .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
-      }
-      res
-        .status(500)
-        .json(
-          responseData('SERVER_ERROR', { error: error.message }, req, false)
-        )
+        .status(404)
+        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
     }
-  },
+
+    return res
+      .status(200)
+      .json(
+        responseData(
+          'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
+          queryResult.results,
+          req,
+          queryResult.success
+        )
+      );
+  } catch (error) {
+    res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
   deleteAttendance: async (req, res) => {
     try {
       const { attendanceId } = req.params 
@@ -177,4 +217,6 @@ module.exports = {
         )
     }
   }
+
+  
 }

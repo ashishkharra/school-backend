@@ -2,13 +2,17 @@ const Teacher = require('../../models/teacher/teacher.schema.js')
 const TeacherAttendance = require('../../models/teacher/teacherAttendance.schema.js')
 // const ProfileUpdateRequest = require('../../models/teacher/profileUpdateRequest.schema');
 const { sendEmail } = require('../../helpers/helper')
+const Salary = require('../../models/admin/salary.schema.js')
 const {
   teacherProfilePipeline,
   teacherAttendancePipeline
 } = require('../../helpers/commonAggregationPipeline.js')
 const { default: mongoose } = require('mongoose')
 const _ = require('lodash')
+const path = require('path')
 module.exports = {
+
+
   requestProfileUpdate: async (teacherId, requestedFields) => {
     try {
       // ✅ Validate teacherId
@@ -50,7 +54,6 @@ module.exports = {
 
       return { success: true, message: 'EMAIL_SUCCESSFULLY_SENT' }
     } catch (error) {
-      console.error('Error in requestProfileUpdate service:', error)
       return {
         success: false,
         message: 'SERVER_ERROR',
@@ -74,20 +77,14 @@ module.exports = {
         ? base + profile.aadharFront
         : null
       profile.aadharBack = profile.aadharBack ? base + profile.aadharBack : null
-      profile.resume = profile.resume ? base + profile.resume : null
 
-      profile.certificates = Array.isArray(profile.certificates)
-        ? profile.certificates.map((cert) => base + cert)
-        : []
 
-      console.log(profile.profilePic, '-------.')
       return {
         success: true,
         message: 'FETCHING_TEACHER_PROFILE_SUCCESSFULLY',
         profile
       }
     } catch (err) {
-      console.error('Get Teacher Profile Error:', err.message)
       return { success: false, message: 'SERVER_ERROR' }
     }
   },
@@ -95,7 +92,7 @@ module.exports = {
   teacherForgotPassword: async (req, res) => {
     try {
       const email = req.body.email.toLowerCase()
-      const student = await Teacher.findOne({ email })
+      const Teacher = await Teacher.findOne({ email })
 
       if (student) {
         const resetToken = jwt.sign(
@@ -118,14 +115,12 @@ module.exports = {
           await sendEmail('student-forgot-password', dataBody)
           return res.json(responseData('EMAIL_SENT', {}, req, true))
         } catch (emailErr) {
-          console.error('Email sending failed:', emailErr.message)
           return res.json(responseData('EMAIL_SEND_FAILED', {}, req, false))
         }
       } else {
         return res.json(responseData('STUDENT_EMAIL_NOT_FOUND', {}, req, false))
       }
     } catch (err) {
-      console.error('Error:', err.message)
       return res.json(responseData('ERROR_OCCUR', {}, req, false))
     }
   },
@@ -144,7 +139,7 @@ module.exports = {
         let salt = await genSalt(10)
         let hash = await genHash(password, salt)
         if (!isEmpty(hash)) {
-          await Student.findOneAndUpdate(
+          await Teacher.findOneAndUpdate(
             { _id: resetToken._id },
             { password: hash, token: null, forceLogout: true }
           )
@@ -156,7 +151,6 @@ module.exports = {
         return res.json(responseData('LINK_INVALID', {}, req, false))
       }
     } catch (err) {
-      console.log('Error', err.message)
       return res.json(responseData('ERROR_OCCUR', {}, req, false))
     }
   },
@@ -187,7 +181,7 @@ module.exports = {
         return res.json(responseData('ERROR_OCCUR', {}, req, false))
       }
 
-      await Student.findOneAndUpdate(
+      await Teacher.findOneAndUpdate(
         { _id },
         {
           password: hash,
@@ -198,7 +192,6 @@ module.exports = {
 
       return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
     } catch (err) {
-      console.log('Error', err.message)
       return res.json(responseData('ERROR_OCCUR', {}, req, false))
     }
   },
@@ -230,8 +223,37 @@ module.exports = {
         attendance: attendanceRecords
       }
     } catch (err) {
-      console.error('Get Teacher Attendance Error:', err.message)
       return { success: false, message: 'SERVER_ERROR' }
     }
-  }
-}
+  },
+
+  downloadMySalaryInvoice: async (teacherId, month) => {
+    try {
+      if (!month) {
+        return { success: false, message: 'MONTH_NOT_VALID' };
+      }
+      const salaryRecord = await Salary.findOne({ teacherId, month });
+
+      if (!salaryRecord || !salaryRecord.invoicePath) {
+        return { success: false, message: 'INVOICE_NOT_FOUND' };
+      }
+
+     
+  const invoicePath = salaryRecord.invoicePath.startsWith('/')
+        ? salaryRecord.invoicePath.slice(1)
+        : salaryRecord.invoicePath;
+
+      // Absolute path to invoice PDF
+      const filePath = path.resolve(__dirname, '../..', invoicePath);
+
+      return { success: true, message: 'INVOICE_FETCHED_SUCCESSFULLY', filePath };
+
+    } catch (err) {
+      console.error(err);
+      return { success: false, message: 'SERVER_ERROR' };
+    }
+  },
+
+};
+
+

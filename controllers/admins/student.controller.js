@@ -23,7 +23,8 @@ module.exports = {
     try {
       const data = req.body;
       const files = req.files;
-      console.log("DATA------", files)
+
+      console.log('Register Student Payload:', { data, files });
       if (data.parents && typeof data.parents === 'string') data.parents = JSON.parse(data.parents);
       if (data.siblings && typeof data.siblings === 'string') data.siblings = JSON.parse(data.siblings);
       if (data.achievements && typeof data.achievements === 'string') data.achievements = JSON.parse(data.achievements);

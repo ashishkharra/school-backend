@@ -3,6 +3,7 @@ const {
 } = require('../../helpers/commonAggregationPipeline')
 const Attendance = require('../../models/students/attendance.schema') // Yeh line add karni hogi
 const Enrollment = require('../../models/students/studentEnrollment.schema')
+const mongoose = require('mongoose')
 const getIndiaTimeString = () => {
   const date = new Date();
   const utc = date.getTime() + date.getTimezoneOffset() * 60000;
@@ -96,54 +97,14 @@ markOrUpdateAttendance: async ({ classId, session, takenBy, records }) => {
         results: attendanceRecord
       }
     } catch (error) {
-      console.error(error)
       return { success: false, message: 'SERVER_ERROR', results: [] }
     }
   }
 ,
-  // UPDATE ATTENDANCE BY ID
-  // updateAttendanceById: async ({ attendanceId, records }) => {
-  //   console.log(attendanceId, records)
-  //   try {
-  //     let attendance = await Attendance.findById(attendanceId);
-  //     console.log("attendance",attendance)
-  //     if (!attendance) return null;
-
-  //     records.forEach((record) => {
-  //       const index = attendance.records.findIndex(
-  //         rec => rec.student.toString() === record.student
-  //       );
-  //       if (index !== -1) {
-  //         attendance.records[index].status = record.status;
-  //         attendance.records[index].remarks = record.remarks || '';
-  //       }
-  //     });
-
-  //     // Update date to current IST
-  //     attendance.date = getIndiaTimeString();
-
-  //     await attendance.save();
-
-  //     attendance = await Attendance.findById(attendanceId)
-  //     console.log("-----------", attendance)
-  //       .populate([
-  //         { path: 'records.student', select: '_id ' },
-  //         { path: 'takenBy', select: '_id name email' },
-  //         { path: 'class', select: '_id section' }
-  //       ]);
-
-  //     return attendance;
-  //   } catch (error) {
-  //     console.error("updateAttendanceById Error:", error);
-  //     throw error;
-  //   }
-  // },
-
 
   updateAttendanceById: async ({ attendanceId, records }) => {
     try {
       let attendance = await Attendance.findById(attendanceId);
-      console.log("Current Attendance Record:", attendance); // Debug log
       if (!attendance) {
         return { success: false, message: 'ATTENDANCE_NOT_FOUND', results: {} };
       }
@@ -152,7 +113,6 @@ markOrUpdateAttendance: async ({ classId, session, takenBy, records }) => {
         const index = attendance.records.findIndex(
           (rec) => rec.student.toString() === record.student
         );
-// Debug log
         if (index !== -1) {
           attendance.records[index].status = record.status;
           attendance.records[index].remarks = record.remarks || '';
@@ -160,7 +120,6 @@ markOrUpdateAttendance: async ({ classId, session, takenBy, records }) => {
       });
 
       attendance.date = getIndiaTimeString();
-      // console.log("Updated Attendance Record before save:", attendance); // Debug log
       await attendance.save();
 
       attendance = await Attendance.findById(attendanceId)
@@ -171,57 +130,53 @@ markOrUpdateAttendance: async ({ classId, session, takenBy, records }) => {
         results: attendance
       };
     } catch (error) {
-      console.error('updateAttendanceById Error:', error);
       return { success: false, message: 'SERVER_ERROR', results: {} };
     }
   },
 
- getAttendanceData: async (date, month,page = 1, limit = 10) => {
+
+getAttendanceData: async (date, month, page = 1, limit = 10, teacherId, classId) => {
   try {
     const matchQuery = {};
 
+    // Filter by exact date
     if (date) {
-      // Convert to YYYY-MM-DD for regex match
       const d = new Date(date);
       const utc = d.getTime() + d.getTimezoneOffset() * 60000;
       const indiaOffset = 5.5 * 60 * 60000;
       const istDate = new Date(utc + indiaOffset);
-
       const yyyy = istDate.getFullYear();
       const mm = String(istDate.getMonth() + 1).padStart(2, '0');
       const dd = String(istDate.getDate()).padStart(2, '0');
-
-      const dateString = `${yyyy}-${mm}-${dd}`;
-
-      // Use regex to match date ignoring time
-      matchQuery.date = { $regex: `^${dateString}` };
+      matchQuery.date = { $regex: `^${yyyy}-${mm}-${dd}` };
     }
 
+    // Filter by month (YYYY-MM)
     if (month) {
-      // e.g. month = "2025-10"
-      // Validate month format
       if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
-        throw new Error('Invalid month format. Use YYYY-MM.');
+        return { success: false, message: 'INVALID_MONTH_FORMAT', results: {} };
       }
-
       matchQuery.date = { $regex: `^${month}` };
-      console.log(matchQuery )
     }
 
+    // Filter by classId if provided
+    if (classId) {
+      if (!mongoose.Types.ObjectId.isValid(classId)) {
+        return { success: false, message: 'INVALID_CLASS_ID', results: {} };
+      }
+      matchQuery.class = new mongoose.Types.ObjectId(classId);
+    }
 
-    const pipeline = getAttendanceLookup(matchQuery, page, limit);
-    console.log('pipeline----', pipeline);
-
+    const pipeline = getAttendanceLookup(matchQuery, teacherId, page, limit);
     const result = await Attendance.aggregate(pipeline);
-    console.log(result, "result");
 
-    const totalDocs = result[0].totalCount[0]?.count || 0;
+    const totalDocs = result[0]?.totalCount[0]?.count || 0;
     const totalPages = Math.ceil(totalDocs / limit);
 
     return {
       success: true,
       results: {
-        docs: result[0].docs || [],
+        docs: result[0]?.docs || [],
         totalDocs,
         limit,
         page,
@@ -229,21 +184,30 @@ markOrUpdateAttendance: async ({ classId, session, takenBy, records }) => {
       }
     };
   } catch (error) {
-    throw new Error(error.message || 'Server error');
+    return { success: false, message: 'SERVER_ERROR', results: {} };
   }
 },
-   deleteAttendance: async (attendanceId) => {
-    try {
-      if (!attendanceId) {
-        return null;
-      }
 
-      const deleted = await Attendance.findByIdAndDelete(attendanceId);
-
-      return deleted; // returns null if not found
-    } catch (error) {
-      console.error('deleteAttendance Error:', error);
-      throw error;
+deleteAttendance: async (attendanceId) => {
+  try {
+    if (!attendanceId || !mongoose.Types.ObjectId.isValid(attendanceId)) {
+      return { success: false, message: 'INVALID_ATTENDANCE_ID', results: {} };
     }
-  },
+
+    const deleted = await Attendance.findByIdAndDelete(attendanceId);
+
+    if (!deleted) {
+      return { success: false, message: 'ATTENDANCE_NOT_FOUND', results: {} };
+    }
+
+    return {
+      success: true,
+      message: 'ATTENDANCE_DELETED_SUCCESSFULLY',
+      results: deleted
+    };
+  } catch (error) {
+    return { success: false, message: 'SERVER_ERROR', results: {} };
+  }
+},
+
 }

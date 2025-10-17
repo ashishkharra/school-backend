@@ -20,7 +20,7 @@ const submissionSchema = new mongoose.Schema({
   files: [fileSchema],
   resubmissions: [resubmissionSchema],
 
-  status: { type: String, enum: ["Submitted", "Pending", "Late", "Graded"], default: "Submitted" },
+  status: { type: String, enum: ["Submitted", "Pending", "Late"], default: "Submitted" },
   isLate: { type: Boolean, default: false },
   classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class", required: true },
   marksObtained: { type: Number, default: 0 },

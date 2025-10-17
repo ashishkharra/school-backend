@@ -42,7 +42,8 @@ const salarySchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+    invoicePath: { type: String },
 });
 
 module.exports = mongoose.model('Salary', salarySchema);
