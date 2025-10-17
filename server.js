@@ -26,7 +26,7 @@ const adminAttendanceRoutes = require('./routes/admins/admin.attendance.route.js
 const adminEmailTemplateRouter = require('./routes/admins/emailTemplate.route')
 const adminDashboardRoutes = require('./routes/admins/dashboard.route.js')
 const adminFeeRoutes = require('./routes/admins/fees.route.js')
-const adminteachersalaryRoutes = require('./routes/admins/teacher.salary.js')
+const adminteachersalaryRoutes = require('./routes/admins/teacher.salary.route.js')
 const parentRoutes = require('./routes/admins/parent.route.js')
 const adminSettingRoute = require('./routes/admins/admin.setting.route.js')
 

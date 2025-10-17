@@ -4,9 +4,10 @@ const { responseData } = require("../helpers/responseData");
 module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+console.log(req.body,"result")
 
     const result = await authService.login(email, password);
-
+console.log(result,"result")
     return res.json(
       responseData(result.message, result.results, req, result.success)
     );

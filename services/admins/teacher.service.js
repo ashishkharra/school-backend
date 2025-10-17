@@ -157,7 +157,22 @@ module.exports = {
       updatedTeacher.profilePic.fileUrl = process.env.STATIC_URL + updatedTeacher.profilePic.fileUrl
       updatedTeacher.aadharFront.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharFront.fileUrl
       updatedTeacher.aadharBack.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharBack.fileUrl
+const dataBody = {
+      TEACHER_NAME: updatedTeacher.name || 'Teacher',
+      TEACHER_ID: updatedTeacher._id.toString(),
+      UPDATED_EMAIL: updatedTeacher.email || 'N/A',
+      UPDATED_PHONE: updatedTeacher.phone || 'N/A',
+      DEPARTMENT: updatedTeacher.department || 'N/A',
+      UPDATED_AT: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+    }
 
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: updatedTeacher }
+    }
       return { success: true, message: 'TEACHER_UPDATED', data: updatedTeacher }
     } catch (error) {
       return {
@@ -327,6 +342,18 @@ module.exports = {
       classData.teacher = mongoose.Types.ObjectId(teacherId)
       classData.isClassTeacher = true
       const savedClass = await classData.save()
+
+          const dataBody = {
+      TEACHER_NAME: teacherData.name,
+      TEACHER_ID: teacherData._id.toString(),
+      CLASS_NAME: classData.name || 'N/A',
+      ASSIGNED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login',
+      TEACHER_EMAIL: teacherData.email  // required by sendEmailWithSlug
+    };
+
+    const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody);
+    if (!mailSent) return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass };
 
       return {
         success: true,
@@ -561,23 +588,26 @@ module.exports = {
       })
 
       const savedAssignment = await newAssignment.save()
-      let dataBody = {
-        email: teacherData.email,
-        TeacherName: teacherData.name,
-        ClassName: classData.name,
-        Section: section,
-        SubjectName: subjectData ? subjectData.name : 'N/A',
-        StartTime: startTime,
-        EndTime: endTime,
-        URL: 'https://your-school-portal.com'
-      }
-      const isMailSent = await helper.sendEmail(
-        'teacher-class-assignment-notification',
-        dataBody
-      )
-      if (!isMailSent) {
-        return { success: false, message: 'EMAIL_NOT_SENT' }
-      }
+    const dataBody = {
+  TEACHER_NAME: teacherData.name,                  // Teacher's full name
+  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+  SECTION: section || assignment.section || 'N/A', // Class section
+  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+}
+
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: savedAssignment }
+    }
 
       return {
         success: true,
@@ -801,6 +831,27 @@ module.exports = {
       assignment.startMinutes = startMinutes
       assignment.endMinutes = endMinutes
       const saved = await assignment.save()
+
+    const dataBody = {
+  TEACHER_NAME: teacherData.name,                  // Teacher's full name
+  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+  SECTION: section || assignment.section || 'N/A', // Class section
+  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+}
+
+    // 🔹 Send email using the correct slug
+    const isMailSent = await sendEmail('update-assigned-to-class', dataBody)
+
+    if (!isMailSent) {
+      return { success: false, message: 'EMAIL_NOT_SENT', data: saved  }
+    }
       return {
         success: true,
         message: 'TEACHER_ASSIGNMENT_UPDATED',

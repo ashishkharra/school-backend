@@ -170,6 +170,77 @@ module.exports.validate = (method) => {
         body('qualifications').optional().isArray(),
         body('qualifications.*').optional().isString(),
 
+        // Email
+        body('email')
+          .notEmpty()
+          .withMessage('EMAIL_EMPTY')
+          .isEmail()
+          .withMessage('EMAIL_VALID'),
+
+        // Password
+        body('password')
+          .notEmpty()
+          .withMessage('PASSWORD_EMPTY')
+          .isLength({ min: 6 })
+          .withMessage('PASSWORD_MIN')
+          .isLength({ max: 30 })
+          .withMessage('PASSWORD_MAX'),
+
+        // Phone
+        body('phone')
+          .notEmpty()
+          .withMessage('PHONE_EMPTY')
+          .isMobilePhone()
+          .withMessage('PHONE_VALID'),
+
+        // Date of Birth
+        body('dateOfBirth')
+          .notEmpty()
+          .withMessage('DOB_EMPTY')
+          .isISO8601()
+          .withMessage('DOB_VALID'),
+
+        // Gender
+        body('gender')
+          .notEmpty()
+          .withMessage('GENDER_EMPTY')
+          .custom((value) =>
+            ['male', 'female', 'other'].includes(value.toLowerCase())
+          )
+          .withMessage('GENDER_INVALID')
+          .bail()
+          .customSanitizer(
+            (value) =>
+              value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+          ),
+
+        // Address (object)
+        body('address')
+          .notEmpty()
+          .withMessage('ADDRESS_EMPTY')
+          .isObject()
+          .withMessage('ADDRESS_OBJECT_REQUIRED')
+          .bail()
+          .custom(
+            (addr) => addr.street && addr.city && addr.state && addr.zipCode
+          )
+          .withMessage('ADDRESS_INCOMPLETE'),
+
+        // Qualifications: array of strings, minimum 1
+        body('qualifications')
+          .isArray({ min: 1 })
+          .withMessage('QUALIFICATIONS_ARRAY_REQUIRED')
+          .custom((arr) => arr.every((q) => typeof q === 'string'))
+          .withMessage('QUALIFICATIONS_STRING_ONLY'),
+
+        // Classes: array of strings (ObjectIds as string)
+        body('classes')
+          .isArray({ min: 1 })
+          .withMessage('CLASSES_ARRAY_REQUIRED')
+          .custom((arr) => arr.every((c) => /^[0-9a-fA-F]{24}$/.test(c)))
+          .withMessage('CLASSES_INVALID_OBJECTID'),
+
+        // Specialization: array of strings (ObjectIds as string)
         body('specialization')
           .isArray({ min: 1 })
           .withMessage('SPECIALIZATION_ARRAY_REQUIRED')
@@ -486,12 +557,12 @@ module.exports.validate = (method) => {
           .withMessage('CLASS_ID_INVALID'),
 
         // subjectId (required, ObjectId)
-        body('subjectId')
-          .notEmpty()
-          .withMessage('SUBJECT_ID_REQUIRED')
-          .bail()
-          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-          .withMessage('SUBJECT_ID_INVALID'),
+        // body('subjectId')
+        //   .notEmpty()
+        //   .withMessage('SUBJECT_ID_REQUIRED')
+        //   .bail()
+        //   .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+        //   .withMessage('SUBJECT_ID_INVALID'),
 
         // title (required, string)
         body('title')
@@ -625,12 +696,12 @@ module.exports.validate = (method) => {
     case 'updateAttendance': {
       return [
         // classId (required, ObjectId)
-        body('classId')
-          .notEmpty()
-          .withMessage('CLASS_ID_REQUIRED')
-          .bail()
-          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-          .withMessage('CLASS_ID_INVALID'),
+        // body('classId')
+        //   .notEmpty()
+        //   .withMessage('CLASS_ID_REQUIRED')
+        //   .bail()
+        //   .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+        //   .withMessage('CLASS_ID_INVALID'),
 
         // date (required, valid date)
         // body('date')
@@ -641,12 +712,12 @@ module.exports.validate = (method) => {
         //   .withMessage('DATE_INVALID'),
 
         // session (required, number 1|2|3)
-        body('session')
-          .notEmpty()
-          .withMessage('SESSION_REQUIRED')
-          .bail()
-          .isInt({ min: 1, max: 3 })
-          .withMessage('SESSION_INVALID'),
+        // body('session')
+        //   .notEmpty()
+        //   .withMessage('SESSION_REQUIRED')
+        //   .bail()
+        //   .isInt({ min: 1, max: 3 })
+        //   .withMessage('SESSION_INVALID'),
 
         // records (required, array)
         body('records')
@@ -657,12 +728,12 @@ module.exports.validate = (method) => {
           .withMessage('RECORDS_MUST_BE_ARRAY'),
 
         // records[].student (required, ObjectId)
-        body('records.*.student')
-          .notEmpty()
-          .withMessage('STUDENT_ID_REQUIRED')
-          .bail()
-          .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
-          .withMessage('STUDENT_ID_INVALID'),
+        // body('records.*.student')
+        //   .notEmpty()
+        //   .withMessage('STUDENT_ID_REQUIRED')
+        //   .bail()
+        //   .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+        //   .withMessage('STUDENT_ID_INVALID'),
 
         // records[].status (required, string)
         body('records.*.status')
@@ -681,7 +752,90 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ];
     }
+case 'assignGradeOrMarks': {
+  return [
+    // ✅ classId: required, must be a valid MongoDB ObjectId
+    body('classId')
+      .notEmpty()
+      .withMessage('CLASS_ID_EMPTY')
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage('CLASS_ID_INVALID'),
 
+    // ✅ gradesData: must be a non-empty array
+    body('gradesData')
+      .isArray({ min: 1 })
+      .withMessage('GRADES_DATA_ARRAY_REQUIRED'),
+
+    // ✅ Each element in gradesData should contain a valid studentId
+    body('gradesData.*.studentId')
+      .notEmpty()
+      .withMessage('STUDENT_ID_EMPTY')
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage('STUDENT_ID_INVALID'),
+
+    // ✅ marks: optional but if present, must be a number between 0 and 100
+    body('gradesData.*.marks')
+      .optional()
+      .isNumeric()
+      .withMessage('MARKS_NUMERIC')
+      .custom((value) => value >= 0 && value <= 100)
+      .withMessage('MARKS_RANGE_INVALID'),
+
+    // ✅ grade: optional but must be one of A, B, C, D, F
+    body('gradesData.*.grade')
+      .optional()
+      .isString()
+      .withMessage('GRADE_STRING')
+      .isIn(['A', 'B', 'C', 'D', 'F'])
+      .withMessage('GRADE_INVALID'),
+
+    // ✅ remark: optional, should be a string (limit for length)
+    body('gradesData.*.remark')
+      .optional()
+      .isString()
+      .withMessage('REMARK_STRING')
+      .isLength({ max: 200 })
+      .withMessage('REMARK_MAX_LENGTH'),
+
+    validatorMiddleware
+  ]
+}
+case 'updateGrade': {
+  return [
+    // ✅ gradeId: must exist and be a valid ObjectId (from req.params)
+    param('gradeId')
+      .notEmpty()
+      .withMessage('GRADE_ID_EMPTY')
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage('GRADE_ID_INVALID'),
+
+    // ✅ marks: optional but must be numeric and within range 0–100
+    body('marks')
+      .optional()
+      .isNumeric()
+      .withMessage('MARKS_NUMERIC')
+      .custom((value) => value >= 0 && value <= 100)
+      .withMessage('MARKS_RANGE_INVALID'),
+
+    // ✅ grade: optional but must be one of A–F
+    body('grade')
+      .optional()
+      .isString()
+      .withMessage('GRADE_STRING')
+      .isIn(['A', 'B', 'C', 'D', 'F'])
+      .withMessage('GRADE_INVALID'),
+
+    // ✅ remark: optional, must be a string with length limit
+    body('remark')
+      .optional()
+      .isString()
+      .withMessage('REMARK_STRING')
+      .isLength({ max: 200 })
+      .withMessage('REMARK_MAX_LENGTH'),
+
+    validatorMiddleware
+  ]
+}
     //---------
     case 'registerStudent': {
       return [

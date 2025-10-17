@@ -16,4 +16,7 @@ router.post('/change-password', [verifyToken], validationRule.validate('change-p
 
 router.get('/get-attendance', [verifyToken], teacherController.getAttendance);
 
+router.get('/download-invoice/:month', verifyToken, teacherController.downloadMySalaryInvoice);
+
+
 module.exports = router;

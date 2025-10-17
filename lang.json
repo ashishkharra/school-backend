@@ -2102,4 +2102,261 @@
     "en": "Notes is invalid",
     "ar": ""
   }
+  ,
+   "VALID_CLASS_ID_REQUIRED": {
+    "en": "Valid classId is required",
+    "ar": ""
+  },
+  "GRADES_DATA_ARRAY_REQUIRED": {
+    "en": "gradesData array is required",
+    "ar": ""
+  },
+  "GRADES_ASSIGNED_SUCCESSFULLY": {
+    "en": "Grades assigned successfully",
+    "ar": ""
+  },
+  "VALID_GRADE_ID_REQUIRED": {
+    "en": "Valid gradeId is required",
+    "ar": ""
+  },
+  "GRADE_NOT_FOUND": {
+    "en": "Grade not found",
+    "ar": ""
+  },
+  "GRADE_UPDATED_SUCCESSFULLY": {
+    "en": "Grade updated successfully",
+    "ar": ""
+  },
+  "GRADE_DELETED_SUCCESSFULLY": {
+    "en": "Grade deleted successfully",
+    "ar": ""
+  },
+
+  
+  "UNAUTHORIZED_ACCESS": {
+    "en": "Unauthorized access",
+    "ar": ""
+  },
+  "DATA_FETCHED_SUCCESSFULLY": {
+    "en": "Data fetched successfully",
+    "ar": ""
+  },
+  "DATA_SAVED_SUCCESSFULLY": {
+    "en": "Data saved successfully",
+    "ar": ""
+  },
+  "DATA_UPDATED_SUCCESSFULLY": {
+    "en": "Data updated successfully",
+    "ar": ""
+  },
+  "DATA_DELETED_SUCCESSFULLY": {
+    "en": "Data deleted successfully",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_NOT_VALID": {
+    "en": "Assignment is not valid",
+    "ar": ""
+  },
+  "ASSIGNMENT_ID_INVALID": {
+    "en": "Assignment id not valid",
+    "ar": ""
+  },
+  "TITLE_MUST_BE_STRING": {
+    "en": "Title must string",
+    "ar": ""
+  },
+  "DESCRIPTION_MUST_BE_STRING": {
+    "en": "Description must be string",
+    "ar": ""
+  },
+  "FILE_MUST_BE_STRING": {
+    "en": "File must be string",
+    "ar": ""
+  },
+  "SALARY_GENERATED_SUCCESSFULLY":{
+     "en": "salary generated",
+    "ar": ""
+  },
+  "SALARY_GENERATION_FAILED":{
+     "en": "salary generated failed",
+    "ar": ""
+  },
+  "SALARIES_FETCHED_SUCCESSFULLY":{
+  "en": "salary fetched failed",
+    "ar": ""
+  },
+  "FETCH_SALARIES_FAILED":{
+  "en": "salary fetched failed",
+    "ar": ""
+  },
+
+  "TEACHER_NOT_FOUND": {
+    "en": "Teacher not found",
+    "ar": ""
+  },
+  "INVALID_CLASS_ID": {
+    "en": "Invalid class ID",
+    "ar": ""
+  },
+ 
+  "INVALID_SUBJECT": {
+    "en": "Invalid subject",
+    "ar": ""
+  },
+ 
+  "SUBJECT_NOT_ASSIGNED_TO_TEACHER": {
+    "en": "Subject not assigned to this teacher",
+    "ar": ""
+  },
+
+  "ASSIGNMENT_UPDATED_SUCCESSFULLY": {
+    "en": "Assignment updated successfully",
+    "ar": ""
+  },
+
+  "ASSIGNMENTS_FETCHED_SUCCESSFULLY": {
+    "en": "Assignments fetched successfully",
+    "ar": ""
+  },
+
+  "NO_SUBMISSIONS_FOUND_FOR_THIS_CLASS": {
+    "en": "No submissions found for this class",
+    "ar": ""
+  },
+
+  "GRADES_UPDATED_SUCCESSFULLY": {
+    "en": "Grades updated successfully",
+    "ar": ""
+  },
+  "GRADES_FETCHED_SUCCESSFULLY": {
+    "en": "Grades fetched successfully",
+    "ar": ""
+  },
+  "FETCH_GRADES_FAILED": {
+    "en": "Failed to fetch grades",
+    "ar": ""
+  },
+ 
+  "INVALID_ATTENDANCE_ID": {
+    "en": "Invalid attendance ID",
+    "ar": ""
+  },
+
+  "NO_VALID_STUDENTS": {
+    "en": "No valid students found in this class",
+    "ar": ""
+  },
+  "EMPTY_STATUS_NOT_ALLOWED": {
+    "en": "Attendance status cannot be empty",
+    "ar": ""
+  },
+  "INVALID_MONTH_FORMAT": {
+    "en": "Invalid month format. Use YYYY-MM format",
+    "ar": ""
+  },
+
+  "FETCH_ATTENDANCE_FAILED": {
+    "en": "Failed to fetch attendance records",
+    "ar": ""
+  },
+    "TEACHER_REGISTERED_SUCCESSFULLY": {
+    "en": "Teacher registered successfully",
+    "ar": ""
+  },
+  "TEACHER_REGISTRATION_FAILED": {
+    "en": "Teacher registration failed",
+    "ar": ""
+  },
+
+  "TEACHER_SOFT_DELETED": {
+    "en": "Teacher soft deleted successfully",
+    "ar": ""
+  },
+  "SOFT_DELETE_FAILED": {
+    "en": "Failed to soft delete teacher",
+    "ar": ""
+  },
+  "FETCH_HISTORY_FAILED": {
+    "en": "Failed to fetch deleted teacher history",
+    "ar": ""
+  },
+  "ASSIGN_CLASS_TEACHER_SUCCESS": {
+    "en": "Class teacher assigned successfully",
+    "ar": ""
+  },
+  "ASSIGN_CLASS_TEACHER_FAILED": {
+    "en": "Failed to assign class teacher",
+    "ar": ""
+  },
+  "UPDATE_CLASS_TEACHER_SUCCESS": {
+    "en": "Class teacher updated successfully",
+    "ar": ""
+  },
+  "UPDATE_CLASS_TEACHER_FAILED": {
+    "en": "Failed to update class teacher",
+    "ar": ""
+  },
+  "REMOVE_CLASS_TEACHER_SUCCESS": {
+    "en": "Class teacher removed successfully",
+    "ar": ""
+  },
+  "REMOVE_CLASS_TEACHER_FAILED": {
+    "en": "Failed to remove class teacher",
+    "ar": ""
+  },
+  "TEACHER_ASSIGNED_TO_CLASS": {
+    "en": "Teacher assigned to class successfully",
+    "ar": ""
+  },
+  "ASSIGN_TEACHER_FAILED": {
+    "en": "Failed to assign teacher to class",
+    "ar": ""
+  },
+  "UPDATE_TEACHER_SUCCESS": {
+    "en": "Teacher assignment updated successfully",
+    "ar": ""
+  },
+  "UPDATE_TEACHER_FAILED": {
+    "en": "Failed to update teacher assignment",
+    "ar": ""
+  },
+  "DELETE_TEACHER_SUCCESS": {
+    "en": "Teacher assignment deleted successfully",
+    "ar": ""
+  },
+  "DELETE_TEACHER_FAILED": {
+    "en": "Failed to delete teacher assignment",
+    "ar": ""
+  },
+  "GET_TEACHER_ASSIGNMENTS_SUCCESS": {
+    "en": "Teacher assignments fetched successfully",
+    "ar": ""
+  },
+  "GET_TEACHER_ASSIGNMENTS_FAILED": {
+    "en": "Failed to fetch teacher assignments",
+    "ar": ""
+  },
+  "MARK_ATTENDANCE_SUCCESS": {
+    "en": "Attendance marked successfully",
+    "ar": ""
+  },
+  "MARK_ATTENDANCE_FAILED": {
+    "en": "Failed to mark attendance",
+    "ar": ""
+  },
+  "UPDATE_ATTENDANCE_SUCCESS": {
+    "en": "Attendance updated successfully",
+    "ar": ""
+  },
+  "UPDATE_ATTENDANCE_FAILED": {
+    "en": "Failed to update attendance",
+    "ar": ""
+  },
+ 
+  "FETCH_PROFILE_FAILED": {
+    "en": "Failed to fetch teacher profile",
+    "ar": ""
+  }
+
 }
+

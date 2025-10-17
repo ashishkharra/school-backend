@@ -12,7 +12,7 @@ router.get(
 );
 
 router.get(
-  "/view/profile/", [verifyToken],
+  "/view/profile", [verifyToken],
   studentController.viewProfile
 );
 
@@ -20,11 +20,11 @@ router.get("/assignments/:assignmentId/download", [verifyToken],
   studentController.downloadAssignment
 );
 
-router.post('/update-profile-request/:studentId/', [verifyToken],
+router.post('/update-profile-request', [verifyToken],
   studentController.requestUpdateProfile
 );
 
-router.post("/submit", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
+router.post("/submit/:assignmentId", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
 
 // router.put("/grade/:submissionId", studentController.gradeSubmission);
 
