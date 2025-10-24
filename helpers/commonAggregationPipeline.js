@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const { getPaginationArray } = require('./helper.js')
 const Student = require('../models/students/student.schema.js')
+const TeacherTimeTable = require('../models/class/teacher.timetable.schema.js')
 
 
 const studentAssignmentPipeline = (assignmentId) => {
@@ -806,7 +807,8 @@ const getAllClassesPipeline = (className, page = 1, limit = 10) => {
               name: "$teacherDoc.name",
               email: "$teacherDoc.email",
               department: "$teacherDoc.department",
-              subjectsHandled: "$teacherDoc.subjectsHandled"
+              subjectsHandled: "$teacherDoc.subjectsHandled",
+              specialization: "$teacherDoc.specialization"
             },
             else: null
           }
@@ -1638,6 +1640,66 @@ const studentDashboardPipeline = (studentId) => {
   ]
 }
 
+async function getTimetableForClassAggregation(classId) {
+  const timetable = await TeacherTimeTable.aggregate([
+    { $match: { class: new mongoose.Types.ObjectId(classId) } },
+
+    // Lookup teacher info
+    {
+      $lookup: {
+        from: "teachers",
+        localField: "teacher",
+        foreignField: "_id",
+        as: "teacherInfo"
+      }
+    },
+    { $unwind: { path: "$teacherInfo", preserveNullAndEmptyArrays: true } },
+
+    // Lookup subject info
+    {
+      $lookup: {
+        from: "subjects",
+        localField: "subject",
+        foreignField: "_id",
+        as: "subjectInfo"
+      }
+    },
+    { $unwind: { path: "$subjectInfo", preserveNullAndEmptyArrays: true } },
+
+    // Lookup class info
+    {
+      $lookup: {
+        from: "classes",
+        localField: "class",
+        foreignField: "_id",
+        as: "classInfo"
+      }
+    },
+    { $unwind: { path: "$classInfo", preserveNullAndEmptyArrays: true } },
+
+    // Project only required fields
+    {
+      $project: {
+        day: 1,
+        period: 1,
+        startTime: 1,
+        endTime: 1,
+        startMinutes: 1,
+        endMinutes: 1,
+        section: 1,
+        teacher: "$teacherInfo.name",
+        subject: "$subjectInfo.name",
+        className: "$classInfo.name"
+      }
+    }
+  ]);
+
+  console.log('timtable ------ ', timetable)
+
+  return timetable;
+}
+
+
 module.exports = {
   getAttendanceLookup
 };
@@ -1676,7 +1738,10 @@ module.exports = {
   getGradeLookupPipeline,
 
   // fees
-  getAllFeesStructurePipeline
+  getAllFeesStructurePipeline,
+
+  // time table
+  getTimetableForClassAggregation
 }
 
 

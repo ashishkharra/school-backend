@@ -541,7 +541,7 @@ module.exports = {
 
   getTeacherProfile: async (req, res) => {
     try {
-      const teacherId = req.user.id;
+      const {teacherId} = req.params;
 
       const result = await adminTeacherService.getTeacherProfile(teacherId);
       if (!result.success) {

@@ -33,6 +33,8 @@ const adminSettingRoute = require('./routes/admins/admin.setting.route.js')
 // Import Student routes
 const studentRoutes = require('./routes/students/student.routes.js');
 
+const timeTableRoute = require('./routes/timeTable/timeTable.routes.js')
+
 //import Teacher routes
 const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') ;
 const teacherProfileRoute = require('./routes/teachers/teacher.route.js');
@@ -41,7 +43,7 @@ const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
 
 // middlewares
 const corsOption = {
-  origin: ['http://localhost:5173', 'http://192.168.2.157:5173', 'http://192.168.2.84:5173'],
+  origin: ['http://localhost:5173', 'http://192.168.2.157:5173', 'http://192.168.2.84:5173', 'http://192.168.1.15:5173'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };
@@ -82,6 +84,7 @@ app.use('/api/admins/fees', adminFeeRoutes)
 app.use('/api/admins/teachersalary', adminteachersalaryRoutes)
 app.use('/api/admins/setting', adminSettingRoute)
 app.use('/api/parents/meeting', parentRoutes)
+app.use("/api/admins/timetable",timeTableRoute)
 // app.use('/v1/admin/notification', adminNotificationRouter)
 
 // Student routes
@@ -90,6 +93,7 @@ app.use('/api/student', studentRoutes)
 app.use("/api/teacher",teacherAttendanceRoute)
 app.use("/api/teacher",teacherProfileRoute)
 app.use("/api/teacher",teacherAssignmentRoute)
+
 // 404 Handler
 app.use(function (req, res) {
   res.status(404).json({

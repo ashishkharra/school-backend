@@ -6,23 +6,14 @@ const studentController = require('../../controllers/students/student.controller
 
 
 router.get('/dashboard', [verifyToken], studentController.studentDashboard);
-router.get(
-  "/view/attendance", [verifyToken],
-  studentController.viewAttendanceByClass
-);
 
-router.get(
-  "/view/profile", [verifyToken],
-  studentController.viewProfile
-);
+router.get("/view/attendance", [verifyToken],studentController.viewAttendanceByClass);
 
-router.get("/assignments/:assignmentId/download", [verifyToken],
-  studentController.downloadAssignment
-);
+router.get("/view/profile", [verifyToken], studentController.viewProfile);
 
-router.post('/update-profile-request', [verifyToken],
-  studentController.requestUpdateProfile
-);
+router.get("/assignments/:assignmentId/download", [verifyToken],studentController.downloadAssignment);
+
+router.post('/update-profile-request', [verifyToken],studentController.requestUpdateProfile);
 
 router.post("/submit/:assignmentId", validationRule.validate('submissions'), uploadSubmission.single("file"), studentController.submitAssignment);
 

@@ -11,7 +11,6 @@ router.post(
     feeController.createFeeStructure
 )
 
-
     .post(
         "/student",
         [verifyToken],

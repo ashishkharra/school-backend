@@ -3,6 +3,7 @@ const Salary = require('../../models/admin/salary.schema');
 const Teacher = require('../../models/teacher/teacher.schema');
 const { generateInvoicePDF } = require("../../helpers/generateinvoice"); // ✅ Added import
 const generateInvoice = require('../../helpers/generateinvoice');
+const { default: mongoose } = require('mongoose');
 
 
 module.exports ={
@@ -77,11 +78,17 @@ module.exports ={
 //       invoicePath: pdfPath, // return for frontend use
 //     };
 //   },
+
+
   generateSalary : async ({ teacherId, month, leaves = 0 }) => {
-  if (!teacherId || !month) throw new Error('teacherId and month are required');
+  if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+    return { success : false, message : "TEACHER_ID_NOT_VALID"}
+  }
 
   const teacher = await Teacher.findById(teacherId);
-  if (!teacher) throw new Error('Teacher not found');
+  if (!teacher) {
+    return { success : false, message : "TEACHER_NOT_FOUND"}
+  }
 
   const salaryInfo = teacher.salaryInfo || {};
   const basic = salaryInfo.basic || 0;
