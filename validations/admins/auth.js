@@ -37,6 +37,46 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
+
+    case 'edit-profile': {
+      return [
+        body('firstName')
+          .optional()
+          .isString()
+          .withMessage('First name must be a string')
+          .notEmpty()
+          .withMessage('First name is required'),
+
+        body('lastName')
+          .optional()
+          .isString()
+          .withMessage('Last name must be a string')
+          .notEmpty()
+          .withMessage('Last name is required'),
+
+        body('contact')
+          .optional()
+          .isMobilePhone('any')
+          .withMessage('Invalid contact number'),
+
+        body('region')
+          .optional()
+          .isString()
+          .withMessage('Region must be a string'),
+
+        body('address')
+          .optional()
+          .isString()
+          .withMessage('Address must be a string'),
+
+        body('email')
+          .optional()
+          .isEmail()
+          .withMessage('Invalid email address'),
+
+        validatorMiddleware
+      ];
+    }
     case 'adminSetting': {
       return [
         body("schoolName")
@@ -171,48 +211,48 @@ module.exports.validate = (method) => {
         body('qualifications.*').optional().isString(),
 
         // Email
-        body('email')
-          .notEmpty()
-          .withMessage('EMAIL_EMPTY')
-          .isEmail()
-          .withMessage('EMAIL_VALID'),
+        // body('email')
+        //   .notEmpty()
+        //   .withMessage('EMAIL_EMPTY')
+        //   .isEmail()
+        //   .withMessage('EMAIL_VALID'),
 
-        // Password
-        body('password')
-          .notEmpty()
-          .withMessage('PASSWORD_EMPTY')
-          .isLength({ min: 6 })
-          .withMessage('PASSWORD_MIN')
-          .isLength({ max: 30 })
-          .withMessage('PASSWORD_MAX'),
+        // // Password
+        // body('password')
+        //   .notEmpty()
+        //   .withMessage('PASSWORD_EMPTY')
+        //   .isLength({ min: 6 })
+        //   .withMessage('PASSWORD_MIN')
+        //   .isLength({ max: 30 })
+        //   .withMessage('PASSWORD_MAX'),
 
-        // Phone
-        body('phone')
-          .notEmpty()
-          .withMessage('PHONE_EMPTY')
-          .isMobilePhone()
-          .withMessage('PHONE_VALID'),
+        // // Phone
+        // body('phone')
+        //   .notEmpty()
+        //   .withMessage('PHONE_EMPTY')
+        //   .isMobilePhone('any')
+        //   .withMessage('PHONE_VALID'),
 
-        // Date of Birth
-        body('dateOfBirth')
-          .notEmpty()
-          .withMessage('DOB_EMPTY')
-          .isISO8601()
-          .withMessage('DOB_VALID'),
+        // // Date of Birth
+        // body('dob')
+        //   .notEmpty()
+        //   .withMessage('DOB_EMPTY')
+        //   .isISO8601()
+        //   .withMessage('DOB_VALID'),
 
-        // Gender
-        body('gender')
-          .notEmpty()
-          .withMessage('GENDER_EMPTY')
-          .custom((value) =>
-            ['male', 'female', 'other'].includes(value.toLowerCase())
-          )
-          .withMessage('GENDER_INVALID')
-          .bail()
-          .customSanitizer(
-            (value) =>
-              value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-          ),
+        // // Gender
+        // body('gender')
+        //   .notEmpty()
+        //   .withMessage('GENDER_EMPTY')
+        //   .custom((value) =>
+        //     ['male', 'female', 'other'].includes(value.toLowerCase())
+        //   )
+        //   .withMessage('GENDER_INVALID')
+        //   .bail()
+        //   .customSanitizer(
+        //     (value) =>
+        //       value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+        //   ),
 
         // Address (object)
         body('address')
@@ -222,7 +262,7 @@ module.exports.validate = (method) => {
           .withMessage('ADDRESS_OBJECT_REQUIRED')
           .bail()
           .custom(
-            (addr) => addr.street && addr.city && addr.state && addr.zipCode
+            (addr) => addr.street && addr.city && addr.state && addr.zip
           )
           .withMessage('ADDRESS_INCOMPLETE'),
 
@@ -257,10 +297,10 @@ module.exports.validate = (method) => {
           .withMessage('INVALID_CLASS_ID'),
 
         // Subjects handled
-        body('subjectsHandled.*.classId')
-          .optional()
-          .custom(value => mongoose.Types.ObjectId.isValid(value))
-          .withMessage('INVALID_CLASS_ID'),
+        // body('subjectsHandled.*.classId')
+        //   .optional()
+        //   .custom(value => value.type === String)
+        //   .withMessage('INVALID_CLASS_ID'),
 
         // Salary
         body('salaryInfo').optional().isObject(),
@@ -268,13 +308,6 @@ module.exports.validate = (method) => {
         body('salaryInfo.allowances').optional().isNumeric(),
         body('salaryInfo.deductions').optional().isNumeric(),
         body('salaryInfo.netSalary').optional().isNumeric(),
-
-        // Address
-        body('address').optional().isObject(),
-        body('address.street').optional().isString(),
-        body('address.city').optional().isString(),
-        body('address.state').optional().isString(),
-        body('address.zip').optional().isString(),
 
         // Emergency Contact
         body('emergencyContact').optional().isObject(),
@@ -752,90 +785,142 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ];
     }
-case 'assignGradeOrMarks': {
-  return [
-    // ✅ classId: required, must be a valid MongoDB ObjectId
-    body('classId')
-      .notEmpty()
-      .withMessage('CLASS_ID_EMPTY')
-      .matches(/^[0-9a-fA-F]{24}$/)
-      .withMessage('CLASS_ID_INVALID'),
+    case 'assignGradeOrMarks': {
+      return [
+        // ✅ classId: required, must be a valid MongoDB ObjectId
+        body('classId')
+          .notEmpty()
+          .withMessage('CLASS_ID_EMPTY')
+          .matches(/^[0-9a-fA-F]{24}$/)
+          .withMessage('CLASS_ID_INVALID'),
 
-    // ✅ gradesData: must be a non-empty array
-    body('gradesData')
-      .isArray({ min: 1 })
-      .withMessage('GRADES_DATA_ARRAY_REQUIRED'),
+        // ✅ gradesData: must be a non-empty array
+        body('gradesData')
+          .isArray({ min: 1 })
+          .withMessage('GRADES_DATA_ARRAY_REQUIRED'),
 
-    // ✅ Each element in gradesData should contain a valid studentId
-    body('gradesData.*.studentId')
-      .notEmpty()
-      .withMessage('STUDENT_ID_EMPTY')
-      .matches(/^[0-9a-fA-F]{24}$/)
-      .withMessage('STUDENT_ID_INVALID'),
+        // ✅ Each element in gradesData should contain a valid studentId
+        body('gradesData.*.studentId')
+          .notEmpty()
+          .withMessage('STUDENT_ID_EMPTY')
+          .matches(/^[0-9a-fA-F]{24}$/)
+          .withMessage('STUDENT_ID_INVALID'),
 
-    // ✅ marks: optional but if present, must be a number between 0 and 100
-    body('gradesData.*.marks')
-      .optional()
-      .isNumeric()
-      .withMessage('MARKS_NUMERIC')
-      .custom((value) => value >= 0 && value <= 100)
-      .withMessage('MARKS_RANGE_INVALID'),
+        // ✅ marks: optional but if present, must be a number between 0 and 100
+        body('gradesData.*.marks')
+          .optional()
+          .isNumeric()
+          .withMessage('MARKS_NUMERIC')
+          .custom((value) => value >= 0 && value <= 100)
+          .withMessage('MARKS_RANGE_INVALID'),
 
-    // ✅ grade: optional but must be one of A, B, C, D, F
-    body('gradesData.*.grade')
-      .optional()
-      .isString()
-      .withMessage('GRADE_STRING')
-      .isIn(['A', 'B', 'C', 'D', 'F'])
-      .withMessage('GRADE_INVALID'),
+        // ✅ grade: optional but must be one of A, B, C, D, F
+        body('gradesData.*.grade')
+          .optional()
+          .isString()
+          .withMessage('GRADE_STRING')
+          .isIn(['A', 'B', 'C', 'D', 'F'])
+          .withMessage('GRADE_INVALID'),
 
-    // ✅ remark: optional, should be a string (limit for length)
-    body('gradesData.*.remark')
-      .optional()
-      .isString()
-      .withMessage('REMARK_STRING')
-      .isLength({ max: 200 })
-      .withMessage('REMARK_MAX_LENGTH'),
+        // ✅ remark: optional, should be a string (limit for length)
+        body('gradesData.*.remark')
+          .optional()
+          .isString()
+          .withMessage('REMARK_STRING')
+          .isLength({ max: 200 })
+          .withMessage('REMARK_MAX_LENGTH'),
 
-    validatorMiddleware
-  ]
-}
-case 'updateGrade': {
-  return [
-    // ✅ gradeId: must exist and be a valid ObjectId (from req.params)
-    param('gradeId')
-      .notEmpty()
-      .withMessage('GRADE_ID_EMPTY')
-      .matches(/^[0-9a-fA-F]{24}$/)
-      .withMessage('GRADE_ID_INVALID'),
+        validatorMiddleware
+      ]
+    }
+    case 'updateGrade': {
+      return [
+        // ✅ gradeId: must exist and be a valid ObjectId (from req.params)
+        param('gradeId')
+          .notEmpty()
+          .withMessage('GRADE_ID_EMPTY')
+          .matches(/^[0-9a-fA-F]{24}$/)
+          .withMessage('GRADE_ID_INVALID'),
 
-    // ✅ marks: optional but must be numeric and within range 0–100
-    body('marks')
-      .optional()
-      .isNumeric()
-      .withMessage('MARKS_NUMERIC')
-      .custom((value) => value >= 0 && value <= 100)
-      .withMessage('MARKS_RANGE_INVALID'),
+        // ✅ marks: optional but must be numeric and within range 0–100
+        body('marks')
+          .optional()
+          .isNumeric()
+          .withMessage('MARKS_NUMERIC')
+          .custom((value) => value >= 0 && value <= 100)
+          .withMessage('MARKS_RANGE_INVALID'),
 
-    // ✅ grade: optional but must be one of A–F
-    body('grade')
-      .optional()
-      .isString()
-      .withMessage('GRADE_STRING')
-      .isIn(['A', 'B', 'C', 'D', 'F'])
-      .withMessage('GRADE_INVALID'),
+        // ✅ grade: optional but must be one of A–F
+        body('grade')
+          .optional()
+          .isString()
+          .withMessage('GRADE_STRING')
+          .isIn(['A', 'B', 'C', 'D', 'F'])
+          .withMessage('GRADE_INVALID'),
 
-    // ✅ remark: optional, must be a string with length limit
-    body('remark')
-      .optional()
-      .isString()
-      .withMessage('REMARK_STRING')
-      .isLength({ max: 200 })
-      .withMessage('REMARK_MAX_LENGTH'),
+        // ✅ remark: optional, must be a string with length limit
+        body('remark')
+          .optional()
+          .isString()
+          .withMessage('REMARK_STRING')
+          .isLength({ max: 200 })
+          .withMessage('REMARK_MAX_LENGTH'),
 
-    validatorMiddleware
-  ]
-}
+        validatorMiddleware
+      ]
+    }
+
+    case 'assignClass': {
+      return [
+        body().isArray({ min: 1 }).withMessage("Body must be an array of slots"),
+        body('*.teacherId').notEmpty().withMessage('teacherId is required'),
+        body('*.classId').notEmpty().withMessage('classId is required'),
+        body('*.subjectId').notEmpty().withMessage('subjectId is required'),
+        body('*.day').isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
+          .withMessage('day must be a valid weekday'),
+        body('*.period').isInt({ min: 1 }).withMessage('period must be a number'),
+        body('*.startTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('startTime must be in hh:mm AM/PM format'),
+        body('*.endTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('endTime must be in hh:mm AM/PM format'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'checkSlot': {
+      return [
+        body('teacherId').notEmpty().withMessage('teacherId is required'),
+        body('classId').notEmpty().withMessage('classId is required'),
+        body('day').isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
+          .withMessage('day must be a valid weekday'),
+        body('startTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('startTime must be in hh:mm AM/PM format'),
+        body('endTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('endTime must be in hh:mm AM/PM format'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'updateAssign': {
+      return [
+        param('classId').notEmpty().withMessage('classId is required'),
+        body('slots').isArray({ min: 1 }).withMessage('slots must be an array'),
+        body('slots.*.teacherId').optional().notEmpty().withMessage('teacherId cannot be empty if provided'),
+        body('slots.*.subjectId').optional().notEmpty().withMessage('subjectId cannot be empty if provided'),
+        body('slots.*.day').optional().isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
+          .withMessage('day must be a valid weekday if provided'),
+        body('slots.*.period').optional().isInt({ min: 1 }).withMessage('period must be a number if provided'),
+        body('slots.*.startTime').optional().matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('startTime must be in hh:mm AM/PM format if provided'),
+        body('slots.*.endTime').optional().matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
+          .withMessage('endTime must be in hh:mm AM/PM format if provided'),
+
+        validatorMiddleware
+
+      ]
+    }
     //---------
     case 'registerStudent': {
       return [
@@ -869,10 +954,10 @@ case 'updateGrade': {
           .optional()
           .isString()
           .withMessage('PARENT_OCCUPATION_INVALID'),
-        body('parents.*.phone')
-          .optional()
-          .isMobilePhone('any')
-          .withMessage('PARENT_PHONE_INVALID'),
+        // body('parents.*.phone')
+        //   .optional()
+        //   .isMobilePhone('any')
+        //   .withMessage('PARENT_PHONE_INVALID'),
         body('parents.*.email')
           .optional()
           .isEmail()
@@ -901,18 +986,18 @@ case 'updateGrade': {
           .withMessage('EMERGENCY_ADDRESS_INVALID'),
 
         // Address
-        // body("address.street").optional().isString().withMessage("STREET_INVALID"),
-        // body("address.city").optional().isString().withMessage("CITY_INVALID"),
-        // body("address.state").optional().isString().withMessage("STATE_INVALID"),
-        // body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
-        // body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
+        body("address.street").optional().isString().withMessage("STREET_INVALID"),
+        body("address.city").optional().isString().withMessage("CITY_INVALID"),
+        body("address.state").optional().isString().withMessage("STATE_INVALID"),
+        body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
+        body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
 
         // Contact
         body('email').optional().isEmail().withMessage('EMAIL_INVALID'),
-        body('phone')
-          .optional()
-          .isMobilePhone('any')
-          .withMessage('PHONE_INVALID'),
+        // body('phone')
+        //   .optional()
+        //   .isMobilePhone('any')
+        //   .withMessage('PHONE_INVALID'),
 
         // Class & Academic Year
         body('classId').notEmpty().isMongoId().withMessage('CLASS_ID_INVALID'),
@@ -1402,8 +1487,6 @@ case 'updateGrade': {
 
     case 'addPayment': {
       return [
-        body('transactionId').notEmpty().withMessage('TRANSACTION_ID_REQUIRED'),
-
         body('amountPaid')
           .notEmpty()
           .withMessage('AMOUNT_PAID_REQUIRED')
@@ -1421,17 +1504,6 @@ case 'updateGrade': {
 
             return true
           }),
-
-        body('mode')
-          .notEmpty()
-          .withMessage('PAYMENT_MODE_REQUIRED')
-          .isIn(['Cash', 'Card', 'UPI', 'BankTransfer', 'Cheque'])
-          .withMessage('PAYMENT_MODE_INVALID'),
-
-        body('status')
-          .optional()
-          .isIn(['Success', 'Failed', 'Pending'])
-          .withMessage('PAYMENT_STATUS_INVALID'),
 
         body('remarks')
           .optional()

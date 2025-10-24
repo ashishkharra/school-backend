@@ -349,15 +349,17 @@ const studentService = {
     getStudentDashboard: async (studentId) => {
         try {
             if (!mongoose.Types.ObjectId.isValid(studentId)) {
-                return { success: false, message: "STUDENT_ID_NOT_VALID" }
+                return { success: false, message: "STUDENT_ID_NOT_VALID" };
             }
 
             const pipeline = studentDashboardPipeline(studentId);
             const result = await Submission.aggregate(pipeline);
 
             if (result.length === 0) {
-                return { success: false, message: "STUDENT_NOT_FOUND" }
+                return { success: false, message: "STUDENT_NOT_FOUND" };
             }
+
+            const data = result;
 
             const overall = data.reduce(
                 (acc, subj) => {
@@ -368,13 +370,77 @@ const studentService = {
                     acc.totalLate += subj.lateSubmissions;
                     return acc;
                 },
-                { totalMarksObtained: 0, totalMaxMarks: 0, totalAssignments: 0, totalSubmitted: 0, totalLate: 0 }
+                {
+                    totalMarksObtained: 0,
+                    totalMaxMarks: 0,
+                    totalAssignments: 0,
+                    totalSubmitted: 0,
+                    totalLate: 0,
+                }
             );
 
             const overallPercentage = overall.totalMaxMarks
                 ? (overall.totalMarksObtained / overall.totalMaxMarks) * 100
                 : 0;
 
+            const gradeData = await Submission.aggregate([
+                { $unwind: "$grades" },
+                { $match: { "grades.student": new mongoose.Types.ObjectId(studentId) } },
+                {
+                    $lookup: {
+                        from: "assignments",
+                        localField: "grades.assignment",
+                        foreignField: "_id",
+                        as: "assignmentInfo",
+                    },
+                },
+                { $unwind: "$assignmentInfo" },
+                {
+                    $project: {
+                        _id: 0,
+                        assignmentId: "$grades.assignment",
+                        subjectId: "$assignmentInfo.subject",
+                        assignmentTitle: "$assignmentInfo.title",
+                        marks: "$grades.marks",
+                        grade: "$grades.grade",
+                        remark: "$grades.remark",
+                        status: "$grades.status",
+                        createdAt: "$grades.createdAt",
+                    },
+                },
+                { $sort: { createdAt: -1 } },
+            ]);
+
+            const subjectGrades = await Submission.aggregate([
+                { $unwind: "$grades" },
+                { $match: { "grades.student": new mongoose.Types.ObjectId(studentId) } },
+                {
+                    $lookup: {
+                        from: "assignments",
+                        localField: "grades.assignment",
+                        foreignField: "_id",
+                        as: "assignmentInfo",
+                    },
+                },
+                { $unwind: "$assignmentInfo" },
+                {
+                    $group: {
+                        _id: "$assignmentInfo.subject",
+                        averageMarks: { $avg: "$grades.marks" },
+                        totalAssignments: { $sum: 1 },
+                        graded: {
+                            $sum: {
+                                $cond: [{ $eq: ["$grades.status", "Graded"] }, 1, 0],
+                            },
+                        },
+                        pending: {
+                            $sum: {
+                                $cond: [{ $eq: ["$grades.status", "Submitted"] }, 1, 0],
+                            },
+                        },
+                    },
+                },
+            ]);
 
             return {
                 success: true,
@@ -383,16 +449,20 @@ const studentService = {
                     subjects: data,
                     overall: {
                         ...overall,
-                        overallPercentage: Number(overallPercentage.toFixed(2))
-                    }
-                }
+                        overallPercentage: Number(overallPercentage.toFixed(2)),
+                    },
+                    grades: {
+                        recent: gradeData.slice(0, 5),
+                        subjects: subjectGrades,
+                    },
+                },
             };
-
         } catch (error) {
             console.error("Error in getStudentDashboard service:", error);
             return { success: false, message: "SERVER_ERROR" };
         }
     }
+
 }
 
 module.exports = studentService

@@ -1734,6 +1734,10 @@
     "en": "Teacher id is not valid",
     "ar": ""
   },
+  "PHONE_INVALID": {
+    "en": "Phone number must be valid",
+    "ar": ""
+  },
   "FEE_ALREADY_ASSIGNED": {
     "en": "Fee already assigned to this student for this academic year",
     "ar": ""
@@ -1922,7 +1926,7 @@
     "en": "Class ID is required",
     "ar": ""
   },
-  "SECTION_REQUIRED":  {
+  "SECTION_REQUIRED": {
     "en": "Section is required",
     "ar": ""
   },
@@ -2101,9 +2105,8 @@
   "NOTES_INVALID": {
     "en": "Notes is invalid",
     "ar": ""
-  }
-  ,
-   "VALID_CLASS_ID_REQUIRED": {
+  },
+  "VALID_CLASS_ID_REQUIRED": {
     "en": "Valid classId is required",
     "ar": ""
   },
@@ -2131,8 +2134,6 @@
     "en": "Grade deleted successfully",
     "ar": ""
   },
-
-  
   "UNAUTHORIZED_ACCESS": {
     "en": "Unauthorized access",
     "ar": ""
@@ -2173,23 +2174,22 @@
     "en": "File must be string",
     "ar": ""
   },
-  "SALARY_GENERATED_SUCCESSFULLY":{
-     "en": "salary generated",
+  "SALARY_GENERATED_SUCCESSFULLY": {
+    "en": "salary generated",
     "ar": ""
   },
-  "SALARY_GENERATION_FAILED":{
-     "en": "salary generated failed",
+  "SALARY_GENERATION_FAILED": {
+    "en": "salary generated failed",
     "ar": ""
   },
-  "SALARIES_FETCHED_SUCCESSFULLY":{
-  "en": "salary fetched failed",
+  "SALARIES_FETCHED_SUCCESSFULLY": {
+    "en": "salary fetched failed",
     "ar": ""
   },
-  "FETCH_SALARIES_FAILED":{
-  "en": "salary fetched failed",
+  "FETCH_SALARIES_FAILED": {
+    "en": "salary fetched failed",
     "ar": ""
   },
-
   "TEACHER_NOT_FOUND": {
     "en": "Teacher not found",
     "ar": ""
@@ -2198,32 +2198,26 @@
     "en": "Invalid class ID",
     "ar": ""
   },
- 
   "INVALID_SUBJECT": {
     "en": "Invalid subject",
     "ar": ""
   },
- 
   "SUBJECT_NOT_ASSIGNED_TO_TEACHER": {
     "en": "Subject not assigned to this teacher",
     "ar": ""
   },
-
   "ASSIGNMENT_UPDATED_SUCCESSFULLY": {
     "en": "Assignment updated successfully",
     "ar": ""
   },
-
   "ASSIGNMENTS_FETCHED_SUCCESSFULLY": {
     "en": "Assignments fetched successfully",
     "ar": ""
   },
-
   "NO_SUBMISSIONS_FOUND_FOR_THIS_CLASS": {
     "en": "No submissions found for this class",
     "ar": ""
   },
-
   "GRADES_UPDATED_SUCCESSFULLY": {
     "en": "Grades updated successfully",
     "ar": ""
@@ -2236,12 +2230,10 @@
     "en": "Failed to fetch grades",
     "ar": ""
   },
- 
   "INVALID_ATTENDANCE_ID": {
     "en": "Invalid attendance ID",
     "ar": ""
   },
-
   "NO_VALID_STUDENTS": {
     "en": "No valid students found in this class",
     "ar": ""
@@ -2254,12 +2246,11 @@
     "en": "Invalid month format. Use YYYY-MM format",
     "ar": ""
   },
-
   "FETCH_ATTENDANCE_FAILED": {
     "en": "Failed to fetch attendance records",
     "ar": ""
   },
-    "TEACHER_REGISTERED_SUCCESSFULLY": {
+  "TEACHER_REGISTERED_SUCCESSFULLY": {
     "en": "Teacher registered successfully",
     "ar": ""
   },
@@ -2267,7 +2258,6 @@
     "en": "Teacher registration failed",
     "ar": ""
   },
-
   "TEACHER_SOFT_DELETED": {
     "en": "Teacher soft deleted successfully",
     "ar": ""
@@ -2352,11 +2342,57 @@
     "en": "Failed to update attendance",
     "ar": ""
   },
- 
   "FETCH_PROFILE_FAILED": {
     "en": "Failed to fetch teacher profile",
     "ar": ""
+  },
+  "TIMETABLE_ASSIGNED": {
+    "en": "Period assigned to teacher",
+    "ar": ""
+  },
+  "TEACHER_ALREADY_ASSIGNED_IN_THIS_SLOT_IN_CLASS": {
+    "en": "Teacher is already assigned in this slot",
+    "ar": ""
+  },
+  "BREAK_REQUIRED_BETWEEN_PERIOD 5 mins)": {
+    "en": "Can not assign in 5 min break"
+  },
+  "BREAK_REQUIRED_BETWEEN_PERIOD 10 mins)": {
+    "en": "Can not assign in 10 min break"
+  },
+  "SLOT_IS_OVERLAPPING_WITH_LUNCH_BREAK": {
+    "en": "This slot overlapping lunch break",
+    "ar": ""
+  },
+  "SLOT_MUST_BE_WITHIN_SCHOOL_HOUR": {
+    "en": "Slot must be within school hour",
+    "ar": ""
+  },
+  "SET_UP_SCHOOL_SETTING": {
+    "en": "Set up school setting",
+    "ar": ""
+  },
+  "TIMETABLE_UPDATED_SUCCESSFULLY": {
+    "en": "Time table updated"
+  },
+  "TEACHER_ALREADY_ASSIGNED": {
+    "en": "Teacher is already assigned in this slot"
+  },
+  "SLOT_AVAILABLE": {
+    "en": "Slot is available"
+  },
+  "INVALID_START_OR_END_TIME": {
+    "en": "Invalid start and end time"
+  },
+  "TIMETABLE_ASSIGNED_SUCCESSFULLY": {
+    "en": "Timetable assigned"
+  },
+  "Invalid value": {
+    "en": "Invalid value",
+    "ar": ""
+  },
+  "TIME_TABLE_RESET_SUCCESSFULLY": {
+    "en": "Time table reset successfully",
+    "ar": ""
   }
-
 }
-

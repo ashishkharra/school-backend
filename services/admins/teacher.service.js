@@ -352,7 +352,7 @@ const dataBody = {
       TEACHER_EMAIL: teacherData.email  // required by sendEmailWithSlug
     };
 
-    const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody);
+    const mailSent = await sendEmail('assign-class-teacher', dataBody);
     if (!mailSent) return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass };
 
       return {
