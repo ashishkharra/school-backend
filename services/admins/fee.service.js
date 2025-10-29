@@ -12,6 +12,7 @@ module.exports = {
             const { classIdentifier } = data;
 
             let existingFee = await FeeStructure.findOne({ classIdentifier });
+            console.log('existing 0000=-===== ', existingFee)
             if (existingFee) {
                 return {
                     success: false,

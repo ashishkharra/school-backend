@@ -1156,6 +1156,30 @@ module.exports = {
     next();
   },
 
+  // parseMultipartJSONFields: (fields) => (req, res, next) => {
+  //   if (!req.body) req.body = {};
+
+  //   for (const field of fields) {
+  //     if (req.body[field] && typeof req.body[field] === 'string') {
+  //       try {
+  //         let parsed = JSON.parse(req.body[field]);
+
+  //         if (typeof parsed === 'string' && (parsed.startsWith('[') || parsed.startsWith('{'))) {
+  //           parsed = JSON.parse(parsed);
+  //         }
+
+  //         req.body[field] = parsed;
+  //       } catch (err) {
+  //         return res.status(400).json({
+  //           success: false,
+  //           message: `${field.toUpperCase()}_INVALID_JSON`
+  //         });
+  //       }
+  //     }
+  //   }
+  //   next();
+  // },
+
   createZoomMeeting: async ({ topic, start_time }) => {
     const result = await generateZoomToken();
     const token = result.zoom_token;

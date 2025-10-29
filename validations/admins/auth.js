@@ -9,14 +9,15 @@ module.exports.validate = (method) => {
   switch (method) {
     case 'adminLogin': {
       return [
-        body('email').notEmpty().withMessage('EMAIL_EMPTY'),
-        body('password').notEmpty().withMessage('PASSWORD_EMPTY'),
+        body('email').trim().notEmpty().withMessage('EMAIL_EMPTY'),
+        body('password').trim().notEmpty().withMessage('PASSWORD_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'forgot-password': {
       return [
         body('email')
+          .trim()
           .notEmpty()
           .withMessage('EMAIL_EMPTY')
           .isEmail()
@@ -26,14 +27,14 @@ module.exports.validate = (method) => {
     }
     case 'reset-password': {
       return [
-        body('password').notEmpty().withMessage('PASSWORD_EMPTY'),
+        body('password').trim().notEmpty().withMessage('PASSWORD_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'change-password': {
       return [
-        body('oldPassword').notEmpty().withMessage('OLDPASSWORD_EMPTY'),
-        body('newPassword').notEmpty().withMessage('NEWPASSWORD_EMPTY'),
+        body('oldPassword').trim().notEmpty().withMessage('OLDPASSWORD_EMPTY'),
+        body('newPassword').trim().notEmpty().withMessage('NEWPASSWORD_EMPTY'),
         validatorMiddleware
       ]
     }
@@ -43,6 +44,7 @@ module.exports.validate = (method) => {
         body('firstName')
           .optional()
           .isString()
+          .trim()
           .withMessage('First name must be a string')
           .notEmpty()
           .withMessage('First name is required'),
@@ -50,28 +52,33 @@ module.exports.validate = (method) => {
         body('lastName')
           .optional()
           .isString()
+          .trim()
           .withMessage('Last name must be a string')
           .notEmpty()
           .withMessage('Last name is required'),
 
         body('contact')
           .optional()
+          .trim()
           .isMobilePhone('any')
           .withMessage('Invalid contact number'),
 
         body('region')
           .optional()
           .isString()
+          .trim()
           .withMessage('Region must be a string'),
 
         body('address')
           .optional()
           .isString()
+          .trim()
           .withMessage('Address must be a string'),
 
         body('email')
           .optional()
           .isEmail()
+          .trim()
           .withMessage('Invalid email address'),
 
         validatorMiddleware
@@ -82,6 +89,7 @@ module.exports.validate = (method) => {
         body("schoolName")
           .optional()
           .isString()
+          .trim()
           .withMessage("SCHOOL_NAME_MUST_BE_STRING")
           .isLength({ min: 2, max: 100 })
           .withMessage("SCHOOL_NAME_LENGTH_INVALID"),
@@ -90,18 +98,18 @@ module.exports.validate = (method) => {
           .optional()
           .isObject()
           .withMessage("ADDRESS_MUST_BE_OBJECT"),
-        body("address.street").optional().isString(),
-        body("address.city").optional().isString(),
-        body("address.state").optional().isString(),
-        body("address.zip").optional().isString(),
-        body("address.country").optional().isString(),
+        body("address.street").optional().isString().trim(),
+        body("address.city").optional().isString().trim(),
+        body("address.state").optional().isString().trim(),
+        body("address.zip").optional().isString().trim(),
+        body("address.country").optional().isString().trim(),
 
         body("contact")
           .optional()
           .isObject()
           .withMessage("CONTACT_MUST_BE_OBJECT"),
-        body("contact.phone").optional().isString(),
-        body("contact.email").optional().isEmail().withMessage("CONTACT_EMAIL_INVALID"),
+        body("contact.phone").optional().isString().trim(),
+        body("contact.email").optional().isEmail().trim().withMessage("CONTACT_EMAIL_INVALID"),
         body("contact.website").optional().isString(),
 
         body("schoolTiming")
@@ -110,24 +118,29 @@ module.exports.validate = (method) => {
           .withMessage("SCHOOL_TIMING_MUST_BE_OBJECT"),
         body("schoolTiming.startTime")
           .optional()
+          .trim()
           .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
           .withMessage("SCHOOL_START_TIME_INVALID"),
         body("schoolTiming.endTime")
           .optional()
+          .trim()
           .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
           .withMessage("SCHOOL_END_TIME_INVALID"),
 
         body("periods").optional().isObject().withMessage("PERIODS_MUST_BE_OBJECT"),
         body("periods.totalPeriods")
           .optional()
+          .trim()
           .isInt({ min: 1 })
           .withMessage("TOTAL_PERIODS_INVALID"),
         body("periods.periodDuration")
           .optional()
+          .trim()
           .isInt({ min: 1 })
           .withMessage("PERIOD_DURATION_INVALID"),
         body("periods.breakDuration")
           .optional()
+          .trim()
           .isInt({ min: 0 })
           .withMessage("BREAK_DURATION_INVALID"),
 
@@ -135,22 +148,63 @@ module.exports.validate = (method) => {
         body("periods.lunchBreak.isEnabled").optional().isBoolean(),
         body("periods.lunchBreak.time")
           .optional()
+          .trim()
           .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
           .withMessage("LUNCH_BREAK_TIME_INVALID"),
         body("periods.lunchBreak.duration")
           .optional()
+          .trim()
           .isInt({ min: 0 })
           .withMessage("LUNCH_BREAK_DURATION_INVALID"),
 
         body("academicSession").optional().isObject().withMessage("ACADEMIC_SESSION_MUST_BE_OBJECT"),
-        body("academicSession.startDate").optional().isISO8601().toDate(),
-        body("academicSession.endDate").optional().isISO8601().toDate(),
-        body("academicSession.currentSession").optional().isString(),
+        body("academicSession.startDate").optional().isISO8601().toDate().trim(),
+        body("academicSession.endDate").optional().isISO8601().toDate().trim(),
+        body("academicSession.currentSession").optional().isString().trim(),
 
         body("status")
           .optional()
+          .trim()
           .isIn(["active", "inactive"])
           .withMessage("STATUS_INVALID"),
+
+        body("socialUrl")
+          .optional()
+          .isArray()
+          .withMessage("SOCIAL_URL_MUST_BE_ARRAY")
+          .bail()
+          .custom((arr) => {
+            for (const url of arr) {
+              if (typeof url !== "string") {
+                throw new Error("EACH_SOCIAL_URL_MUST_BE_STRING");
+              }
+
+              try {
+                new URL(url);
+              } catch {
+                throw new Error("INVALID_SOCIAL_URL_FORMAT");
+              }
+
+              const domainPattern = /\.[a-z]{2,}$/i;
+              if (!domainPattern.test(url)) {
+                throw new Error("SOCIAL_URL_MUST_HAVE_VALID_DOMAIN");
+              }
+            }
+            return true;
+          }),
+
+
+        body('tollFree')
+          .optional()
+          .isString()
+          .trim()
+          .withMessage('TOLL_FREE_MUST_BE_STRING'),
+
+        body("faqs")
+          .optional()
+          .isArray()
+          .withMessage("FAQS_MUST_BE_ARRAY")
+          .bail(),
 
         validatorMiddleware
       ]
@@ -188,8 +242,37 @@ module.exports.validate = (method) => {
 
         body('status')
           .optional()
+          .trim()
           .isIn(['active', 'inactive'])
           .withMessage('STATUS_INVALID'),
+
+        body("socialUrl")
+          .optional()
+          .isArray()
+          .withMessage("SOCIAL_URL_MUST_BE_ARRAY")
+          .bail()
+          .custom((arr) => {
+            for (const url of arr) {
+              if (typeof url !== "string") {
+                throw new Error("EACH_SOCIAL_URL_MUST_BE_STRING");
+              }
+
+              // ✅ Check if valid URL
+              try {
+                new URL(url);
+              } catch {
+                throw new Error("INVALID_SOCIAL_URL_FORMAT");
+              }
+
+              // ✅ Ensure domain has a TLD (.com, .in, .org, etc.)
+              const domainPattern = /\.[a-z]{2,}$/i;
+              if (!domainPattern.test(url)) {
+                throw new Error("SOCIAL_URL_MUST_HAVE_VALID_DOMAIN");
+              }
+            }
+            return true;
+          }),
+
 
         validatorMiddleware
       ]
@@ -197,18 +280,18 @@ module.exports.validate = (method) => {
     //---------------------
     case 'registerTeacher': {
       return [
-        body('name').isString().notEmpty().withMessage('NAME_REQUIRED'),
-        body('email').isEmail().withMessage('VALID_EMAIL_REQUIRED'),
-        body('password').isString().notEmpty().withMessage('PASSWORD_REQUIRED'),
-        body('phone').optional().isString(),
-        body('dob').optional().isISO8601().toDate(),
-        body('gender').isIn(['Male', 'Female', 'Other']).withMessage('GENDER_INVALID'),
-        body('maritalStatus').optional().isIn(['Single', 'Married', 'Divorced', 'Widowed']),
-        body('bloodGroup').optional().isString(),
+        body('name').isString().notEmpty().trim().withMessage('NAME_REQUIRED'),
+        body('email').isEmail().trim().withMessage('VALID_EMAIL_REQUIRED'),
+        body('password').isString().notEmpty().trim().withMessage('PASSWORD_REQUIRED'),
+        body('phone').optional().isString().trim(),
+        body('dob').optional().isISO8601().toDate().trim(),
+        body('gender').isIn(['Male', 'Female', 'Other']).trim().withMessage('GENDER_INVALID'),
+        body('maritalStatus').optional().trim().isIn(['Single', 'Married', 'Divorced', 'Widowed']),
+        body('bloodGroup').optional().trim().isString(),
         body('physicalDisability').optional().isBoolean(),
-        body('disabilityDetails').optional().isString(),
+        body('disabilityDetails').optional().trim().isString(),
         body('qualifications').optional().isArray(),
-        body('qualifications.*').optional().isString(),
+        body('qualifications.*').optional().trim().isString(),
 
         // Email
         // body('email')
@@ -304,16 +387,16 @@ module.exports.validate = (method) => {
 
         // Salary
         body('salaryInfo').optional().isObject(),
-        body('salaryInfo.basic').optional().isNumeric(),
-        body('salaryInfo.allowances').optional().isNumeric(),
-        body('salaryInfo.deductions').optional().isNumeric(),
-        body('salaryInfo.netSalary').optional().isNumeric(),
+        body('salaryInfo.basic').optional().isNumeric().trim(),
+        body('salaryInfo.allowances').optional().isNumeric().trim(),
+        body('salaryInfo.deductions').optional().isNumeric().trim(),
+        body('salaryInfo.netSalary').optional().isNumeric().trim(),
 
         // Emergency Contact
-        body('emergencyContact').optional().isObject(),
-        body('emergencyContact.name').optional().isString(),
-        body('emergencyContact.relationship').optional().isString(),
-        body('emergencyContact.phone').optional().isString(),
+        body('emergencyContact').optional().isObject().trim(),
+        body('emergencyContact.name').optional().isString().trim(),
+        body('emergencyContact.relationship').optional().isString().trim(),
+        body('emergencyContact.phone').optional().isString().trim(),
         validatorMiddleware
       ]
     }
@@ -322,19 +405,20 @@ module.exports.validate = (method) => {
         // Name (optional)
         body('name')
           .optional()
+          .trim()
           .isLength({ min: 2 })
           .withMessage('NAME_LENGTH_MIN')
           .isLength({ max: 50 })
           .withMessage('NAME_LENGTH_MAX'),
 
         // Email (optional)
-        body('email').optional().isEmail().withMessage('EMAIL_VALID'),
+        body('email').optional().isEmail().trim().withMessage('EMAIL_VALID'),
 
         // Phone (optional)
-        body('phone').optional().isMobilePhone().withMessage('PHONE_VALID'),
+        body('phone').optional().isMobilePhone().trim().withMessage('PHONE_VALID'),
 
         // Date of Birth (optional)
-        body('dateOfBirth').optional().isISO8601().withMessage('DOB_VALID'),
+        body('dateOfBirth').optional().isISO8601().trim().withMessage('DOB_VALID'),
 
         // Gender (optional)
         body('gender')
@@ -353,7 +437,7 @@ module.exports.validate = (method) => {
         body('address')
           .optional()
           .isObject()
-          .withMessage('ADDRESS_OBJECT_REQUIRED')
+          .trim().withMessage('ADDRESS_OBJECT_REQUIRED')
           .bail()
           .custom(
             (addr) =>
@@ -409,11 +493,13 @@ module.exports.validate = (method) => {
         body('emergencyContact.name')
           .optional()
           .notEmpty()
+          .trim()
           .withMessage('EMERGENCY_CONTACT_NAME_EMPTY'),
 
         body('emergencyContact.phone')
           .optional()
           .isMobilePhone()
+          .trim()
           .withMessage('EMERGENCY_CONTACT_PHONE_VALID'),
 
         validatorMiddleware
@@ -424,6 +510,7 @@ module.exports.validate = (method) => {
         // classId is required and must be a valid ObjectId
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -431,6 +518,7 @@ module.exports.validate = (method) => {
 
         body('teacherId')
           .notEmpty()
+          .trim()
           .withMessage('TEACHER_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -443,10 +531,11 @@ module.exports.validate = (method) => {
       return [
         body('status')
           .optional()
+          .trim()
           .isIn(['Present', 'Absent'])
           .withMessage('INVALID_STATUS'),
 
-        body('date').optional().isISO8601().withMessage('INVALID_DATE_FORMAT'),
+        body('date').optional().isISO8601().trim().withMessage('INVALID_DATE_FORMAT'),
 
         validatorMiddleware
       ]
@@ -456,6 +545,7 @@ module.exports.validate = (method) => {
         // classId is required and must be a valid ObjectId
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -464,6 +554,7 @@ module.exports.validate = (method) => {
         // teacherId is required and must be a valid ObjectId
         body('teacherId')
           .notEmpty()
+          .trim()
           .withMessage('TEACHER_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -477,6 +568,7 @@ module.exports.validate = (method) => {
         // classId (required, ObjectId)
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -485,6 +577,7 @@ module.exports.validate = (method) => {
         // teacherId (required, ObjectId)
         body('teacherId')
           .notEmpty()
+          .trim()
           .withMessage('TEACHER_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -493,6 +586,7 @@ module.exports.validate = (method) => {
         // section (required, string)
         body('section')
           .notEmpty()
+          .trim()
           .withMessage('SECTION_REQUIRED')
           .isString()
           .withMessage('SECTION_MUST_BE_STRING'),
@@ -500,6 +594,7 @@ module.exports.validate = (method) => {
         // subjectId (required, ObjectId)
         body('subjectId')
           .notEmpty()
+          .trim()
           .withMessage('SUBJECT_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -508,6 +603,7 @@ module.exports.validate = (method) => {
         // startTime (required, string, basic format check e.g., HH:MM AM/PM)
         body('startTime')
           .notEmpty()
+          .trim()
           .withMessage('START_TIME_REQUIRED')
           .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
           .withMessage('START_TIME_INVALID'),
@@ -515,6 +611,7 @@ module.exports.validate = (method) => {
         // endTime (required, string, basic format check)
         body('endTime')
           .notEmpty()
+          .trim()
           .withMessage('END_TIME_REQUIRED')
           .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
           .withMessage('END_TIME_INVALID'),
@@ -527,6 +624,7 @@ module.exports.validate = (method) => {
         // assignmentId (required, in params, ObjectId)
         param('assignmentId')
           .notEmpty()
+          .trim()
           .withMessage('ASSIGNMENT_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -535,36 +633,42 @@ module.exports.validate = (method) => {
         // classId (optional, ObjectId)
         body('classId')
           .optional()
+          .trim()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
           .withMessage('CLASS_ID_INVALID'),
 
         // teacherId (optional, ObjectId)
         body('teacherId')
           .optional()
+          .trim()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
           .withMessage('TEACHER_ID_INVALID'),
 
         // section (optional, string)
         body('section')
           .optional()
+          .trim()
           .isString()
           .withMessage('SECTION_MUST_BE_STRING'),
 
         // subjectId (optional, ObjectId)
         body('subjectId')
           .optional()
+          .trim()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
           .withMessage('SUBJECT_ID_INVALID'),
 
         // startTime (optional, string, format HH:MM AM/PM)
         body('startTime')
           .optional()
+          .trim()
           .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
           .withMessage('START_TIME_INVALID'),
 
         // endTime (optional, string, format HH:MM AM/PM)
         body('endTime')
           .optional()
+          .trim()
           .matches(/^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
           .withMessage('END_TIME_INVALID'),
 
@@ -576,6 +680,7 @@ module.exports.validate = (method) => {
         // teacherId (required, ObjectId)
         body('teacherId')
           .notEmpty()
+          .trim()
           .withMessage('TEACHER_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -584,6 +689,7 @@ module.exports.validate = (method) => {
         // classId (required, ObjectId)
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -600,6 +706,7 @@ module.exports.validate = (method) => {
         // title (required, string)
         body('title')
           .notEmpty()
+          .trim()
           .withMessage('TITLE_REQUIRED')
           .bail()
           .isString()
@@ -608,12 +715,14 @@ module.exports.validate = (method) => {
         // description (optional, string)
         body('description')
           .optional()
+          .trim()
           .isString()
           .withMessage('DESCRIPTION_MUST_BE_STRING'),
 
         // dueDate (required, valid date)
         body('dueDate')
           .notEmpty()
+          .trim()
           .withMessage('DUE_DATE_REQUIRED')
           .bail()
           .custom((value) => !isNaN(new Date(value).getTime()))
@@ -622,6 +731,7 @@ module.exports.validate = (method) => {
         // file (optional, string filename, if using multer)
         body('file')
           .optional()
+          .trim()
           .isString()
           .withMessage('FILE_MUST_BE_STRING'),
 
@@ -633,6 +743,7 @@ module.exports.validate = (method) => {
         // id (required, ObjectId in params)
         param('id')
           .notEmpty()
+          .trim()
           .withMessage('ASSIGNMENT_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -641,18 +752,21 @@ module.exports.validate = (method) => {
         // title (optional, string)
         body('title')
           .optional()
+          .trim()
           .isString()
           .withMessage('TITLE_MUST_BE_STRING'),
 
         // description (optional, string)
         body('description')
           .optional()
+          .trim()
           .isString()
           .withMessage('DESCRIPTION_MUST_BE_STRING'),
 
         // file (optional, string filename if using multer)
         body('file')
           .optional()
+          .trim()
           .isString()
           .withMessage('FILE_MUST_BE_STRING'),
 
@@ -664,6 +778,7 @@ module.exports.validate = (method) => {
         // classId (required, ObjectId)
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -680,6 +795,7 @@ module.exports.validate = (method) => {
         // session (required, number 1|2|3)
         body('session')
           .notEmpty()
+          .trim()
           .withMessage('SESSION_REQUIRED')
           .bail()
           .isInt({ min: 1, max: 3 })
@@ -688,6 +804,7 @@ module.exports.validate = (method) => {
         // takenBy (required, ObjectId)
         body('takenBy')
           .notEmpty()
+          .trim()
           .withMessage('TAKENBY_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -704,6 +821,7 @@ module.exports.validate = (method) => {
         // records[].student (required, ObjectId)
         body('records.*.student')
           .notEmpty()
+          .trim()
           .withMessage('STUDENT_ID_REQUIRED')
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
@@ -712,6 +830,7 @@ module.exports.validate = (method) => {
         // records[].status (required, string)
         body('records.*.status')
           .notEmpty()
+          .trim()
           .withMessage('STATUS_REQUIRED')
           .bail()
           .isString()
@@ -720,6 +839,7 @@ module.exports.validate = (method) => {
         // records[].remarks (optional, string)
         body('records.*.remarks')
           .optional()
+          .trim()
           .isString()
           .withMessage('REMARKS_MUST_BE_STRING'),
 
@@ -771,6 +891,7 @@ module.exports.validate = (method) => {
         // records[].status (required, string)
         body('records.*.status')
           .notEmpty()
+          .trim()
           .withMessage('STATUS_REQUIRED')
           .bail()
           .isString()
@@ -779,6 +900,7 @@ module.exports.validate = (method) => {
         // records[].remarks (optional, string)
         body('records.*.remarks')
           .optional()
+          .trim()
           .isString()
           .withMessage('REMARKS_MUST_BE_STRING'),
 
@@ -790,6 +912,7 @@ module.exports.validate = (method) => {
         // ✅ classId: required, must be a valid MongoDB ObjectId
         body('classId')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_ID_EMPTY')
           .matches(/^[0-9a-fA-F]{24}$/)
           .withMessage('CLASS_ID_INVALID'),
@@ -802,6 +925,7 @@ module.exports.validate = (method) => {
         // ✅ Each element in gradesData should contain a valid studentId
         body('gradesData.*.studentId')
           .notEmpty()
+          .trim()
           .withMessage('STUDENT_ID_EMPTY')
           .matches(/^[0-9a-fA-F]{24}$/)
           .withMessage('STUDENT_ID_INVALID'),
@@ -809,6 +933,7 @@ module.exports.validate = (method) => {
         // ✅ marks: optional but if present, must be a number between 0 and 100
         body('gradesData.*.marks')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('MARKS_NUMERIC')
           .custom((value) => value >= 0 && value <= 100)
@@ -817,6 +942,7 @@ module.exports.validate = (method) => {
         // ✅ grade: optional but must be one of A, B, C, D, F
         body('gradesData.*.grade')
           .optional()
+          .trim()
           .isString()
           .withMessage('GRADE_STRING')
           .isIn(['A', 'B', 'C', 'D', 'F'])
@@ -825,6 +951,7 @@ module.exports.validate = (method) => {
         // ✅ remark: optional, should be a string (limit for length)
         body('gradesData.*.remark')
           .optional()
+          .trim()
           .isString()
           .withMessage('REMARK_STRING')
           .isLength({ max: 200 })
@@ -838,6 +965,7 @@ module.exports.validate = (method) => {
         // ✅ gradeId: must exist and be a valid ObjectId (from req.params)
         param('gradeId')
           .notEmpty()
+          .trim()
           .withMessage('GRADE_ID_EMPTY')
           .matches(/^[0-9a-fA-F]{24}$/)
           .withMessage('GRADE_ID_INVALID'),
@@ -845,6 +973,7 @@ module.exports.validate = (method) => {
         // ✅ marks: optional but must be numeric and within range 0–100
         body('marks')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('MARKS_NUMERIC')
           .custom((value) => value >= 0 && value <= 100)
@@ -853,6 +982,7 @@ module.exports.validate = (method) => {
         // ✅ grade: optional but must be one of A–F
         body('grade')
           .optional()
+          .trim()
           .isString()
           .withMessage('GRADE_STRING')
           .isIn(['A', 'B', 'C', 'D', 'F'])
@@ -861,6 +991,7 @@ module.exports.validate = (method) => {
         // ✅ remark: optional, must be a string with length limit
         body('remark')
           .optional()
+          .trim()
           .isString()
           .withMessage('REMARK_STRING')
           .isLength({ max: 200 })
@@ -873,16 +1004,16 @@ module.exports.validate = (method) => {
     case 'assignClass': {
       return [
         body().isArray({ min: 1 }).withMessage("Body must be an array of slots"),
-        body('*.teacherId').notEmpty().withMessage('teacherId is required'),
-        body('*.classId').notEmpty().withMessage('classId is required'),
-        body('*.subjectId').notEmpty().withMessage('subjectId is required'),
+        body('*.teacherId').notEmpty().trim().withMessage('teacherId is required'),
+        body('*.classId').notEmpty().trim().withMessage('classId is required'),
+        body('*.subjectId').notEmpty().trim().withMessage('subjectId is required'),
         body('*.day').isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
           .withMessage('day must be a valid weekday'),
-        body('*.period').isInt({ min: 1 }).withMessage('period must be a number'),
+        body('*.period').isInt({ min: 1 }).trim().withMessage('period must be a number'),
         body('*.startTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('startTime must be in hh:mm AM/PM format'),
+          .trim().withMessage('startTime must be in hh:mm AM/PM format'),
         body('*.endTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('endTime must be in hh:mm AM/PM format'),
+          .trim().withMessage('endTime must be in hh:mm AM/PM format'),
 
         validatorMiddleware
       ]
@@ -890,14 +1021,14 @@ module.exports.validate = (method) => {
 
     case 'checkSlot': {
       return [
-        body('teacherId').notEmpty().withMessage('teacherId is required'),
-        body('classId').notEmpty().withMessage('classId is required'),
+        body('teacherId').notEmpty().trim().withMessage('teacherId is required'),
+        body('classId').notEmpty().trim().withMessage('classId is required'),
         body('day').isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
-          .withMessage('day must be a valid weekday'),
+          .trim().withMessage('day must be a valid weekday'),
         body('startTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('startTime must be in hh:mm AM/PM format'),
+          .trim().withMessage('startTime must be in hh:mm AM/PM format'),
         body('endTime').matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('endTime must be in hh:mm AM/PM format'),
+          .trim().withMessage('endTime must be in hh:mm AM/PM format'),
 
         validatorMiddleware
       ]
@@ -905,17 +1036,17 @@ module.exports.validate = (method) => {
 
     case 'updateAssign': {
       return [
-        param('classId').notEmpty().withMessage('classId is required'),
+        param('classId').notEmpty().trim().withMessage('classId is required'),
         body('slots').isArray({ min: 1 }).withMessage('slots must be an array'),
-        body('slots.*.teacherId').optional().notEmpty().withMessage('teacherId cannot be empty if provided'),
-        body('slots.*.subjectId').optional().notEmpty().withMessage('subjectId cannot be empty if provided'),
+        body('slots.*.teacherId').optional().notEmpty().trim().withMessage('teacherId cannot be empty if provided'),
+        body('slots.*.subjectId').optional().notEmpty().trim().withMessage('subjectId cannot be empty if provided'),
         body('slots.*.day').optional().isIn(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
-          .withMessage('day must be a valid weekday if provided'),
-        body('slots.*.period').optional().isInt({ min: 1 }).withMessage('period must be a number if provided'),
+          .trim().withMessage('day must be a valid weekday if provided'),
+        body('slots.*.period').optional().isInt({ min: 1 }).trim().withMessage('period must be a number if provided'),
         body('slots.*.startTime').optional().matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('startTime must be in hh:mm AM/PM format if provided'),
+          .trim().withMessage('startTime must be in hh:mm AM/PM format if provided'),
         body('slots.*.endTime').optional().matches(/^([0]?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i)
-          .withMessage('endTime must be in hh:mm AM/PM format if provided'),
+          .trim().withMessage('endTime must be in hh:mm AM/PM format if provided'),
 
         validatorMiddleware
 
@@ -927,6 +1058,7 @@ module.exports.validate = (method) => {
         // Name
         body('name')
           .notEmpty()
+          .trim()
           .withMessage('NAME_EMPTY')
           .isLength({ min: 2 })
           .withMessage('NAME_LENGTH_MIN')
@@ -936,6 +1068,7 @@ module.exports.validate = (method) => {
         // DOB
         body('dob')
           .notEmpty()
+          .trim()
           .withMessage('DOB_EMPTY')
           .isISO8601()
           .withMessage('DOB_INVALID'),
@@ -943,6 +1076,7 @@ module.exports.validate = (method) => {
         // Gender
         body('gender')
           .notEmpty()
+          .trim()
           .withMessage('GENDER_EMPTY')
           .isIn(['Male', 'Female', 'Other'])
           .withMessage('GENDER_INVALID'),
@@ -952,6 +1086,7 @@ module.exports.validate = (method) => {
         body('parents.*.name').notEmpty().withMessage('PARENT_NAME_EMPTY'),
         body('parents.*.occupation')
           .optional()
+          .trim()
           .isString()
           .withMessage('PARENT_OCCUPATION_INVALID'),
         // body('parents.*.phone')
@@ -960,20 +1095,24 @@ module.exports.validate = (method) => {
         //   .withMessage('PARENT_PHONE_INVALID'),
         body('parents.*.email')
           .optional()
+          .trim()
           .isEmail()
           .withMessage('PARENT_EMAIL_INVALID'),
 
         // Emergency Contact
         body('emergencyContact')
           .optional()
+          .trim()
           .isObject()
           .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
+          .trim()
           .isString()
           .withMessage('EMERGENCY_NAME_INVALID'),
         body('emergencyContact.relation')
           .optional()
+          .trim()
           .isString()
           .withMessage('EMERGENCY_RELATION_INVALID'),
         // body('emergencyContact.phone')
@@ -982,31 +1121,34 @@ module.exports.validate = (method) => {
         //   .withMessage('EMERGENCY_PHONE_INVALID'),
         body('emergencyContact.address')
           .optional()
+          .trim()
           .isString()
           .withMessage('EMERGENCY_ADDRESS_INVALID'),
 
         // Address
-        body("address.street").optional().isString().withMessage("STREET_INVALID"),
-        body("address.city").optional().isString().withMessage("CITY_INVALID"),
-        body("address.state").optional().isString().withMessage("STATE_INVALID"),
-        body("address.zip").optional().isString().withMessage("ZIP_INVALID"),
-        body("address.country").optional().isString().withMessage("COUNTRY_INVALID"),
+        body("address.street").optional().isString().trim().withMessage("STREET_INVALID"),
+        body("address.city").optional().isString().trim().withMessage("CITY_INVALID"),
+        body("address.state").optional().isString().trim().withMessage("STATE_INVALID"),
+        body("address.zip").optional().isString().trim().withMessage("ZIP_INVALID"),
+        body("address.country").optional().isString().trim().withMessage("COUNTRY_INVALID"),
 
         // Contact
-        body('email').optional().isEmail().withMessage('EMAIL_INVALID'),
+        body('email').optional().isEmail().trim().withMessage('EMAIL_INVALID'),
         // body('phone')
         //   .optional()
         //   .isMobilePhone('any')
         //   .withMessage('PHONE_INVALID'),
 
         // Class & Academic Year
-        body('classId').notEmpty().isMongoId().withMessage('CLASS_ID_INVALID'),
+        body('classId').notEmpty().isMongoId().trim().withMessage('CLASS_ID_INVALID'),
         body('academicYear')
           .notEmpty()
+          .trim()
           .isString()
           .withMessage('ACADEMIC_YEAR_INVALID'),
         body('section')
           .optional()
+          .trim()
           .isIn(['A', 'B', 'C', 'D'])
           .withMessage('SECTION_INVALID'),
 
@@ -1042,6 +1184,7 @@ module.exports.validate = (method) => {
 
         body('feeStructureId')
           .notEmpty()
+          .trim()
           .withMessage('FEE_STRUCTURE_ID_REQUIRED')
           .isMongoId()
           .withMessage('FEE_STRUCTURE_ID_INVALID')
@@ -1085,6 +1228,7 @@ module.exports.validate = (method) => {
 
         body('discounts')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('DISCOUNTS_INVALID'),
 
@@ -1097,12 +1241,14 @@ module.exports.validate = (method) => {
         // Class name
         body('name')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_NAME_REQUIRED')
           .isLength({ min: 3, max: 50 })
           .withMessage('CLASS_NAME_LENGTH'),
 
         body('section')
           .notEmpty()
+          .trim()
           .withMessage('CLASS_SECTION_MUST_REQUIRED')
           .isLength({ min: 1, max: 3 })
           .withMessage('CLASS_SECTION_LENGTH'),
@@ -1115,11 +1261,13 @@ module.exports.validate = (method) => {
       return [
         body('name')
           .optional()
+          .trim()
           .isLength({ min: 3, max: 50 })
           .withMessage('CLASS_NAME_LENGTH'),
 
         body('section')
           .optional()
+          .trim()
           .isLength({ min: 1, max: 3 })
           .withMessage('CLASS_SECTION_LENGTH'),
 
@@ -1132,6 +1280,7 @@ module.exports.validate = (method) => {
         // Subject name
         body('name')
           .notEmpty()
+          .trim()
           .withMessage('SUBJECT_NAME_REQUIRED')
           .isLength({ min: 3, max: 100 })
           .withMessage('SUBJECT_NAME_LENGTH'),
@@ -1139,6 +1288,7 @@ module.exports.validate = (method) => {
         // Unique subject code
         body('code')
           .notEmpty()
+          .trim()
           .withMessage('SUBJECT_CODE_REQUIRED')
           .isLength({ min: 2, max: 20 })
           .withMessage('SUBJECT_CODE_LENGTH'),
@@ -1146,6 +1296,7 @@ module.exports.validate = (method) => {
         // Optional description
         body('description')
           .optional()
+          .trim()
           .isString()
           .withMessage('DESCRIPTION_MUST_BE_STRING')
           .isLength({ max: 300 })
@@ -1172,11 +1323,13 @@ module.exports.validate = (method) => {
 
         body('name')
           .optional()
+          .trim()
           .isLength({ min: 3, max: 100 })
           .withMessage('SUBJECT_NAME_LENGTH'),
 
         body('code')
           .optional()
+          .trim()
           .customSanitizer((value) => value.toUpperCase()) // 🔑 auto-uppercase
           .isLength({ min: 3, max: 10 })
           .withMessage('SUBJECT_CODE_LENGTH')
@@ -1185,11 +1338,13 @@ module.exports.validate = (method) => {
 
         body('description')
           .optional()
+          .trim()
           .isLength({ min: 10, max: 500 })
           .withMessage('SUBJECT_DESCRIPTION_LENGTH'),
 
         body('credits')
           .optional()
+          .trim()
           .isInt({ min: 3, max: 20 })
           .withMessage('SUBJECT_CREDITS_RANGE'),
 
@@ -1201,20 +1356,22 @@ module.exports.validate = (method) => {
       return [
         body('name')
           .optional()
+          .trim()
           .isString()
           .isLength({ min: 2 })
           .withMessage('NAME_TOO_SHORT'),
 
-        body('dob').optional().isISO8601().toDate().withMessage('DOB_INVALID'),
+        body('dob').optional().isISO8601().toDate().trim().withMessage('DOB_INVALID'),
 
         body('gender')
           .optional()
+          .trim()
           .isIn(['Male', 'Female', 'Other'])
           .withMessage('INVALID_GENDER'),
 
-        body('email').optional().isEmail().withMessage('INVALID_EMAIL'),
+        body('email').optional().isEmail().trim().withMessage('INVALID_EMAIL'),
 
-        body('phone').optional().isMobilePhone().withMessage('INVALID_PHONE'),
+        body('phone').optional().isMobilePhone().trim().withMessage('INVALID_PHONE'),
 
         // // Address
         // body("address").optional().isObject().withMessage("INVALID_ADDRESS"),
@@ -1227,62 +1384,75 @@ module.exports.validate = (method) => {
         // Parents
         body('parents')
           .optional()
+          .trim()
           .isArray()
           .withMessage('PARENTS_MUST_BE_ARRAY'),
         body('parents.*.name')
           .optional()
+          .trim()
           .isString()
           .withMessage('PARENT_NAME_INVALID'),
         body('parents.*.occupation')
           .optional()
+          .trim()
           .isString()
           .withMessage('PARENT_OCCUPATION_INVALID'),
 
         // Guardian & Emergency
-        body('guardian').optional().isObject().withMessage('GUARDIAN_INVALID'),
+        body('guardian').optional().isObject().trim().withMessage('GUARDIAN_INVALID'),
         body('guardian.name')
           .optional()
+          .trim()
           .isString()
           .withMessage('GUARDIAN_NAME_INVALID'),
         body('guardian.phone')
           .optional()
+          .trim()
           .isMobilePhone('any')
           .withMessage('GUARDIAN_PHONE_INVALID'),
         body('emergencyContact')
           .optional()
+          .trim()
           .isObject()
           .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
+          .trim()
           .isString()
           .withMessage('EMERGENCY_NAME_INVALID'),
         body('emergencyContact.relationship')
           .optional()
+          .trim()
           .isString()
           .withMessage('EMERGENCY_RELATION_INVALID'),
         body('emergencyContact.phone')
           .optional()
+          .trim()
           .isMobilePhone('any')
           .withMessage('EMERGENCY_PHONE_INVALID'),
 
         // Class & Section
-        body('classId').optional().isMongoId().withMessage('CLASS_ID_INVALID'),
+        body('classId').optional().isMongoId().trim().withMessage('CLASS_ID_INVALID'),
         body('year')
+          .trim()
           .optional()
           .isInt({ min: 2000, max: new Date().getFullYear() + 1 })
           .withMessage('INVALID_YEAR'),
         body('section')
           .optional()
+          .trim()
           .isIn(['A', 'B', 'C', 'D'])
           .withMessage('INVALID_SECTION'),
 
         // Physical Disability
         body('physicalDisability')
           .optional()
+          .trim()
           .isBoolean()
           .withMessage('INVALID_DISABILITY'),
         body('disabilityDetails')
           .optional()
+          .trim()
           .isString()
           .withMessage('DISABILITY_DETAILS_INVALID'),
 
@@ -1294,12 +1464,14 @@ module.exports.validate = (method) => {
       return [
         body('classIdentifier')
           .notEmpty()
+          .trim()
           .withMessage('CLASSIDENTIFIER_REQUIRED')
           .isLength({ min: 2, max: 50 })
           .withMessage('CLASSIDENTIFIER_LENGTH'),
 
         body('academicYear')
           .notEmpty()
+          .trim()
           .withMessage('ACADEMIC_YEAR_REQUIRED')
           .matches(/^\d{4}-\d{4}$/)
           .withMessage('ACADEMIC_YEAR_FORMAT_INVALID'),
@@ -1307,15 +1479,13 @@ module.exports.validate = (method) => {
         body('feeHeads')
           .isArray({ min: 1 })
           .withMessage('FEEHEADS_ARRAY_REQUIRED')
-          .custom((arr) =>
-            arr.every(
-              (f) =>
-                f.type &&
-                typeof f.type === 'string' &&
-                typeof f.amount === 'number'
-            )
-          )
-          .withMessage('FEEHEADS_INVALID'),
+          .custom((feeHeads) => {
+            const allValid = feeHeads.every(
+              f => f.type && typeof f.type === 'string' && typeof f.amount === 'number'
+            );
+            if (!allValid) throw new Error('FEEHEADS_INVALID');
+            return true;
+          }),
 
         body('totalAmount')
           .notEmpty()
@@ -1323,27 +1493,27 @@ module.exports.validate = (method) => {
           .isNumeric()
           .withMessage('TOTAL_AMOUNT_INVALID')
           .custom((value, { req }) => {
-            const sum = req.body.feeHeads.reduce(
-              (acc, head) => acc + head.amount,
-              0
-            )
-            if (value !== sum) return Promise.reject('TOTAL_AMOUNT_MISMATCH')
-            return true
+            const sum = req.body.feeHeads.reduce((acc, head) => acc + head.amount, 0);
+            if (Number(value) !== sum) throw new Error('TOTAL_AMOUNT_MISMATCH');
+            return true;
           }),
 
         validatorMiddleware
-      ]
+      ];
     }
+
 
     case 'updateFeeStruture': {
       return [
         body('classIdentifier')
           .optional()
+          .trim()
           .isLength({ min: 2, max: 50 })
           .withMessage('CLASSIDENTIFIER_LENGTH'),
 
         body('academicYear')
           .optional()
+          .trim()
           .matches(/^\d{4}-\d{4}$/)
           .withMessage('ACADEMIC_YEAR_FORMAT_INVALID'),
 
@@ -1365,13 +1535,13 @@ module.exports.validate = (method) => {
                 !isNaN(f.amount)
             )
           )
-          .withMessage('FEEHEADS_INVALID'),
+          .trim().withMessage('FEEHEADS_INVALID'),
 
 
         body('totalAmount')
           .optional()
           .isNumeric()
-          .withMessage('TOTAL_AMOUNT_INVALID')
+          .trim().withMessage('TOTAL_AMOUNT_INVALID')
           .custom((value, { req }) => {
             if (req.body.feeHeads) {
               const sum = req.body.feeHeads.reduce(
@@ -1393,12 +1563,14 @@ module.exports.validate = (method) => {
       return [
         body('studentId')
           .notEmpty()
+          .trim()
           .withMessage('STUDENT_ID_REQUIRED')
           .isMongoId()
           .withMessage('STUDENT_ID_INVALID'),
 
         body('feeStructureId')
           .notEmpty()
+          .trim()
           .withMessage('FEE_STRUCTURE_ID_REQUIRED')
           .isMongoId()
           .withMessage('FEE_STRUCTURE_ID_INVALID')
@@ -1438,7 +1610,7 @@ module.exports.validate = (method) => {
                 typeof f.amount === 'number'
             )
           )
-          .withMessage('APPLIED_FEEHEADS_INVALID'),
+          .trim().withMessage('APPLIED_FEEHEADS_INVALID'),
 
         body('discounts')
           .optional()
@@ -1453,6 +1625,7 @@ module.exports.validate = (method) => {
       return [
         param('id')
           .notEmpty()
+          .trim()
           .withMessage('STUDENT_FEE_ID_REQUIRED')
           .isMongoId()
           .withMessage('STUDENT_FEE_ID_INVALID'),
@@ -1460,7 +1633,7 @@ module.exports.validate = (method) => {
         body('appliedFeeHeads')
           .optional()
           .isArray({ min: 1 })
-          .withMessage('APPLIED_FEEHEADS_ARRAY_REQUIRED')
+          .trim().withMessage('APPLIED_FEEHEADS_ARRAY_REQUIRED')
           .custom((arr) =>
             arr.every(
               (f) =>
@@ -1473,11 +1646,13 @@ module.exports.validate = (method) => {
 
         body('discounts')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('DISCOUNTS_INVALID'),
 
         body('paidTillNow')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('PAID_TILL_NOW_INVALID'),
 
@@ -1489,6 +1664,7 @@ module.exports.validate = (method) => {
       return [
         body('amountPaid')
           .notEmpty()
+          .trim()
           .withMessage('AMOUNT_PAID_REQUIRED')
           .isNumeric()
           .withMessage('AMOUNT_PAID_INVALID')
@@ -1507,6 +1683,7 @@ module.exports.validate = (method) => {
 
         body('remarks')
           .optional()
+          .trim()
           .isString()
           .withMessage('REMARKS_MUST_BE_STRING'),
 
@@ -1519,7 +1696,7 @@ module.exports.validate = (method) => {
         body('appliedFeeHeads')
           .optional()
           .isArray({ min: 1 })
-          .withMessage('APPLIED_FEEHEADS_ARRAY_REQUIRED')
+          .trim().withMessage('APPLIED_FEEHEADS_ARRAY_REQUIRED')
           .custom((arr) =>
             arr.every(
               (f) =>
@@ -1532,13 +1709,14 @@ module.exports.validate = (method) => {
 
         body('discounts')
           .optional()
+          .trim()
           .isNumeric()
           .withMessage('DISCOUNTS_INVALID'),
 
         body('payableAmount')
           .optional()
           .isNumeric()
-          .withMessage('PAYABLE_AMOUNT_INVALID')
+          .trim().withMessage('PAYABLE_AMOUNT_INVALID')
           .custom((value, { req }) => {
             const total =
               req.body.appliedFeeHeads?.reduce((acc, h) => acc + h.amount, 0) ||
@@ -1557,24 +1735,28 @@ module.exports.validate = (method) => {
       return [
         body('studentId')
           .notEmpty()
+          .trim()
           .withMessage('STUDENT_ID_REQUIRED')
           .isMongoId()
           .withMessage('STUDENT_ID_INVALID'),
 
         body('hostId')
           .notEmpty()
+          .trim()
           .withMessage('HOST_ID_REQUIRED')
           .isMongoId()
           .withMessage('HOST_ID_INVALID'),
 
         body('date')
           .notEmpty()
+          .trim()
           .withMessage('MEETING_DATE_REQUIRED')
           .isISO8601()
           .withMessage('MEETING_DATE_INVALID'),
 
         body('reason')
           .notEmpty()
+          .trim()
           .withMessage('MEETING_REASON_REQUIRED')
           .isString()
           .withMessage('MEETING_REASON_INVALID'),
@@ -1589,14 +1771,16 @@ module.exports.validate = (method) => {
       return [
         param('meetingId')
           .notEmpty()
+          .trim()
           .withMessage('MEETING_ID_REQUIRED')
           .isMongoId()
           .withMessage('MEETING_ID_INVALID'),
 
-        body('date').optional().isISO8601().withMessage('MEETING_DATE_INVALID'),
+        body('date').optional().isISO8601().trim().withMessage('MEETING_DATE_INVALID'),
 
         body('reason')
           .optional()
+          .trim()
           .isString()
           .withMessage('MEETING_REASON_INVALID'),
 
@@ -1604,6 +1788,7 @@ module.exports.validate = (method) => {
 
         body('hostId')
           .notEmpty()
+          .trim()
           .withMessage('HOST_ID_REQUIRED')
           .isMongoId()
           .withMessage('HOST_ID_INVALID'),
@@ -1616,12 +1801,14 @@ module.exports.validate = (method) => {
       return [
         param('meetingId')
           .notEmpty()
+          .trim()
           .withMessage('MEETING_ID_REQUIRED')
           .isMongoId()
           .withMessage('MEETING_ID_INVALID'),
 
         body('status')
           .notEmpty()
+          .trim()
           .withMessage('STATUS_REQUIRED')
           .isIn(['cancelled'])
           .withMessage('STATUS_INVALID'),
@@ -1633,116 +1820,116 @@ module.exports.validate = (method) => {
     // already covered validations
     case 'addFAQ': {
       return [
-        body('title').notEmpty().withMessage('TITLE_EMPTY'),
-        body('content').notEmpty().withMessage('CONTENT_EMPTY'),
+        body('title').notEmpty().trim().withMessage('TITLE_EMPTY'),
+        body('content').notEmpty().trim().withMessage('CONTENT_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'verify-mobile': {
       return [
-        body('country_code').notEmpty().withMessage('COUNTRY_CODE_EMPTY'),
-        body('mobile').notEmpty().withMessage('MOBILE_EMPTY'),
-        body('otp_phone').notEmpty().withMessage('OTP_PHONE_EMPTY'),
-        body('email').notEmpty().withMessage('EMAIL_EMPTY'),
-        body('otp_email').notEmpty().withMessage('OTP_EMAIL_EMPTY'),
+        body('country_code').notEmpty().trim().withMessage('COUNTRY_CODE_EMPTY'),
+        body('mobile').notEmpty().trim().withMessage('MOBILE_EMPTY'),
+        body('otp_phone').notEmpty().trim().withMessage('OTP_PHONE_EMPTY'),
+        body('email').notEmpty().trim().withMessage('EMAIL_EMPTY'),
+        body('otp_email').notEmpty().trim().withMessage('OTP_EMAIL_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'resend-otp': {
       return [
-        body('country_code').notEmpty().withMessage('COUNTRY_CODE_EMPTY'),
-        body('mobile').notEmpty().withMessage('MOBILE_EMPTY'),
-        body('email').notEmpty().withMessage('EMAIL_EMPTY'),
+        body('country_code').notEmpty().trim().withMessage('COUNTRY_CODE_EMPTY'),
+        body('mobile').notEmpty().trim().withMessage('MOBILE_EMPTY'),
+        body('email').notEmpty().trim().withMessage('EMAIL_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'login': {
       return [
-        body('login_type').notEmpty().withMessage('LOGIN_TYPE_EMPTY'),
-        body('login_input').notEmpty().withMessage('LOGIN_INPUT_EMPTY'),
-        body('password').notEmpty().withMessage('PASSWORD_EMPTY'),
+        body('login_type').notEmpty().trim().withMessage('LOGIN_TYPE_EMPTY'),
+        body('login_input').notEmpty().trim().withMessage('LOGIN_INPUT_EMPTY'),
+        body('password').notEmpty().trim().withMessage('PASSWORD_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'login-token': {
       return [
-        body('input').notEmpty().withMessage('LOGIN_INPUT_EMPTY'),
-        body('password').notEmpty().withMessage('PASSWORD_EMPTY'),
-        body('device_id').notEmpty().withMessage('DEVICE_ID_EMPTY'),
-        body('device_type').notEmpty().withMessage('DEVICE_TYPE_EMPTY'),
-        body('device_token').notEmpty().withMessage('DEVICE_TOKEN_EMPTY'),
+        body('input').notEmpty().trim().withMessage('LOGIN_INPUT_EMPTY'),
+        body('password').notEmpty().trim().withMessage('PASSWORD_EMPTY'),
+        body('device_id').notEmpty().trim().withMessage('DEVICE_ID_EMPTY'),
+        body('device_type').notEmpty().trim().withMessage('DEVICE_TYPE_EMPTY'),
+        body('device_token').notEmpty().trim().withMessage('DEVICE_TOKEN_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'permission': {
       return [
-        body('permission').notEmpty().withMessage('PERMISSION_EMPTY'),
+        body('permission').notEmpty().trim().withMessage('PERMISSION_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'change-status': {
       return [
-        body('status').notEmpty().withMessage('STATUS_EMPTY'),
+        body('status').notEmpty().trim().withMessage('STATUS_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'set-security-pin': {
       return [
-        body('pin').notEmpty().withMessage('PIN_EMPTY'),
+        body('pin').notEmpty().trim().withMessage('PIN_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'contact-us': {
       return [
-        body('name').notEmpty().withMessage('NAME_EMPTY'),
-        body('email').notEmpty().withMessage('EMAIL_EMPTY'),
-        body('message').notEmpty().withMessage('MESSAGE_EMPTY'),
+        body('name').notEmpty().trim().withMessage('NAME_EMPTY'),
+        body('email').notEmpty().trim().withMessage('EMAIL_EMPTY'),
+        body('message').notEmpty().trim().withMessage('MESSAGE_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'reset-password-user': {
       return [
-        body('otp').notEmpty().withMessage('OTP_EMPTY'),
-        body('password').notEmpty().withMessage('PASSWORD_EMPTY'),
+        body('otp').notEmpty().trim().withMessage('OTP_EMPTY'),
+        body('password').notEmpty().trim().withMessage('PASSWORD_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'refund': {
       return [
-        body('mobile').notEmpty().withMessage('MOBILE_EMPTY'),
-        body('amount').notEmpty().withMessage('AMOUNT_EMPTY'),
+        body('mobile').notEmpty().trim().withMessage('MOBILE_EMPTY'),
+        body('amount').notEmpty().trim().withMessage('AMOUNT_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'reply': {
       return [
-        body('message').notEmpty().withMessage('MESSAGE_EMPTY'),
+        body('message').notEmpty().trim().withMessage('MESSAGE_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'add-notification': {
       return [
-        body('title').notEmpty().withMessage('TITLE_EMPTY'),
-        body('description').notEmpty().withMessage('DESCRIPTION_EMPTY'),
-        body('sendTo').notEmpty().withMessage('SENDTO_EMPTY'),
+        body('title').notEmpty().trim().withMessage('TITLE_EMPTY'),
+        body('description').notEmpty().trim().withMessage('DESCRIPTION_EMPTY'),
+        body('sendTo').notEmpty().trim().withMessage('SENDTO_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'EDIT-PROFILE': {
       return [
-        body('name').notEmpty().withMessage('NAME_EMPTY'),
-        body('countryID').notEmpty().withMessage('COUNTRY_EMPTY'),
-        body('cityID').notEmpty().withMessage('CITY_EMPTY'),
-        body('address').notEmpty().withMessage('ADDRESS_EMPTY'),
+        body('name').notEmpty().trim().withMessage('NAME_EMPTY'),
+        body('countryID').notEmpty().trim().withMessage('COUNTRY_EMPTY'),
+        body('cityID').notEmpty().trim().withMessage('CITY_EMPTY'),
+        body('address').notEmpty().trim().withMessage('ADDRESS_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'status-faq': {
       return [
-        param('id').notEmpty().withMessage('ID_EMPTY'),
+        param('id').notEmpty().trim().withMessage('ID_EMPTY'),
         body('status')
           .notEmpty()
-          .withMessage('STATUS_EMPTY')
+          .trim().withMessage('STATUS_EMPTY')
           .isIn(['active', 'inactive'])
           .withMessage('INVALID_STATUS'),
         validatorMiddleware
@@ -1750,18 +1937,164 @@ module.exports.validate = (method) => {
     }
     case 'add-category': {
       return [
-        body('name').notEmpty().withMessage('NAME_EMPTY'),
+        body('name').notEmpty().trim().withMessage('NAME_EMPTY'),
         validatorMiddleware
       ]
     }
     case 'add-user': {
       return [
-        body('fullName').notEmpty().withMessage('NAME_EMPTY'),
-        body('mobile').notEmpty().withMessage('MOBILE_EMPTY'),
-        body('countryCode').notEmpty().withMessage('COUNTRY_CODE_EMPTY'),
-        body('email').notEmpty().withMessage('EMAIL_EMPTY'),
+        body('fullName').notEmpty().trim().withMessage('NAME_EMPTY'),
+        body('mobile').notEmpty().trim().withMessage('MOBILE_EMPTY'),
+        body('countryCode').notEmpty().trim().withMessage('COUNTRY_CODE_EMPTY'),
+        body('email').notEmpty().trim().withMessage('EMAIL_EMPTY'),
         validatorMiddleware
       ]
     }
+
+    case 'submissions': {
+      return [
+        body('assignmentId').notEmpty().trim().withMessage("ASSIGNMENT_ID_REQUIRED"),
+        body('classId').notEmpty().trim().withMessage('CLASS_ID_REQUIRED'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'contact-us': {
+      return [
+        body('name')
+          .trim()
+          .notEmpty()
+          .withMessage('NAME_REQUIRED')
+          .isLength({ min: 2 })
+          .withMessage('NAME_TOO_SHORT'),
+
+        body('email')
+          .trim()
+          .notEmpty()
+          .withMessage('EMAIL_EMPTY')
+          .isEmail()
+          .withMessage('INVALID_EMAIL'),
+
+        body('phone')
+          .optional({ checkFalsy: true })
+          .isString()
+          .matches(/^[0-9+\-\s()]{7,20}$/)
+          .withMessage('INVALID_PHONE_FORMAT'),
+
+        body('message')
+          .trim()
+          .notEmpty()
+          .withMessage('MESSAGE_REQUIRED')
+          .isLength({ min: 10 })
+          .withMessage('MESSAGE_TOO_SHORT'),
+
+        body('subject')
+          .optional()
+          .isString()
+          .isLength({ max: 150 })
+          .withMessage('SUBJECT_TOO_LONG'),
+
+        validatorMiddleware
+      ];
+    }
+
+    case 'feedback': {
+      return [
+        body('name')
+          .trim()
+          .notEmpty()
+          .withMessage('NAME_REQUIRED'),
+
+        body('role')
+          .optional()
+          .isIn(['Student', 'Parent', 'Teacher', 'Visitor'])
+          .withMessage('INVALID_ROLE'),
+
+        body('message')
+          .trim()
+          .notEmpty()
+          .withMessage('MESSAGE_REQUIRED')
+          .isLength({ min: 10 })
+          .withMessage('MESSAGE_TOO_SHORT'),
+
+        body('rating')
+          .optional()
+          .isInt({ min: 1, max: 5 })
+          .withMessage('RATING_MUST_BE_BETWEEN_1_AND_5'),
+
+        validatorMiddleware
+      ]
+    }
+
+    case 'make-announcement': {
+      return [
+        // 🏷️ Title is required
+        body('title')
+          .trim()
+          .notEmpty()
+          .withMessage('TITLE_REQUIRED')
+          .isLength({ max: 150 })
+          .withMessage('TITLE_TOO_LONG'),
+
+        // 📝 Message is required
+        body('message')
+          .trim()
+          .notEmpty()
+          .withMessage('MESSAGE_REQUIRED')
+          .isLength({ max: 2000 })
+          .withMessage('MESSAGE_TOO_LONG'),
+
+        // 👥 Audience (optional, but must be array if provided)
+        body('audience')
+          .optional()
+          .isArray()
+          .withMessage('AUDIENCE_MUST_BE_ARRAY'),
+
+        // 📎 Attachments (optional array of strings)
+        body('attachments')
+          .optional()
+          .isArray()
+          .withMessage('ATTACHMENTS_MUST_BE_ARRAY'),
+
+        // 📅 Dates
+        body('startDate')
+          .optional()
+          .isISO8601()
+          .withMessage('INVALID_START_DATE'),
+        body('endDate')
+          .optional()
+          .isISO8601()
+          .withMessage('INVALID_END_DATE'),
+
+        // ⚠️ Priority
+        body('priority')
+          .optional()
+          .isIn(['low', 'medium', 'high'])
+          .withMessage('INVALID_PRIORITY'),
+
+        // 🚦 Status
+        body('status')
+          .optional()
+          .isIn(['active', 'inactive'])
+          .withMessage('INVALID_STATUS'),
+
+        validatorMiddleware
+      ];
+    }
+
+    case 'testimonial-status': {
+      return [
+        body('status')
+          .trim()
+          .notEmpty()
+          .withMessage('STATUS_REQUIRED')
+          .isIn(['pending', 'approved', 'rejected'])
+          .withMessage('INVALID_STATUS_VALUE'),
+
+        validatorMiddleware
+      ];
+    }
+
   }
 }

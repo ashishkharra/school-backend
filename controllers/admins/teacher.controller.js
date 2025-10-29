@@ -163,10 +163,11 @@ module.exports = {
   },
 
   getAllTeachers: async (req, res) => {
+    console.log('yoo')
     try {
-      const { page = 1, limit = 10, status } = req.query
+      const { page = 1, limit = 10, status, search } = req.query
 
-      const queryResult = await adminTeacherService.getAllTeachers(page, limit, status);
+      const queryResult = await adminTeacherService.getAllTeachers(page, limit, status, search);
       return res.json(
         responseData(
           'GET_LIST',
@@ -541,7 +542,7 @@ module.exports = {
 
   getTeacherProfile: async (req, res) => {
     try {
-      const {teacherId} = req.params;
+      const { teacherId } = req.params;
 
       const result = await adminTeacherService.getTeacherProfile(teacherId);
       if (!result.success) {
@@ -553,4 +554,20 @@ module.exports = {
       return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
   },
+
+  getAllAttendance: async (req, res) => {
+    try {
+      const { month, search } = req.query
+
+      const result = await adminTeacherService.getAllAttendance(month, search);
+      
+      if (!result?.success) {
+        return res.status(400).json(responseData("ATTENDANCE_NOT_FOUND", {}, req, result?.success || false))
+      }
+      return res.status(200).json(responseData("ATTENDANCE_FETCHED_SUCCESSFULLY", result?.formatted, req, result?.success || true));
+    } catch (error) {
+      console.log("Error while fetching attendance : ", error)
+      return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+    }
+  }
 }

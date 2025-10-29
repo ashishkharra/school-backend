@@ -17,7 +17,7 @@ const adminClassService = {
             section = section.toUpperCase();
 
             if (!VALID_SECTIONS.includes(section)) {
-                return { success: false, message: "SECTION_INVALID" };
+                return { success: false, message: "INVALID_SECTION" };
             }
 
             let existingClass = await Class.findOne({ name, section });
@@ -33,17 +33,15 @@ const adminClassService = {
 
             const newClass = await Class.create({
                 name,
-                teacher: null,
                 section,
                 classIdentifier,
-                studentCount: 0,
             });
 
             if (!newClass) {
                 return { success: false, message: "REGISTRATION_FAILED" };
             }
 
-            return { success: true, message: "CLASS_REGISTERED" };
+            return { success: true, message: "CLASS_REGISTERED", newClass };
         } catch (error) {
             console.error("Error adding class:", error);
             return { success: false, message: "REGISTRATION_FAILED" };
@@ -97,7 +95,7 @@ const adminClassService = {
         try {
             const { name, code, description, credits } = subjectData;
 
-            const existing = await Subject.findOne({ name: name.trim() , code: code.trim() });
+            const existing = await Subject.findOne({ name: name.trim(), code: code.trim() });
             if (existing) {
                 return { success: false, message: "SUBJECT_ALREADY_EXISTS" };
             }
@@ -105,8 +103,7 @@ const adminClassService = {
             const newSubject = await Subject.create({
                 name: name.trim(),
                 code: code.trim(),
-                description: description?.trim() || "",
-                credits: typeof credits === "number" ? credits : undefined,
+                description: description?.trim() || ""
             });
 
             return {
@@ -116,7 +113,7 @@ const adminClassService = {
             };
         } catch (error) {
             console.error("Error while registering subject:", error);
-            return { success: false, message: 'SUBJECT_REGISTRATION_FAILED' };
+            return { success: false, message: error.message };
         }
     },
 
@@ -155,7 +152,9 @@ const adminClassService = {
     getAllClasses: async (className, page = 1, limit = 10) => {
         try {
             const match = {};
-            if (className) match.name = { $regex: className, $options: "i" };
+            if (className && className.trim() !== "") {
+                match.name = { $regex: className.trim(), $options: "i" }
+            }
 
             const total = await Class.countDocuments(match);
 
@@ -165,7 +164,7 @@ const adminClassService = {
 
             return {
                 success: true,
-                message: "CLASSES_FETCHING_SUCCESSFULLY",
+                message: "CLASSES_FETCHED_SUCCESSFULLY",
                 docs: result,
                 page,
                 limit,
@@ -183,7 +182,7 @@ const adminClassService = {
             page = Math.max(parseInt(page, 10) || 1, 1);
             limit = Math.max(parseInt(limit, 10) || 10, 1);
 
-            const filter = { };
+            const filter = {};
             if (name) {
                 filter.name = { $regex: name, $options: "i" };
             }

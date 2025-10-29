@@ -11,7 +11,12 @@ const jsonFieldsForSchool = [
   "contact",
   "schoolTiming",
   "periods",
-  "academicSession"
+  "academicSession",
+  'tollFree',
+  'socialUrl',
+  'faqs',
+  'banner',
+  'gallery'
 ];
 
 

@@ -16,7 +16,7 @@ const classSchema = new mongoose.Schema(
 
     subjects: [{ type: mongoose.Schema.Types.ObjectId }],
 
-    teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher" },
+    teacher: { type: mongoose.Schema.Types.ObjectId, ref: "Teacher", default: null },
 
     classIdentifier: { type: String, required: true },
 
@@ -34,7 +34,7 @@ const classSchema = new mongoose.Schema(
 
     studentCount: { type: Number, default: 0 },
 
-    status: { type : String, enum: ['active', 'inactive'], default : 'active'}
+    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
   },
   { timestamps: true }
 );

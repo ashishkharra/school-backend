@@ -159,7 +159,7 @@ module.exports = {
           LINK: link,
           FIRSTNAME: admin.firstName
         }
-        sendEmail("forgot-password", dataBody);
+        sendEmail("admin-forgot-password", dataBody);
 
         await Admin.findOneAndUpdate({ email }, { token: resetToken })
         return res.json(responseData('EMAIL_SENT', {}, req, true))
@@ -180,9 +180,11 @@ module.exports = {
       console.log('token : ', token)
 
       const resetToken = await Admin.findOne({ token })
+      console.log('ress --- ', resetToken)
+
       const passwordMatch = await bcrypt.compare(password, resetToken?.password)
       if (passwordMatch) {
-        return res.json(responseData('PASSWORD_SAME_ERORR', {}, req, false))
+        return res.status(401).json(responseData('PASSWORD_SAME_ERORR', {}, req, false))
       }
       if (!isEmpty(resetToken)) {
         let salt = await genSalt(10)
@@ -192,16 +194,16 @@ module.exports = {
             { _id: resetToken._id },
             { password: hash, token: null, forceLogout: true }
           )
-          return res.json(responseData('PASSWORD_CHANGED', {}, req, true))
+          return res.status(200).json(responseData('PASSWORD_CHANGED', {}, req, true))
         } else {
-          return res.json(responseData('ERROR_OCCUR', {}, req, false))
+          return res.status(401).json(responseData('ERROR_OCCUR', {}, req, false))
         }
       } else {
-        return res.json(responseData('LINK_INVALID', {}, req, false))
+        return res.status(400).json(responseData('LINK_INVALID', {}, req, false))
       }
     } catch (err) {
       console.log('Error', err.message)
-      return res.json(responseData('ERROR_OCCUR', {}, req, false))
+      return res.status(500).json(responseData('ERROR_OCCUR', {}, req, false))
     }
   },
   changePassword: async (req, res) => {

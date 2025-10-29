@@ -45,6 +45,8 @@ router.post('/attendance', [verifyToken], validationRule.validate('markAttendanc
 router.put('/attendance-update', [verifyToken], teacherController.updateAttendance);
 router.get('/get-attendance/:teacherId', [verifyToken], teacherController.getAttendance);
 
+router.get('/get-all-attendance',[verifyToken], teacherController.getAllAttendance)
+
 
 
 module.exports = router

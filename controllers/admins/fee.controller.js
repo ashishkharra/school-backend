@@ -5,7 +5,9 @@ const feeController = {
 
     createFeeStructure: async (req, res) => {
         try {
+            console.log('rq 0000----- ', req.body)
             const result = await feeService.createFeeStructure(req.body);
+            console.log('res 0000----- ', result)
 
             if (!result.success) {
                 return res.status(400).json(responseData(result.message, {}, req, false));
