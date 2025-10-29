@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs')
-const Teacher = require('../../models/teacher/teacher.schema')
+const Teacher = require('../../models/teacher/teacher.schema.js')
 const TeacherAttendance = require('../../models/teacher/teacherAttendance.schema.js')
 const { sendEmail } = require('../../helpers/helper') // adjust path
 // const teacherAssignBYClass = require('../../models/class/class.schema');
@@ -16,7 +16,8 @@ const {
   getTeachersWithClassesLookup,
   getAllTeachersWithClassLookup,
   teacherProfilePipeline,
-  teacherAttendancePipeline
+  teacherAttendancePipeline,
+  getTeachersAttendancesByMonth
 } = require('../../helpers/commonAggregationPipeline')
 const convertToMinutes = (timeStr) => {
   if (!timeStr) return null
@@ -157,22 +158,22 @@ module.exports = {
       updatedTeacher.profilePic.fileUrl = process.env.STATIC_URL + updatedTeacher.profilePic.fileUrl
       updatedTeacher.aadharFront.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharFront.fileUrl
       updatedTeacher.aadharBack.fileUrl = process.env.STATIC_URL + updatedTeacher.aadharBack.fileUrl
-const dataBody = {
-      TEACHER_NAME: updatedTeacher.name || 'Teacher',
-      TEACHER_ID: updatedTeacher._id.toString(),
-      UPDATED_EMAIL: updatedTeacher.email || 'N/A',
-      UPDATED_PHONE: updatedTeacher.phone || 'N/A',
-      DEPARTMENT: updatedTeacher.department || 'N/A',
-      UPDATED_AT: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
-    }
+      const dataBody = {
+        TEACHER_NAME: updatedTeacher.name || 'Teacher',
+        TEACHER_ID: updatedTeacher._id.toString(),
+        UPDATED_EMAIL: updatedTeacher.email || 'N/A',
+        UPDATED_PHONE: updatedTeacher.phone || 'N/A',
+        DEPARTMENT: updatedTeacher.department || 'N/A',
+        UPDATED_AT: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+      }
 
-    // 🔹 Send email using the correct slug
-    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+      // 🔹 Send email using the correct slug
+      const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
 
-    if (!isMailSent) {
-      return { success: false, message: 'EMAIL_NOT_SENT', data: updatedTeacher }
-    }
+      if (!isMailSent) {
+        return { success: false, message: 'EMAIL_NOT_SENT', data: updatedTeacher }
+      }
       return { success: true, message: 'TEACHER_UPDATED', data: updatedTeacher }
     } catch (error) {
       return {
@@ -183,7 +184,7 @@ const dataBody = {
     }
   },
 
-  getAllTeachers: async (page = 1, limit = 10, status = 1) => {
+  getAllTeachers: async (page = 1, limit = 10, status = 1, search) => {
     try {
       page = parseInt(page) || 1
       limit = parseInt(limit) || 10
@@ -191,13 +192,71 @@ const dataBody = {
       const totalTeachers = await Teacher.countDocuments({
         isRemoved: { $ne: 1 }
       })
-      console.log('total : ', totalTeachers)
-      const teachers = await Teacher.find({ isRemoved: { $ne: 1 } })
+
+      let filter = {
+        isRemoved: { $ne: 1 }
+      }
+      
+      if (search && search.trim() !== "") {
+        const regex = new RegExp(search.trim(), "i");
+        filter.$or = [
+          { name: regex },
+          { "contact.email": regex },
+          { "contact.phone": regex }
+        ];
+      }
+      let teachers = await Teacher.find(filter)
         .select('-password -token -refreshToken')
         .lean()
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const teacherIds = teachers.map(t => t._id);
+
+      const todaysAttendances = await TeacherAttendance.find({
+        teacher: { $in: teacherIds },
+        date: { $gte: startOfDay, $lte: endOfDay }
+      })
+        .select('teacher status date')
+        .lean();
+
+      const attendanceMap = todaysAttendances.reduce((acc, att) => {
+        acc[att.teacher.toString()] = att;
+        return acc;
+      }, {});
+
+      teachers = teachers.map(t => ({
+        ...t,
+        todayAttendance:
+          attendanceMap[t._id.toString()] || { status: 'not_marked', date: startOfDay },
+      }));
+
+      teachers = teachers.map(t => ({
+        ...t,
+        profilePic: {
+          ...t.profilePic,
+          fileUrl: process.env.STATIC_URL_ + (t.profilePic?.fileUrl || "")
+        },
+        aadharFront: {
+          ...t.aadharFront,
+          fileUrl: process.env.STATIC_URL_ + (t.aadharFront?.fileUrl || "")
+        },
+        aadharBack: {
+          ...t.aadharBack,
+          fileUrl: process.env.STATIC_URL_ + (t.aadharBack?.fileUrl || "")
+        },
+        todayAttendance:
+          attendanceMap[t._id.toString()] || {
+            status: "not_marked",
+            date: startOfDay
+          }
+      }));
 
       return {
         success: true,
@@ -290,13 +349,16 @@ const dataBody = {
 
   getTeacherProfile: async (id) => {
     try {
-      const profile = await Teacher.aggregate(teacherProfilePipeline(id));
+      let profile = await Teacher.aggregate(teacherProfilePipeline(id));
 
       if (!profile || profile.length === 0) {
         return { success: false, message: 'TEACHER_NOT_FOUND' };
       }
 
       console.log('Teacher Profile:', profile[0]);
+      profile[0].profilePic = process.env.STATIC_URL_ + profile[0].profilePic
+      profile[0].aadharFront = process.env.STATIC_URL_ + profile[0].aadharFront
+      profile[0].aadharBack = process.env.STATIC_URL_ + profile[0].aadharBack
 
       return { success: true, message: 'TEACHER_PROFILE_FETCHED', data: profile[0] };
     } catch (error) {
@@ -343,17 +405,17 @@ const dataBody = {
       classData.isClassTeacher = true
       const savedClass = await classData.save()
 
-          const dataBody = {
-      TEACHER_NAME: teacherData.name,
-      TEACHER_ID: teacherData._id.toString(),
-      CLASS_NAME: classData.name || 'N/A',
-      ASSIGNED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
-      LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login',
-      TEACHER_EMAIL: teacherData.email  // required by sendEmailWithSlug
-    };
+      const dataBody = {
+        TEACHER_NAME: teacherData.name,
+        TEACHER_ID: teacherData._id.toString(),
+        CLASS_NAME: classData.name || 'N/A',
+        ASSIGNED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login',
+        TEACHER_EMAIL: teacherData.email  // required by sendEmailWithSlug
+      };
 
-    const mailSent = await sendEmail('assign-class-teacher', dataBody);
-    if (!mailSent) return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass };
+      const mailSent = await sendEmail('assign-class-teacher', dataBody);
+      if (!mailSent) return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass };
 
       return {
         success: true,
@@ -588,26 +650,26 @@ const dataBody = {
       })
 
       const savedAssignment = await newAssignment.save()
-    const dataBody = {
-  TEACHER_NAME: teacherData.name,                  // Teacher's full name
-  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
-  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
-  SECTION: section || assignment.section || 'N/A', // Class section
-  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
-  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
-  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
-  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
-  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
-  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
-  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
-}
+      const dataBody = {
+        TEACHER_NAME: teacherData.name,                  // Teacher's full name
+        TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+        CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+        SECTION: section || assignment.section || 'N/A', // Class section
+        SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+        OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+        OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+        NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+        NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+        UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+      }
 
-    // 🔹 Send email using the correct slug
-    const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+      // 🔹 Send email using the correct slug
+      const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
 
-    if (!isMailSent) {
-      return { success: false, message: 'EMAIL_NOT_SENT', data: savedAssignment }
-    }
+      if (!isMailSent) {
+        return { success: false, message: 'EMAIL_NOT_SENT', data: savedAssignment }
+      }
 
       return {
         success: true,
@@ -832,26 +894,26 @@ const dataBody = {
       assignment.endMinutes = endMinutes
       const saved = await assignment.save()
 
-    const dataBody = {
-  TEACHER_NAME: teacherData.name,                  // Teacher's full name
-  TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
-  CLASS_NAME: classData.name || 'N/A',             // Assigned class name
-  SECTION: section || assignment.section || 'N/A', // Class section
-  SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
-  OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
-  OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
-  NEW_START_TIME: startTime || assignment.startTime, // Updated start time
-  NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
-  UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
-  LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
-}
+      const dataBody = {
+        TEACHER_NAME: teacherData.name,                  // Teacher's full name
+        TEACHER_ID: teacherData._id.toString(),          // Teacher's ID
+        CLASS_NAME: classData.name || 'N/A',             // Assigned class name
+        SECTION: section || assignment.section || 'N/A', // Class section
+        SUBJECT: subjectData ? subjectData.name : 'N/A', // Subject name
+        OLD_START_TIME: assignment.startTime || 'N/A',   // Previous start time
+        OLD_END_TIME: assignment.endTime || 'N/A',       // Previous end time
+        NEW_START_TIME: startTime || assignment.startTime, // Updated start time
+        NEW_END_TIME: endTime || assignment.endTime,       // Updated end time
+        UPDATED_DATE: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        LOGIN_URL: process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+      }
 
-    // 🔹 Send email using the correct slug
-    const isMailSent = await sendEmail('update-assigned-to-class', dataBody)
+      // 🔹 Send email using the correct slug
+      const isMailSent = await sendEmail('update-assigned-to-class', dataBody)
 
-    if (!isMailSent) {
-      return { success: false, message: 'EMAIL_NOT_SENT', data: saved  }
-    }
+      if (!isMailSent) {
+        return { success: false, message: 'EMAIL_NOT_SENT', data: saved }
+      }
       return {
         success: true,
         message: 'TEACHER_ASSIGNMENT_UPDATED',
@@ -1009,7 +1071,7 @@ const dataBody = {
       if (statusFilter) totalCountQuery.status = statusFilter
 
       const totalDocs = await TeacherAttendance.countDocuments(totalCountQuery)
-      const docs = data[0].docs
+      const docs = data[0]
 
       return {
         success: true,
@@ -1022,5 +1084,59 @@ const dataBody = {
       console.error('Error fetching teacher attendance:', error)
       return { success: false, message: 'FAILED_TEACHER_ATTENDANCE_FAILED' }
     }
+  },
+
+  getAllAttendance: async (month, search) => {
+    try {
+      const now = new Date();
+      const targetMonth = month
+        ? new Date(month + "-01")
+        : new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const monthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+      const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0, 23, 59, 59);
+
+      // Build pipeline
+      const pipeline = getTeachersAttendancesByMonth(monthStart, monthEnd, search);
+
+      const teachersWithAttendance = await Teacher.aggregate(pipeline);
+
+      // Build all dates in the month
+      const datesInMonth = [];
+      for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+        datesInMonth.push(new Date(d));
+      }
+
+      const formatted = teachersWithAttendance.map(teacher => {
+        const attendanceMap = {};
+        teacher.attendance.forEach(a => {
+          const dateKey = new Date(a.date).toISOString().split("T")[0];
+          attendanceMap[dateKey] = a.status;
+        });
+
+        const fullMonthAttendance = datesInMonth.map(d => {
+          const dateKey = d.toISOString().split("T")[0];
+          return {
+            date: dateKey,
+            status: attendanceMap[dateKey] || null
+          };
+        });
+
+        return {
+          teacherId: teacher.teacherId,
+          teacherName: teacher.teacherName,
+          attendance: fullMonthAttendance
+        };
+      });
+
+      return { success: true, message: "Teacher attendance fetched successfully", formatted };
+
+    } catch (error) {
+      console.error("Error while fetching attendance:", error);
+      return { success: false, message: "SERVER_ERROR", error: error.message };
+    }
   }
+
+
+
 }

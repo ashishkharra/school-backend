@@ -36,7 +36,7 @@ module.exports = {
       safeData.role = role;
       const tokens = generateAuthToken(safeData);
 
-      return { success: true, message: `${role.toUpperCase()}_LOGIN_SUCCESS`, results: { ...safeData, ...tokens } };
+      return { success: true, message: `${role.toUpperCase()}_LOGIN_SUCCESS`, results: { ...tokens, role : safeData.role } };
 
     } catch (err) {
       return { success: false, message: "SERVER_ERROR", results: {}};

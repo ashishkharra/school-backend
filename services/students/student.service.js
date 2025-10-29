@@ -2,6 +2,8 @@ const Student = require('../../models/students/student.schema.js')
 const Assignment = require('../../models/assignment/assignment.schema.js')
 const Attendance = require('../../models/students/attendance.schema.js')
 const Submission = require('../../models/assignment/submission.schema.js')
+const StudentFee = require('../../models/fees/studentFee.schema.js')
+const Grade = require('../../models/assignment/grades.schema.js')
 const _ = require('lodash');
 const { sendEmail } = require('../../helpers/helper.js')
 const { responseData } = require('../../helpers/responseData.js')
@@ -13,7 +15,6 @@ const crypto = require("crypto");
 const { v4 } = require("uuid");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-
 
 const { studentAttendancePipeline, studentProfilePipeline, studentAssignmentPipeline, getSubmissionWithDetails, studentDashboardPipeline } = require('../../helpers/commonAggregationPipeline.js')
 
@@ -197,8 +198,11 @@ const studentService = {
 
             const totalDocs = await Attendance.countDocuments(totalCountQuery);
 
+            if (!totalDocs) return { success: false, message: 'ERROR_FETCHING_ATTENDANCE' }
+
             return {
                 success: true,
+                message: 'GET_ATTENDANCE',
                 jsonData: data,
                 meta: {
                     page,
@@ -335,12 +339,17 @@ const studentService = {
     },
 
     // Get submission details
-    getSubmissionDetails: async (submissionId) => {
+    getSubmissionDetails: async (submissionId, studentId) => {
         try {
+            console.log("Inside submission")
+            if (!mongoose.Types.ObjectId.isValid(studentId)) {
+                return { success : false, message : "STUDENT_ID_NOT_VALID"}
+            }
             const [populated] = await Submission.aggregate(getSubmissionWithDetails(submissionId));
             if (!populated) return { success: false, message: "SUBMISSION_NOT_FOUND" };
             return { success: true, data: populated };
         } catch (err) {
+            console.log("Inside submission error")
             console.error("Get Submission Details Error:", err.message);
             return { success: false, message: "FETCH_FAILED" };
         }
@@ -354,6 +363,8 @@ const studentService = {
 
             const pipeline = studentDashboardPipeline(studentId);
             const result = await Submission.aggregate(pipeline);
+
+            console.log('resss ------ ', result)
 
             if (result.length === 0) {
                 return { success: false, message: "STUDENT_NOT_FOUND" };
@@ -460,6 +471,153 @@ const studentService = {
         } catch (error) {
             console.error("Error in getStudentDashboard service:", error);
             return { success: false, message: "SERVER_ERROR" };
+        }
+    },
+
+    getAllAssignmentOfClass: async (classId, title, subject, page = 1, limit = 10) => {
+        try {
+            const query = { class: classId };
+
+            // 🔍 Apply filters if provided
+            const filters = [];
+            if (title && title.trim() !== "") {
+                filters.push({ title: { $regex: title, $options: "i" } });
+            }
+            if (subject && subject.trim() !== "") {
+                filters.push({ subject: { $regex: subject, $options: "i" } });
+            }
+
+            if (filters.length > 0) {
+                query.$or = filters; // match either title or subject
+            }
+
+            // Pagination setup
+            const skip = (page - 1) * limit;
+
+            // Count total
+            const total = await Assignment.countDocuments(query);
+
+            // Fetch paginated assignments
+            let assignments = await Assignment.find(query)
+                .select("title description dueDate maxMarks fileUrl resources subject uploadedBy createdAt")
+                .populate("uploadedBy", "firstName lastName email")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit);
+
+            assignments.map(a => {
+                a.fileUrl = process.env.STATIC_URL_ + a.fileUrl
+            })
+
+            // Handle no data
+            if (!assignments || assignments.length === 0) {
+                return {
+                    success: false,
+                    message: "ASSIGNMENT_NOT_FOUND",
+                    data: [],
+                    pagination: {
+                        total: 0,
+                        page,
+                        limit,
+                        totalPages: 0
+                    }
+                };
+            }
+
+            // ✅ Successful response
+            return {
+                success: true,
+                message: "ASSIGNMENT_FETCHED_SUCCESSFULLY",
+                data: assignments,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            };
+        } catch (error) {
+            console.error("Error fetching assignments:", error);
+            return {
+                success: false,
+                message: "SERVER_ERROR",
+                error: error.message
+            };
+        }
+    },
+
+    performance: async (studentId) => {
+        try {
+            const student = await Student.findById(studentId);
+            if (!student) {
+                return { success: false, message: "STUDENT_NOT_FOUND" };
+            }
+
+            console.log('student : ', student)
+
+            const grades = await Grade.find({ student: studentId });
+            const averageGrade =
+                grades.length > 0
+                    ? grades.reduce((sum, g) => sum + g.percentage, 0) / grades.length
+                    : 0;
+
+            const attendanceRecords = await Attendance.aggregate([
+                { $unwind: "$records" },
+                { $match: { "records.student": student._id } },
+                {
+                    $group: {
+                        _id: null,
+                        total: { $sum: 1 },
+                        present: {
+                            $sum: {
+                                $cond: [{ $eq: ["$records.status", "Present"] }, 1, 0],
+                            },
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        attendancePercentage: {
+                            $cond: [{ $eq: ["$total", 0] }, 0, { $multiply: [{ $divide: ["$present", "$total"] }, 100] }],
+                        },
+                    },
+                },
+            ]);
+            const attendancePercentage = attendanceRecords[0]?.attendancePercentage || 0;
+
+            const fee = await StudentFee.findOne({ studentId });
+            const feeCompletion =
+                fee && fee.totalFee > 0
+                    ? (fee.paidTillNow / fee.totalFee) * 100
+                    : 0;
+
+            const overallScore = Math.round(
+                (averageGrade * 0.6) + (attendancePercentage * 0.3) + (feeCompletion * 0.1)
+            );
+
+            return {
+                success: true,
+                message: "STUDENT_PERFORMANCE_FETCHED",
+                data: {
+                    studentId,
+                    averageGrade: averageGrade.toFixed(2),
+                    attendancePercentage: attendancePercentage.toFixed(2),
+                    feeCompletion: feeCompletion.toFixed(2),
+                    overallScore,
+                    performanceLevel:
+                        overallScore >= 85
+                            ? "Excellent"
+                            : overallScore >= 70
+                                ? "Good"
+                                : overallScore >= 50
+                                    ? "Average"
+                                    : "Needs Improvement",
+                },
+            };
+        } catch (error) {
+            console.error("Error calculating performance:", error);
+            return { success: false, message: error.message };
         }
     }
 

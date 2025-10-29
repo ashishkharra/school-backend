@@ -13,11 +13,15 @@ const server = http.createServer(app);
 // DB connection
 const connectDB = require('./configs/db');
 
+// Landing page routes
+const landingRoutes = require('./routes/admins/landing.routes.js')
+
 // Role login import
 const roleLoginRoute = require('./routes/auth.role.route.js');
 
 // Import Admin routes
 const adminAuthRoutes = require('./routes/admins/admins.route');
+const adminLandingRoute = require('./routes/admins/admin.landing.route.js')
 const adminClassRoutes = require('./routes/admins/class.routes');
 const adminReportRoutes = require('./routes/admins/reports.routes');
 const adminStudentRoutes = require('./routes/admins/student.routes');
@@ -40,10 +44,9 @@ const teacherAttendanceRoute=require('./routes/teachers/attendance.route.js') ;
 const teacherProfileRoute = require('./routes/teachers/teacher.route.js');
 const teacherAssignmentRoute= require('./routes/teachers/assignment.route.js')
 
-
 // middlewares
 const corsOption = {
-  origin: ['http://localhost:5173', 'http://192.168.2.157:5173', 'http://192.168.2.84:5173', 'http://192.168.1.15:5173'],
+  origin: ['http://localhost:5173', 'http://192.168.2.157:5173', 'http://192.168.2.84:5173', 'http://192.168.1.15:5173', 'http://192.168.2.60:5173', 'http://192.168.2.167:5173', 'http://192.168.2.220:5173'],
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   exposedHeaders: ['x-access-token']
 };
@@ -68,11 +71,15 @@ app.get('/', (req, res) => {
   res.send(`API is Running on Port ${process.env.PORT}`);
 });
 
+// Landing page routes
+app.use('/api/main', landingRoutes)
+
 // Role login route
 app.use('/role/auth', roleLoginRoute);
 
 // Admin routes
 app.use('/api/admins', adminDashboardRoutes)
+app.use('/api/main/admins', adminLandingRoute)
 app.use('/api/admins/auth', adminAuthRoutes);
 app.use('/api/admins/classes', adminClassRoutes);
 app.use('/api/admins/reports', adminReportRoutes);

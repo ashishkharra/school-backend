@@ -22,10 +22,11 @@ const uploadTeacherDocs = createUploader({
 })
 
 const uploadSchoolLogo = createUploader({
-  folderName: 'logo',
+  folderName: 'main',
   allowedMime: [...imageMime],
   maxSize: 2 * 1024 * 1024
 })
+
 
 const uploadProfilePics = createUploader({
   folderName: 'profilePics',
@@ -33,6 +34,13 @@ const uploadProfilePics = createUploader({
   allowedMime: ['image/jpeg', 'image/png', 'image/gif'],
   maxSize: 3 * 1024 * 1024
 });
+
+const uploadAnnouncement = createUploader({
+  folderName: 'announcements',
+  allowedMime: ['image/jpeg', 'image/png', 'image/gif'],
+  maxSize: 3 * 1024 * 1024
+})
+
 
 const studentDocFields = uploadStudentDocs.fields([
   { name: 'profilePic', maxCount: 1 },
@@ -55,11 +63,18 @@ const teacherDocFields = uploadTeacherDocs.fields([
 ])
 
 const schoolDoc = uploadSchoolLogo.fields([
-  { name: 'schoolLogo', maxCount: 1 }
+  { name: 'schoolLogo', maxCount: 1 },
+    { name: 'banner', maxCount: 4 },
+  { name: 'gallery', maxCount: 20 }
 ])
+
 
 const adminDoc = uploadProfilePics.fields([
   { name: 'profilePic', maxCount: 1 }
 ])
 
-module.exports = { studentDocFields, teacherDocFields, schoolDoc, adminDoc }
+const announcement = uploadAnnouncement.fields([
+  { name: 'attachments', maxCount: 5 }
+])
+
+module.exports = { studentDocFields, teacherDocFields, schoolDoc, adminDoc, announcement }

@@ -13,7 +13,6 @@ module.exports = {
                     const oldPath = path.join(__dirname, `../../uploads${existing.schoolLogo}`);
                     if (fs.existsSync(oldPath)) {
                         fs.unlinkSync(oldPath);
-                        console.log(`Deleted old logo: ${oldPath}`);
                     }
                 }
 
@@ -34,41 +33,75 @@ module.exports = {
     getSettings: async () => {
         try {
             let settings = await SchoolSetting.findOne();
-            if (!settings)
+
+            console.log('url - ', process.env.STATIC_URL)
+
+            if (!settings) {
                 return { success: false, message: "SETTINGS_NOT_FOUND", data: {} };
+            }
 
-            console.log('Fetched Settings:', settings);
+            if (settings.schoolLogo)
+                settings.schoolLogo = process.env.STATIC_URL + settings.schoolLogo;
 
-            settings.schoolLogo = process.env.STATIC_URL + settings.schoolLogo
-            return { success: true, message: "SCHOOL_SETTINGS_FETCHED", data: settings };
+            if (settings.faqs?.length > 0) {
+                settings.faqs = settings.faqs
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 3);
+            }
+
+            if (settings.banner?.length > 0) {
+                settings.banner = settings.banner
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    .slice(0, 3)
+                    .map(b => process.env.STATIC_URL + b.image);
+            }
+
+            if (settings.gallery?.length > 0) {
+                settings.gallery = settings.gallery
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                    // .slice(0, 3)
+                    .map(g => `${process.env.STATIC_URL}${g.image}`);
+            }
+
+            console.log('setting ----- ', settings)
+
+            return {
+                success: true,
+                message: "SCHOOL_SETTINGS_FETCHED",
+                data: settings,
+            };
         } catch (error) {
             console.error("Error in getSettings:", error);
             return { success: false, message: "SERVER_ERROR", data: {} };
         }
     },
 
+
     updateSettings: async (data) => {
         try {
-            console.log('Update data:', data);
+            console.log("Update data:", data);
 
-            // Fetch the existing settings document
+            // 🔍 Fetch existing settings
             const existing = await SchoolSetting.findOne();
             if (!existing) {
                 return { success: false, message: "SETTING_NOT_FOUND", data: {} };
             }
 
             const updatableData = {};
+            const pushOps = {};
 
-            // Copy top-level fields except nested objects
+            // 🧩 Copy top-level fields (ignore nested objects)
             Object.keys(data).forEach((key) => {
-                if (!["address", "contact", "schoolTiming", "periods", "academicSession"].includes(key)) {
+                if (
+                    !["address", "contact", "schoolTiming", "periods", "academicSession", "banner", "gallery"].includes(key)
+                ) {
                     if (data[key] !== null && data[key] !== undefined && data[key] !== "") {
                         updatableData[key] = data[key];
                     }
                 }
             });
 
-            // Merge nested objects
+            // 🧠 Merge nested object fields
             ["address", "contact", "schoolTiming", "periods", "academicSession"].forEach((field) => {
                 if (data[field] && typeof data[field] === "object") {
                     updatableData[field] = {
@@ -78,20 +111,38 @@ module.exports = {
                 }
             });
 
-            // Handle school logo replacement
+            // 🖼️ If a new school logo is uploaded, delete the old one
             if (data.schoolLogo && existing.schoolLogo) {
-                const oldPath = path.join(__dirname, `../uploads${existing.schoolLogo}`);
-                if (fs.existsSync(oldPath)) {
-                    fs.unlinkSync(oldPath);
-                    console.log(`Deleted old logo: ${oldPath}`);
+                try {
+                    const oldPath = path.join(__dirname, `../uploads${existing.schoolLogo}`);
+                    if (fs.existsSync(oldPath)) {
+                        fs.unlinkSync(oldPath);
+                        console.log(`🗑️ Deleted old logo: ${oldPath}`);
+                    }
+                } catch (err) {
+                    console.warn("⚠️ Failed to delete old logo:", err.message);
                 }
                 updatableData.schoolLogo = data.schoolLogo;
             }
 
-            // Update the document
+            // 🏞️ Append new banner images (if any)
+            if (Array.isArray(data.banner) && data.banner.length > 0) {
+                pushOps.banner = { $each: data.banner };
+            }
+
+            // 🖼️ Append new gallery images (if any)
+            if (Array.isArray(data.gallery) && data.gallery.length > 0) {
+                pushOps.gallery = { $each: data.gallery };
+            }
+
+            // 🧾 Prepare final update object
+            const updateOps = { $set: updatableData };
+            if (Object.keys(pushOps).length > 0) updateOps.$push = pushOps;
+
+            // 💾 Update settings document
             const updated = await SchoolSetting.findOneAndUpdate(
                 { _id: existing._id },
-                { $set: updatableData },
+                updateOps,
                 { new: true, runValidators: true }
             );
 

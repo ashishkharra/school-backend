@@ -4,15 +4,13 @@ const { responseData } = require("../helpers/responseData");
 module.exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-console.log(req.body,"result")
 
     const result = await authService.login(email, password);
-console.log(result,"result")
     return res.json(
       responseData(result.message, result.results, req, result.success)
     );
   } catch (error) {
     console.error("Login error:", error.message);
-    return res.status(500).json(responseData("SERVER_ERROR", {error : error.message}, req, false));
+    return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
   }
 };

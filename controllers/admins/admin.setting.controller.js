@@ -10,6 +10,14 @@ const schoolSettingController = {
                 data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`;
             }
 
+            if (req.files && req.files.banner && req.files.banner.length > 0) {
+                data.banner = req.files.banner.map(file => `/banner/${file.filename}`);
+            }
+
+            if (req.files && res.files.gallery && req.files.gallery.length > 0) {
+                data.gallery = req.files.gallery.map(file => `/gallery/${file.filename}`)
+            }
+
             const result = await schoolSettingService.saveSettings(data);
 
             return res
@@ -27,7 +35,7 @@ const schoolSettingController = {
 
             return res
                 .status(result.success ? 200 : 404)
-                .json(responseData(result.message, result.data || {}, req, result.success));
+                .json(responseData(result?.message, result?.data || {}, req, result?.success));
         } catch (error) {
             console.error("getSettings Error:", error);
             return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
@@ -38,8 +46,16 @@ const schoolSettingController = {
         try {
             const data = { ...req.body };
 
-            if (req.files?.schoolLogo && req.files.schoolLogo.length > 0) {
-                data.schoolLogo = `/logo/${req.files.schoolLogo[0].filename}`;
+            if (req.files?.schoolLogo?.length > 0) {
+                data.schoolLogo = `/main/${req.files.schoolLogo[0].filename}`;
+            }
+
+            if (req.files?.banner?.length > 0) {
+                data.banner = req.files.banner.map(file => ({ image: `/main/${file.filename}` }));
+            }
+
+            if (req.files?.gallery?.length > 0) {
+                data.gallery = req.files.gallery.map(file => ({ image: `/main/${file.filename}` }));
             }
 
             Object.keys(data).forEach((key) => {
@@ -50,9 +66,7 @@ const schoolSettingController = {
 
             const result = await schoolSettingService.updateSettings(data);
 
-            return res.json(
-                responseData(result.message, result.data || {}, req, result.success)
-            );
+            return res.json(responseData(result.message, result.data || {}, req, result.success));
         } catch (error) {
             console.error("updateSettings Error:", error);
             return res
@@ -60,6 +74,7 @@ const schoolSettingController = {
                 .json(responseData("SERVER_ERROR", { error: error.message }, req, false));
         }
     },
+
 
     resetSettings: async (req, res) => {
         try {

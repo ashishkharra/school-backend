@@ -11,7 +11,7 @@ const adminClassController = {
             if (!result.success) {
                 return res.status(401).json(responseData(result?.message, {}, req, result?.success || false));
             }
-            return res.status(201).json(responseData(result?.message, result, req, true));
+            return res.status(201).json(responseData(result?.message, result?.newClass, req, true));
         } catch (error) {
             console.log('Class register error : ', error.message)
             return res.status(500).json(responseData("REGISTRATION_FAILED", { error: error.message }, req, false));

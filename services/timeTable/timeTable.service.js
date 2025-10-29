@@ -47,16 +47,18 @@ async function getTimetableForClass(classId) {
       timetable[day] = teacherAssignments
         .filter(t => t.day === day)
         .map(t => ({
-          period: t.period,
-          day: t.day,
-          startTime: t.startTime,
-          endTime: t.endTime,
-          startMinutes: t.startMinutes,
-          endMinutes: t.endMinutes,
-          teacher: t.teacher,
-          subject: t.subject,
-          className: t.className,
-          section: t.section
+          period: t?.period,
+          day: t?.day,
+          startTime: t?.startTime,
+          endTime: t?.endTime,
+          startMinutes: t?.startMinutes,
+          endMinutes: t?.endMinutes,
+          teacher: t?.teacher,
+          subject: t?.subjectInfo?.name,
+          subjectId: t?.subjectInfo?._id,
+          teacherId: t?.teacherId,
+          className: t?.className,
+          section: t?.section
         }));
     }
 

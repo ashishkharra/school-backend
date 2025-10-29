@@ -983,6 +983,9 @@
     "en": "Please send total amount.",
     "ar": ""
   },
+  "FEEHEADS_INVALID_JSON": {
+    "en": "Invalid fee heads json"
+  },
   "PRODUCT_HIRED_SUCCESS": {
     "en": "Product hired successfully.",
     "ar": ""
@@ -1003,9 +1006,18 @@
     "en": "Testimonial delete successfully.",
     "ar": ""
   },
+  "TITLE_AND_MESSAGE_REQUIRED": {
+    "en": "Title and message are required"
+  },
+  "ANNOUNCEMENT_CREATED_SUCCESSFULLY": {
+    "en": "Announcement created successfully"
+  },
   "TESTIMONIAL_STATUS_UPDATE": {
     "en": "Testimonial status has been updated successfully.",
     "ar": ""
+  },
+  "SUBJECT_ALREADY_EXISTS": {
+    "en": "Subject already exist"
   },
   "TESTIMONIAL_SEQUENCE_UPDATED": {
     "en": "Testimonial sequence has been updated successfully.",
@@ -2394,5 +2406,176 @@
   "TIME_TABLE_RESET_SUCCESSFULLY": {
     "en": "Time table reset successfully",
     "ar": ""
+  },
+  "CLASS_TEACHER_ASSIGNED_SUCCESSFULLY": {
+    "en": "Class teacher assigned successfully"
+  },
+  "HOME_DATA_INSERTED": {
+    "en": "Data inserted at home sucessfully"
+  },
+  "HOME_DATA_FETCHED": {
+    "en": "Home data fetched successfully"
+  },
+  "SOCIAL_URL_INVALID": {
+    "en": "Social url is invalid"
+  },
+  "SOCIAL_URL_MUST_BE_STRING": {
+    "en": "Social url must be string"
+  },
+  "SOCIAL_URL_MUST_BE_ARRAY": {
+    "en": "Social url must be array"
+  },
+  "SOCIAL_URL_EACH_ITEM_MUST_BE_OBJECT": {
+    "en": "Social url must be object"
+  },
+  "SOCIAL_URL_URL_REQUIRED": {
+    "en": "Social url required"
+  },
+  "SOCIAL_URL_ICON_REQUIRED": {
+    "en": "Social url icon is required"
+  },
+  "HOME_DATA_NOT_FOUND": {
+    "en": "Home data not found"
+  },
+  "TOLL_FREE_MUST_BE_STRING": {
+    "en": "Toll free number must be string"
+  },
+  "FAQS_MUST_BE_ARRAY": {
+    "en": "Faqs must be array"
+  },
+  "FAQS_EACH_ITEM_MUST_BE_OBJECT": {
+    "en": "Faqs must be in object format"
+  },
+  "FAQS_REQUIRED": {
+    "en": "Faqs are required"
+  },
+  "__STUDENT_LOGIN_SUCCESS__": {
+    "en": "Student logged in successfully"
+  },
+  "__TEACHER_LOGIN_SUCCESS__": {
+    "en": "Teacher logged in successfully"
+  },
+  "ASSIGNMENT_FETCHED_SUCCESSFULLY": {
+    "en": "Assignments fetched sucessfully"
+  },
+  "DASHBOARD_DATA_FETCHED": {
+    "en": "Dashboard data fetched successfully"
+  },
+  "DATA_NOT_FOUND": {
+    "en": "Data not found"
+  },
+  "DATA_FETCHED": {
+    "en": "Data fetched successfully"
+  },
+  "GALLERY_NOT_FOUND": {
+    "en": "Gallery not found"
+  },
+  "GALLERY_DATA_FETCHED": {
+    "en": "Gallery data fetched sucessfully"
+  },
+  "ABOUT_DATA_NOT_FOUND": {
+    "en": "About data not found"
+  },
+  "ABOUT_DATA_FETCHED": {
+    "en": "About data fetched"
+  },
+  "MESSAGE_REQUIRED": {
+    "en": "Mess"
+  },
+  "YOUR_MESSAGE_HAS_BEEN_SENT!": {
+    "en": "Your message has been sent successfully!"
+  },
+  "SECTION_INVALID!": {
+    "en": "Invalid section"
+  },
+  "SUBJECT_ALREADY_EXISTS!": {
+    "en": "Subject already exist."
+  },
+  "FEEDBACK_SENT": {
+    "en": "Thank you for your feedback! Awaiting admin approval."
+  },
+  "ALREADY_POSTED": {
+    "en": "You’ve already submitted feedback recently. Please try again later."
+  },
+  "ADMIN_EMAIL_NOT_FOUND": {
+    "en": "Admin email not found"
+  },
+  "Invalid contact number": {
+    "en": "Invalid contact number"
+  },
+  "STUDENT_LOGIN_SUCCESS": {
+    "en": "Student logged in successfully"
+  },
+  "STUDENT_PERFORMANCE_FETCHED": {
+    "en": "Student performance fetched successfully"
+  },
+  "TESTIMONIAL_ID_NOT_VALID": {
+    "en": "Testimonial id is not valid"
+  },
+  "TESTIMONIAL_NOT_FOUND": {
+    "en": "Testimonial not found"
+  },
+  "TESTIMONIAL_APPROVED": {
+    "en": "Testimonial approved"
+  },
+  "TESTIMONIAL_REJECTED": {
+    "en": "Testimonial rejected"
+  },
+  "NO_TESTIMONIALS_FOUND": {
+    "en": "Testimonials not found"
+  },
+  "RECENT_TESTIMONIALS_FETCHED": {
+    "en": "Recent testimonials fetched successfully"
+  },
+  "INVALID_STATUS_VALUE": {
+    "en": "Status is invalid"
+  },
+  "STATUS_REQUIRED": {
+    "en": "Status is required"
+  },
+  "INVALID_PRIORITY": {
+    "en": "Invalid priority"
+  },
+  "INVALID_END_DATE": {
+    "en": "Invalid end date"
+  },
+  "INVALID_START_DATE": {
+    "en": "Invalid start date"
+  },
+  "ATTACHMENTS_MUST_BE_ARRAY": {
+    "en": "Attachments must be array"
+  },
+  "AUDIENCE_MUST_BE_ARRAY": {
+    "en": "Audience must be array"
+  },
+  "MESSAGE_TOO_LONG": {
+    "en": "Message is too long"
+  },
+  "RATING_MUST_BE_BETWEEN_1_AND_5": {
+    "en": "Rating must be between 1 to 5"
+  },
+  "TITLE_TOO_LONG": {
+    "en": "Title is too long"
+  },
+  "MESSAGE_TOO_SHORT": {
+    "en": "Message is too short"
+  },
+  "INVALID_ROLE": {
+    "en": "Invalid role"
+  },
+  "INVALID_PHONE_FORMAT": {
+    "en": "Invalid phone format"
+  },
+  "INVALID_EMAIL": {
+    "en": "Invalid email"
+  },
+  "SOCIAL_URL_MUST_HAVE_VALID_DOMAIN": {
+    "en": "Socail url must have valid domain"
+  },
+  "INVALID_SOCIAL_URL_FORMAT": {
+    "en": "Social url is invalid"
+  },
+  "EACH_SOCIAL_URL_MUST_BE_STRING": {
+    "en": "Social url must be string"
   }
 }
