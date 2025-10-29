@@ -51,16 +51,18 @@ module.exports = {
 
             if (settings.banner?.length > 0) {
                 settings.banner = settings.banner
-                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                    .slice(0, 3)
-                    .map(b => process.env.STATIC_URL + b.image);
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                for (const b of settings.banner) {
+                    b.image = `${process.env.STATIC_URL}${b.image}`;
+                }
             }
 
             if (settings.gallery?.length > 0) {
                 settings.gallery = settings.gallery
-                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-                    // .slice(0, 3)
-                    .map(g => `${process.env.STATIC_URL}${g.image}`);
+                    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+                for (const g of settings.gallery) {
+                    g.image = `${process.env.STATIC_URL}${g.image}`;
+                }
             }
 
             console.log('setting ----- ', settings)
