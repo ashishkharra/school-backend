@@ -5,7 +5,6 @@ const { constant } = require('lodash')
 module.exports = {
   markOrUpdateAttendance: async (req, res) => {
     try {
-      
       const { classId, session, takenBy, records } = req.body
 
       if (!classId || !session || !takenBy || !records) {
@@ -27,6 +26,14 @@ module.exports = {
         records
       })
 
+      if (result.message === 'ALREADY_EXISTS') {
+        return res
+          .status(200)
+          .json(
+            responseData('ATTENDANCE_ALREADY_EXISTS', result.results, req, true)
+          )
+      }
+
       if (!result.success) {
         return res
           .status(400)
@@ -44,7 +51,7 @@ module.exports = {
         .status(200)
         .json(
           responseData(
-            'ATTENDANCE_FETCHED_OR_UPDATED',
+            result.message || 'ATTENDANCE_FETCHED_OR_UPDATED',
             result.results,
             req,
             true
@@ -58,12 +65,12 @@ module.exports = {
         )
     }
   },
-
   updateAttendanceController: async (req, res) => {
     try {
       const { attendanceId } = req.params
       const { records } = req.body
       if (!attendanceId) {
+        x
         return res
           .status(400)
           .json(responseData('MISSING_ATTENDANCE_ID', {}, req, false))
@@ -84,14 +91,16 @@ module.exports = {
           .json(responseData('ATTENDANCE_RECORD_NOT_FOUND', {}, req, false))
       }
 
-      return res.status(200).json(
-        responseData(
-          'ATTENDANCE_UPDATED_SUCCESSFULLY',
-          updatedAttendance.results, 
-          req,
-          true
+      return res
+        .status(200)
+        .json(
+          responseData(
+            'ATTENDANCE_UPDATED_SUCCESSFULLY',
+            updatedAttendance.results,
+            req,
+            true
+          )
         )
-      )
     } catch (error) {
       return res
         .status(500)
@@ -100,88 +109,47 @@ module.exports = {
         )
     }
   },
-  // getAttendance: async (req, res) => {
-  //   const { date,month ,page = 1, limit = 10 } = req.query
-  //    const teacherId = req.user.id;
-  //   try {
-  //     const queryResult = await attendanceService.getAttendanceData(
-  //       date,
-  //       month,
-  //        teacherId,
-  //       parseInt(page),
-  //       parseInt(limit)
-  //     )
 
-  //     if (!queryResult.results || queryResult.results.docs.length === 0) {
-  //       return res
-  //         .status(404)
-  //         .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
-  //     }
+  getAttendance: async (req, res) => {
+    const { date, month, page = 1, limit = 10, classId } = req.query
+    const teacherId = req.user._id
+    try {
+      const queryResult = await attendanceService.getAttendanceData(
+        date,
+        month,
+        parseInt(page),
+        parseInt(limit),
+        teacherId,
+        classId
+      )
+      if (!queryResult.results || queryResult.results.docs.length === 0) {
+        return res
+          .status(404)
+          .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
+      }
 
-  //     return res
-  //       .status(200)
-  //       .json(
-  //         responseData(
-  //           'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
-  //           queryResult.results,
-  //           req,
-  //           queryResult.success
-  //         )
-  //       )
-  //   } catch (error) {
-  //     if (error.message === 'Invalid date format') {
-  //       return res
-  //         .status(400)
-  //         .json(responseData('INVALID_DATE_FORMAT', {}, req, false))
-  //     }
-  //     res
-  //       .status(500)
-  //       .json(
-  //         responseData('SERVER_ERROR', { error: error.message }, req, false)
-  //       )
-  //   }
-  // },
- 
- getAttendance :async (req, res) => {
-  const { date, month, page = 1, limit = 10, classId } = req.query;
-  console.log(req.query,"=====", classId)
-  const teacherId = req.user._id; // Logged-in teacher ID
-console.log(teacherId,"=======+++++++")
-  try {
-    const queryResult = await attendanceService.getAttendanceData(
-      date,
-      month,
-      parseInt(page),
-      parseInt(limit),
-      teacherId,
-      classId
-    );
-    console.log(queryResult)
-    if (!queryResult.results || queryResult.results.docs.length === 0) {
       return res
-        .status(404)
-        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
-    }
-
-    return res
-      .status(200)
-      .json(
-        responseData(
-          'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
-          queryResult.results,
-          req,
-          queryResult.success
+        .status(200)
+        .json(
+          responseData(
+            'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
+            queryResult.results,
+            req,
+            queryResult.success
+          )
         )
-      );
-  } catch (error) {
-    res
-      .status(500)
-      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
-  }
-},
+    } catch (error) {
+      res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
+    }
+  },
+
   deleteAttendance: async (req, res) => {
     try {
-      const { attendanceId } = req.params 
+      const { attendanceId } = req.params
 
       if (!attendanceId) {
         return res
@@ -216,7 +184,60 @@ console.log(teacherId,"=======+++++++")
           responseData('SERVER_ERROR', { error: error.message }, req, false)
         )
     }
-  }
+  },
 
-  
+getAttendanceSummary: async (req, res) => {
+  const { date, month, classId, studentId } = req.query;
+  const teacherId = req.user._id;
+
+  try {
+    const summary = await attendanceService.getAttendanceSummary(
+      date,
+      month,
+      teacherId,
+      classId,
+      studentId
+    );
+
+    // ✅ Handle no data
+    if (!summary || !summary.success) {
+      return res
+        .status(404)
+        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
+    }
+
+    // ✅ Only send final result (don’t rewrap the whole object)
+    return res.status(200).json(
+      responseData(
+        'ATTENDANCE_SUMMARY_FETCHED_SUCCESSFULLY',
+        summary.results, // ✅ send only .results, not the full object
+        req,
+        true
+      )
+    );
+  } catch (error) {
+    console.error('Error in getAttendanceSummary:', error);
+    return res.status(500).json(
+      responseData('SERVER_ERROR', { error: error.message }, req, false)
+    );
+  }
+},
+getStudentsByTeacherController :async (req, res) => {
+  try {
+    const teacherId = req.user._id; // ✅ From Auth Middleware
+
+    const result = await attendanceService.getStudentsByTeacherService(teacherId);
+
+    if (!result.success) {
+      return res.status(404).json(responseData(result.message, result, req, false));
+    }
+
+    return res.status(200).json(responseData(result.message, result.results, req, true));
+  } catch (error) {
+    console.error('Error in getStudentsByTeacherController:', error);
+    return res
+      .status(500)
+      .json(responseData('INTERNAL_SERVER_ERROR', { error: error.message }, req, false));
+  }
+}
 }

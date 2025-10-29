@@ -540,6 +540,33 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
+    case 'updateAttendance': {
+  return [
+    // ✅ teacherId is required and must be a valid MongoDB ObjectId
+    body('teacherId')
+      .notEmpty()
+      .withMessage('TEACHER_ID_REQUIRED')
+      .bail()
+      .isString()
+      .matches(/^[0-9a-fA-F]{24}$/)
+      .withMessage('TEACHER_ID_INVALID'),
+
+    // ✅ status is required and must be one of the allowed values
+    body('status')
+      .notEmpty()
+      .withMessage('STATUS_REQUIRED')
+      .bail()
+      .isString()
+      .withMessage('STATUS_STRING_REQUIRED')
+      .custom((value) => ['present', 'absent', 'leave'].includes(value.toLowerCase()))
+      .withMessage('STATUS_INVALID')
+      .bail()
+      .customSanitizer((value) => value.toLowerCase()),
+
+    validatorMiddleware
+  ]
+}
+
     case 'updateClassTeacherOf': {
       return [
         // classId is required and must be a valid ObjectId
@@ -685,6 +712,12 @@ module.exports.validate = (method) => {
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
           .withMessage('TEACHER_ID_INVALID'),
+        // body('teacherId')
+        //   .notEmpty()
+        //   .withMessage('TEACHER_ID_REQUIRED')
+        //   .bail()
+        //   .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+        //   .withMessage('TEACHER_ID_INVALID'),
 
         // classId (required, ObjectId)
         body('classId')
@@ -1052,6 +1085,39 @@ module.exports.validate = (method) => {
 
       ]
     }
+
+case 'generateSalary': {
+     return [
+        // Teacher ID validation
+        body('teacherId')
+          .notEmpty()
+          .withMessage('TEACHER_ID_REQUIRED')
+          .custom((value) => mongoose.Types.ObjectId.isValid(value))
+          .withMessage('INVALID_TEACHER_ID'),
+
+        // Month validation (should be like 'October 2025' or '2025-10')
+        body('month')
+          .notEmpty()
+          .withMessage('MONTH_REQUIRED')
+          .isString()
+          .withMessage('MONTH_MUST_BE_STRING')
+          .custom((value) => {
+            const validMonthPattern =
+              /^(January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$/i
+            const validAltPattern = /^\d{4}-(0[1-9]|1[0-2])$/
+            if (validMonthPattern.test(value) || validAltPattern.test(value)) return true
+            throw new Error('MONTH_FORMAT_INVALID (e.g., October 2025 or 2025-10)')
+          }),
+
+        // Leaves validation (optional but must be a number >= 0)
+        body('leaves')
+          .optional()
+          .isInt({ min: 0 })
+          .withMessage('LEAVES_MUST_BE_POSITIVE_INTEGER'),
+
+        validatorMiddleware
+      ]
+}
     //---------
     case 'registerStudent': {
       return [

@@ -17,6 +17,9 @@ router.post('/change-password', [verifyToken], validationRule.validate('change-p
 router.get('/get-attendance', [verifyToken], teacherController.getAttendance);
 
 router.get('/download-invoice/:month', verifyToken, teacherController.downloadMySalaryInvoice);
+router.get("/dashboard", [verifyToken],teacherController.getTeacherDashboard);
 
+
+router.get('/my-class-details', [verifyToken], teacherController.getTeacherClassAndAssignments);
 
 module.exports = router;

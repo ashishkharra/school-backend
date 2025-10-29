@@ -17,22 +17,6 @@ const normalizeUploadPath = (filePath) => {
   )
 }
 module.exports = {
-  // registerTeacher: async (req, res) => {
-  //   try {
-  //     const result = await adminTeacherService.registerTeacher(req.body)
-  //     if (!result.success) {
-  //       return res
-  //         .status(400)
-  //         .json(responseData(result.message, {}, req, false))
-  //     }
-  //     return res
-  //       .status(201)
-  //       .json(responseData(result.message, result.data, req, true))
-  //   } catch (error) {
-  //     return res.status(500).json(responseData(error.message, {}, req, false))
-  //   }
-  // },
-
   registerTeacher: async (req, res) => {
     try {
       const data = req.body
@@ -61,18 +45,21 @@ module.exports = {
 
       if (data.classes && Array.isArray(data.classes)) {
         data.classes = data.classes
-          .filter(c => mongoose.Types.ObjectId.isValid(c)) // remove invalid ids
-          .map(c => mongoose.Types.ObjectId(c));          // cast to ObjectId
+          .filter((c) => mongoose.Types.ObjectId.isValid(c)) 
+          .map((c) => mongoose.Types.ObjectId(c)) 
       }
 
       if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
-        data.subjectsHandled = data.subjectsHandled.map(s => ({
-          ...s,
-          classId: mongoose.Types.ObjectId.isValid(s.classId) ? mongoose.Types.ObjectId(s.classId) : null
-        })).filter(s => s.classId !== null);
+        data.subjectsHandled = data.subjectsHandled
+          .map((s) => ({
+            ...s,
+            classId: mongoose.Types.ObjectId.isValid(s.classId)
+              ? mongoose.Types.ObjectId(s.classId)
+              : null
+          }))
+          .filter((s) => s.classId !== null)
       }
 
-      // 🔹 Convert subjectsHandled.classId to ObjectId
       if (data.subjectsHandled && Array.isArray(data.subjectsHandled)) {
         const mongoose = require('mongoose')
         data.subjectsHandled = data.subjectsHandled.map((sub) => ({
@@ -80,9 +67,6 @@ module.exports = {
           classId: mongoose.Types.ObjectId(sub.classId)
         }))
       }
-
-      // data.frontAdhar = data.aadharFront
-
       const result = await adminTeacherService.registerTeacher(data)
       if (!result.success) {
         return res
@@ -93,7 +77,9 @@ module.exports = {
         .status(201)
         .json(responseData(result.message, result.data, req, true))
     } catch (error) {
-      return res.status(500).json(responseData(error.message, { error: error.message }, req, false))
+      return res
+        .status(500)
+        .json(responseData(error.message, { error: error.message }, req, false))
     }
   },
 
@@ -260,7 +246,9 @@ module.exports = {
     } catch (error) {
       return res
         .status(500)
-        .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 
@@ -279,19 +267,20 @@ module.exports = {
     } catch (error) {
       return res
         .status(500)
-        .json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 
   getAllTeachersWithClassData: async (req, res) => {
     try {
-
-      const { keyword, page = 1, limit = 10 } = req.query;
+      const { keyword, page = 1, limit = 10 } = req.query
       const queryResult = await adminTeacherService.getAllTeachersWithClassData(
         keyword,
         parseInt(page),
         parseInt(limit)
-      );
+      )
 
       return res.json(
         responseData(
@@ -306,7 +295,9 @@ module.exports = {
     } catch (error) {
       return res
         .status(500)
-        .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
   removeClassTeacher: async (req, res) => {
@@ -320,7 +311,9 @@ module.exports = {
     } catch (error) {
       return res
         .status(500)
-        .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 
@@ -412,7 +405,6 @@ module.exports = {
             deletedAssignment.success
           )
         )
-
     } catch (error) {
       return res
         .status(400)
@@ -429,13 +421,14 @@ module.exports = {
 
   getAssignTeacherToController: async (req, res) => {
     try {
-      const { classId, teacherId, page = 1, limit = 10 } = req.query;
+      const { classId, teacherId, page = 1, limit = 10 } = req.query
       const queryResult = await adminTeacherService.getTeacherAssign({
-        classId, teacherId,
+        classId,
+        teacherId,
 
         page: parseInt(page),
         limit: parseInt(limit)
-      });
+      })
 
       return res.json(
         responseData(
@@ -463,61 +456,101 @@ module.exports = {
 
   markAttendance: async (req, res) => {
     try {
-      const { teacherId, status } = req.body;
-      const result = await adminTeacherService.markAttendance(teacherId, status);
+      const { teacherId, status } = req.body
+      const result = await adminTeacherService.markAttendance(teacherId, status)
 
       if (!result.success) {
-        return res.status(401).json(responseData(result?.message, {}, req, result?.success || false))
+        return res
+          .status(401)
+          .json(
+            responseData(result?.message, {}, req, result?.success || false)
+          )
       }
 
-      return res.status(result.success ? 200 : 400).json(responseData(result?.message, result, req, result?.success || true));
+      return res
+        .status(result.success ? 200 : 400)
+        .json(
+          responseData(result?.message, result, req, result?.success || true)
+        )
     } catch (error) {
-      return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false))
+      return res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 
   updateAttendance: async (req, res) => {
     try {
-      const { teacherId, status } = req.body;
-      const result = await adminTeacherService.updateAttendance(teacherId, status);
+      const { teacherId, status } = req.body
+      const result = await adminTeacherService.updateAttendance(
+        teacherId,
+        status
+      )
 
       if (!result.success) {
-        return res.status(401).json(responseData(result?.message, {}, req, result?.success || false))
+        return res
+          .status(401)
+          .json(
+            responseData(result?.message, {}, req, result?.success || false)
+          )
       }
 
-      res.status(result.success ? 200 : 400).json(responseData(result?.message, result, req, result?.success || true));
+      res
+        .status(result.success ? 200 : 400)
+        .json(
+          responseData(result?.message, result, req, result?.success || true)
+        )
     } catch (error) {
-      return res.status(500).json(responseData('SERVER_ERROR', { error: error.message }, req, false))
+      return res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 
   getAttendance: async (req, res) => {
     try {
-      const { teacherId } = req.params;
-      const { month, year, date, page = 1, limit = 10, status } = req.query;
+      const { teacherId } = req.params
+      const { month, year, date, page = 1, limit = 10, status } = req.query
 
       if (!teacherId) {
-        return res.status(400).json(responseData("TEACHER_ID_REQUIRED", {}, req, false));
+        return res
+          .status(400)
+          .json(responseData('TEACHER_ID_REQUIRED', {}, req, false))
       }
 
       if (!mongoose.isValidObjectId(teacherId)) {
-        return res.status(400).json(responseData("INVALID_TEACHER_ID", {}, req, false));
+        return res
+          .status(400)
+          .json(responseData('INVALID_TEACHER_ID', {}, req, false))
       }
 
-      const parsedMonth = month ? parseInt(month, 10) : null;
-      const parsedYear = year ? parseInt(year, 10) : null;
+      const parsedMonth = month ? parseInt(month, 10) : null
+      const parsedYear = year ? parseInt(year, 10) : null
 
-      if (month && (isNaN(parsedMonth) || parsedMonth < 1 || parsedMonth > 12)) {
-        return res.status(400).json(responseData("INVALID_MONTH", {}, req, false));
+      if (
+        month &&
+        (isNaN(parsedMonth) || parsedMonth < 1 || parsedMonth > 12)
+      ) {
+        return res
+          .status(400)
+          .json(responseData('INVALID_MONTH', {}, req, false))
       }
 
       if (year && (isNaN(parsedYear) || parsedYear < 1900)) {
-        return res.status(400).json(responseData("INVALID_YEAR", {}, req, false));
+        return res
+          .status(400)
+          .json(responseData('INVALID_YEAR', {}, req, false))
       }
 
-      const validStatuses = ["Present", "Absent"];
+      const validStatuses = ['Present', 'Absent']
       if (status && !validStatuses.includes(status)) {
-        return res.status(400).json(responseData("INVALID_STATUS", {}, req, false));
+        return res
+          .status(400)
+          .json(responseData('INVALID_STATUS', {}, req, false))
       }
 
       const result = await adminTeacherService.getAttendance(teacherId, {
@@ -527,31 +560,91 @@ module.exports = {
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         status: status || null
-      });
-
+      })
 
       if (!result.success) {
-        return res.status(400).json(responseData(result.message, {}, req, result?.success || false));
+        return res
+          .status(400)
+          .json(responseData(result.message, {}, req, result?.success || false))
       }
 
-      return res.status(200).json(responseData(result?.message, result.data[0], req, result?.success || true));
+      return res
+        .status(200)
+        .json(
+          responseData(
+            result?.message,
+            result.data[0],
+            req,
+            result?.success || true
+          )
+        )
     } catch (error) {
-      return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+      return res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
+getTeacherAttendanceSummary: async (req, res) => {
+  try {
+    const { date, month, teacherId } = req.query; // ✅ from query
+
+    if (!teacherId) {
+      return res
+        .status(400)
+        .json(responseData('TEACHER_ID_REQUIRED', {}, req, false));
+    }
+
+    const summary = await adminTeacherService.getTeacherAttendanceSummary(
+      date,
+      month,
+      teacherId
+    );
+
+    if (!summary || !summary.success) {
+      return res
+        .status(404)
+        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
+    }
+
+    return res.status(200).json(
+      responseData(
+        'TEACHER_ATTENDANCE_SUMMARY_FETCHED_SUCCESSFULLY',
+        summary.results,
+        req,
+        true
+      )
+    );
+  } catch (error) {
+    console.error('Error in getTeacherAttendanceSummary:', error);
+    return res.status(500).json(
+      responseData('SERVER_ERROR', { error: error.message }, req, false)
+    );
+  }
+},
+
 
   getTeacherProfile: async (req, res) => {
     try {
-      const { teacherId } = req.params;
+      const teacherId = req.user.id
 
-      const result = await adminTeacherService.getTeacherProfile(teacherId);
+      const result = await adminTeacherService.getTeacherProfile(teacherId)
       if (!result.success) {
-        return res.status(404).json(responseData(result.message, {}, req, false));
+        return res
+          .status(404)
+          .json(responseData(result.message, {}, req, false))
       }
 
-      return res.status(200).json(responseData("TEACHER_PROFILE_FETCHED", result.data, req, true));
+      return res
+        .status(200)
+        .json(responseData('TEACHER_PROFILE_FETCHED', result.data, req, true))
     } catch (error) {
-      return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+      return res
+        .status(500)
+        .json(
+          responseData('SERVER_ERROR', { error: error.message }, req, false)
+        )
     }
   },
 

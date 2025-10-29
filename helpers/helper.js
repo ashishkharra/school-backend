@@ -1139,10 +1139,30 @@ module.exports = {
     return mapping[trimmed.toLowerCase()] || trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
   },
 
+  // parseMultipartJSONFields: (fields) => (req, res, next) => {
+  //   if (!req.body) req.body = {};
+  //   for (const field of fields) {
+  //     if (req.body[field] && typeof req.body[field] === 'string') {
+  //       try {
+  //         req.body[field] = JSON.parse(req.body[field]);
+  //       } catch (err) {
+  //         return res.status(400).json({
+  //           success: false,
+  //           message: `${field.toUpperCase()}_INVALID_JSON`
+  //         });
+  //       }
+  //     }
+  //   }
+  //   next();
+  // },
+
   parseMultipartJSONFields: (fields) => (req, res, next) => {
-    if (!req.body) req.body = {};
-    for (const field of fields) {
-      if (req.body[field] && typeof req.body[field] === 'string') {
+  if (!req.body) req.body = {};
+
+  for (const field of fields) {
+    if (req.body[field] && typeof req.body[field] === 'string') {
+      // Only parse if it looks like JSON
+      if (req.body[field].startsWith('{') || req.body[field].startsWith('[')) {
         try {
           req.body[field] = JSON.parse(req.body[field]);
         } catch (err) {
@@ -1153,8 +1173,10 @@ module.exports = {
         }
       }
     }
-    next();
-  },
+  }
+  next();
+}
+,
 
   // parseMultipartJSONFields: (fields) => (req, res, next) => {
   //   if (!req.body) req.body = {};

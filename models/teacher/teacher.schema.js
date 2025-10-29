@@ -170,6 +170,10 @@ const teacherSchema = new mongoose.Schema(
       }
     ],
     isRemoved: { type: Number, enum: [0, 1], default: 0 },
+    classTeacherOf: {
+  classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class" },
+  section: String
+},
     removedAt: { type: Date },
     removedReason: { type: String },
     removedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },

@@ -5,14 +5,14 @@ const { sendEmail } = require('../../helpers/helper')
 const Salary = require('../../models/admin/salary.schema.js')
 const {
   teacherProfilePipeline,
-  teacherAttendancePipeline
+  teacherAttendancePipeline,
+  getTeacherDashboardPipeline,
+  getTeacherClassAndAssignmentsLookup
 } = require('../../helpers/commonAggregationPipeline.js')
 const { default: mongoose } = require('mongoose')
 const _ = require('lodash')
 const path = require('path')
 module.exports = {
-
-
   requestProfileUpdate: async (teacherId, requestedFields) => {
     try {
       // ✅ Validate teacherId
@@ -68,6 +68,7 @@ module.exports = {
         return { success: false, message: 'TEACHER_ID_NOT_VALID' }
 
       let [profile] = await Teacher.aggregate(teacherProfilePipeline(teacherId))
+      console.log(profile, '===')
       if (!profile) return { success: false, message: 'ERROR_FETCHING_TEACHER' }
 
       const base = process.env.STATIC_URL || ''
@@ -77,7 +78,6 @@ module.exports = {
         ? base + profile.aadharFront
         : null
       profile.aadharBack = profile.aadharBack ? base + profile.aadharBack : null
-
 
       return {
         success: true,
@@ -230,30 +230,67 @@ module.exports = {
   downloadMySalaryInvoice: async (teacherId, month) => {
     try {
       if (!month) {
-        return { success: false, message: 'MONTH_NOT_VALID' };
+        return { success: false, message: 'MONTH_NOT_VALID' }
       }
-      const salaryRecord = await Salary.findOne({ teacherId, month });
+      const salaryRecord = await Salary.findOne({ teacherId, month })
 
       if (!salaryRecord || !salaryRecord.invoicePath) {
-        return { success: false, message: 'INVOICE_NOT_FOUND' };
+        return { success: false, message: 'INVOICE_NOT_FOUND' }
       }
-
-     
-  const invoicePath = salaryRecord.invoicePath.startsWith('/')
+      const invoicePath = salaryRecord.invoicePath.startsWith('/')
         ? salaryRecord.invoicePath.slice(1)
-        : salaryRecord.invoicePath;
+        : salaryRecord.invoicePath
 
       // Absolute path to invoice PDF
-      const filePath = path.resolve(__dirname, '../..', invoicePath);
+      const filePath = path.resolve(__dirname, '../..', invoicePath)
 
-      return { success: true, message: 'INVOICE_FETCHED_SUCCESSFULLY', filePath };
-
+      return {
+        success: true,
+        message: 'INVOICE_FETCHED_SUCCESSFULLY',
+        filePath
+      }
     } catch (err) {
-      console.error(err);
-      return { success: false, message: 'SERVER_ERROR' };
+      console.error(err)
+      return { success: false, message: 'SERVER_ERROR' }
+    }
+  },
+  getTeacherDashboardData: async (teacherId) => {
+    try {
+      if (!teacherId) {
+        return { success: false, message: 'TEACHER_ID_REQUIRED' }
+      }
+
+      const pipeline = getTeacherDashboardPipeline(teacherId)
+      const result = await Teacher.aggregate(pipeline)
+
+      if (!result || result.length === 0) {
+        return { success: false, message: 'DASHBOARD_DATA_NOT_FOUND' }
+      }
+
+      return { success: true, message: 'DASHBOARD_FETCHED', data: result[0] }
+    } catch (error) {
+      return { success: false, message: error.message || 'SERVER_ERROR' }
     }
   },
 
-};
+   getTeacherClassAndAssignments: async (teacherId) => {
+    try {
+      if (!teacherId) {
+        return { success: false, message: 'TEACHER_ID_REQUIRED' }
+      }
 
+      // ✅ Build aggregation pipeline
+      const pipeline = getTeacherClassAndAssignmentsLookup(teacherId)
 
+      const result = await Teacher.aggregate(pipeline)
+
+      if (!result || result.length === 0) {
+        return { success: false, message: 'NO_DATA_FOUND' }
+      }
+
+      return { success: true, message: 'DATA_FETCHED_SUCCESSFULLY', data: result[0] }
+    } catch (error) {
+      return { success: false, message: error.message || 'SERVER_ERROR' }
+    }
+  }
+}
