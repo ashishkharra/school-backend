@@ -2260,6 +2260,8 @@ const getTeacherAttendanceSummaryLookup = (date, month, teacherId) => {
   ];
 
 };
+
+
 const getTeacherStudentsLookup = (teacherId) => {
   if (!ObjectId.isValid(teacherId)) {
     throw new Error('INVALID_TEACHER_ID');

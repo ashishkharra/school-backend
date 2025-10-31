@@ -619,43 +619,7 @@ getAllTeachers: async (req, res) => {
         )
     }
   },
-getTeacherAttendanceSummary: async (req, res) => {
-  try {
-    const { date, month, teacherId } = req.query; 
 
-    if (!teacherId) {
-      return res
-        .status(400)
-        .json(responseData('TEACHER_ID_REQUIRED', {}, req, false));
-    }
-
-    const summary = await adminTeacherService.getTeacherAttendanceSummary(
-      date,
-      month,
-      teacherId
-    );
-
-    if (!summary || !summary.success) {
-      return res
-        .status(404)
-        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
-    }
-
-    return res.status(200).json(
-      responseData(
-        'TEACHER_ATTENDANCE_SUMMARY_FETCHED_SUCCESSFULLY',
-        summary.results,
-        req,
-        true
-      )
-    );
-  } catch (error) {
-    console.error('Error in getTeacherAttendanceSummary:', error);
-    return res.status(500).json(
-      responseData('SERVER_ERROR', { error: error.message }, req, false)
-    );
-  }
-},
 
   getTeacherProfile: async (req, res) => {
     try {
@@ -694,5 +658,42 @@ getTeacherAttendanceSummary: async (req, res) => {
       console.log("Error while fetching attendance : ", error)
       return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
     }
+  },
+  getTeacherAttendanceSummary: async (req, res) => {
+  try {
+    const { date, month, teacherId } = req.query; 
+
+    if (!teacherId) {
+      return res
+        .status(400)
+        .json(responseData('TEACHER_ID_REQUIRED', {}, req, false));
+    }
+
+    const summary = await adminTeacherService.getTeacherAttendanceSummary(
+      date,
+      month,
+      teacherId
+    );
+
+    if (!summary || !summary.success) {
+      return res
+        .status(404)
+        .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false));
+    }
+
+    return res.status(200).json(
+      responseData(
+        'TEACHER_ATTENDANCE_SUMMARY_FETCHED_SUCCESSFULLY',
+        summary.results,
+        req,
+        true
+      )
+    );
+  } catch (error) {
+    console.error('Error in getTeacherAttendanceSummary:', error);
+    return res.status(500).json(
+      responseData('SERVER_ERROR', { error: error.message }, req, false)
+    );
   }
+},
 }
