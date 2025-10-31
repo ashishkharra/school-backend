@@ -179,101 +179,94 @@ module.exports = {
     }
   },
 
-  getAllTeachers: async (page = 1, limit = 10, status = 1, search) => {
-    try {
-      page = parseInt(page) || 1
-      limit = parseInt(limit) || 10
-      helper.filterByStatus({ isRemoved: { $ne: 1 } }, status)
-      const totalTeachers = await Teacher.countDocuments({
-        isRemoved: { $ne: 1 }
-      })
+getAllTeachers: async (page = 1, limit = 10, status = 1, search) => {
+  try {
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
+    helper.filterByStatus({ isRemoved: { $ne: 1 } }, status);
 
-      let filter = {
-        isRemoved: { $ne: 1 }
-      }
+    const totalTeachers = await Teacher.countDocuments({
+      isRemoved: { $ne: 1 }
+    });
 
-      if (search && search.trim() !== '') {
-        const regex = new RegExp(search.trim(), 'i')
-        filter.$or = [
-          { name: regex },
-          { 'contact.email': regex },
-          { 'contact.phone': regex }
-        ]
-      }
-      let teachers = await Teacher.find(filter)
-        .select('-password -token -refreshToken')
-        .lean()
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
+    let filter = { isRemoved: { $ne: 1 } };
 
-      const startOfDay = new Date()
-      startOfDay.setHours(0, 0, 0, 0)
-      const endOfDay = new Date()
-      endOfDay.setHours(23, 59, 59, 999)
-
-      const teacherIds = teachers.map((t) => t._id)
-
-      const todaysAttendances = await TeacherAttendance.find({
-        teacher: { $in: teacherIds },
-        date: { $gte: startOfDay, $lte: endOfDay }
-      })
-        .select('teacher status date')
-        .lean()
-
-      const attendanceMap = todaysAttendances.reduce((acc, att) => {
-        acc[att.teacher.toString()] = att
-        return acc
-      }, {})
-
-      teachers = teachers.map((t) => ({
-        ...t,
-        todayAttendance: attendanceMap[t._id.toString()] || {
-          status: 'not_marked',
-          date: startOfDay
-        }
-      }))
-
-      teachers = teachers.map((t) => ({
-        ...t,
-        profilePic: {
-          ...t.profilePic,
-          fileUrl: process.env.STATIC_URL_ + (t.profilePic?.fileUrl || '')
-        },
-        aadharFront: {
-          ...t.aadharFront,
-          fileUrl: process.env.STATIC_URL_ + (t.aadharFront?.fileUrl || '')
-        },
-        aadharBack: {
-          ...t.aadharBack,
-          fileUrl: process.env.STATIC_URL_ + (t.aadharBack?.fileUrl || '')
-        },
-        todayAttendance: attendanceMap[t._id.toString()] || {
-          status: 'not_marked',
-          date: startOfDay
-        }
-      }))
-
-      return {
-        success: true,
-        message: 'TEACHERS_FETCHED',
-        docs: teachers,
-        pagination: {
-          total: totalTeachers,
-          page,
-          limit,
-          totalPages: Math.ceil(totalTeachers / limit)
-        }
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'FETCH_FAILED',
-        docs: [],
-        pagination: {}
-      }
+    if (search && search.trim() !== '') {
+      const regex = new RegExp(search.trim(), 'i');
+      filter.$or = [
+        { name: regex },
+        { 'contact.email': regex },
+        { 'contact.phone': regex }
+      ];
     }
-  },
+
+    let teachers = await Teacher.find(filter)
+      .select('-password -token -refreshToken')
+      .lean()
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const teacherIds = teachers.map((t) => t._id);
+
+    const todaysAttendances = await TeacherAttendance.find({
+      teacher: { $in: teacherIds },
+      date: { $gte: startOfDay, $lte: endOfDay }
+    })
+      .select('teacher status date')
+      .lean();
+
+    const attendanceMap = todaysAttendances.reduce((acc, att) => {
+      acc[att.teacher.toString()] = att;
+      return acc;
+    }, {});
+
+    teachers = teachers.map((t) => ({
+      ...t,
+      profilePic: {
+        ...t.profilePic,
+        fileUrl: process.env.STATIC_URL_ + (t.profilePic?.fileUrl || '')
+      },
+      aadharFront: {
+        ...t.aadharFront,
+        fileUrl: process.env.STATIC_URL_ + (t.aadharFront?.fileUrl || '')
+      },
+      aadharBack: {
+        ...t.aadharBack,
+        fileUrl: process.env.STATIC_URL_ + (t.aadharBack?.fileUrl || '')
+      },
+      todayAttendance: attendanceMap[t._id.toString()] || {
+        status: 'not_marked',
+        date: startOfDay
+      }
+    }));
+
+    return {
+      success: true,
+      message: 'TEACHERS_FETCHED',
+      docs: teachers,
+      pagination: {
+        total: totalTeachers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalTeachers / limit)
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'FETCH_FAILED',
+      docs: [],
+      pagination: {}
+    };
+  }
+},
+
 
   softDeleteTeacher: async (teacherId) => {
     try {
@@ -418,9 +411,9 @@ getTeacherProfile: async (id) => {
         TEACHER_EMAIL: teacherData.email
       }
 
-      // const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody)
-      // if (!mailSent)
-      //   return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass }
+      const mailSent = await sendEmail('assign-class-teacher', dataBody)
+      if (!mailSent)
+        return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass }
 
       return {
         success: true,

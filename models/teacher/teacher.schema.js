@@ -25,6 +25,17 @@ const teacherSchema = new mongoose.Schema(
       type: String,
       enum: ["Single", "Married", "Divorced", "Widowed"]
     },
+    walletBalance: { type: Number, default: 0 },
+
+    // walletTransactions: [
+    //   {
+    //     transactionId: { type: mongoose.Schema.Types.ObjectId, ref: "WalletTransaction" },
+    //     amount: { type: Number },
+    //     type: { type: String, enum: ["credit", "debit"] },
+    //     description: { type: String },
+    //     date: { type: Date, default: Date.now },
+    //   },
+    // ],
     address: {
       street: String,
       city: String,
@@ -191,23 +202,3 @@ teacherSchema.index({ status: 1 });
 teacherSchema.index({ isRemoved: 1 });
 module.exports = mongoose.model("Teacher", teacherSchema);
 
-
-
-
-  //  teacherId: {
-    //   type: String,
-    //   unique: true,
-    //   default: () =>
-    //     "T-" + Math.random().toString(36).substring(2, 8).toUpperCase()
-    // },
-
-
-
-     // spouseName: { type: String },
-    // children: [
-    //   {
-    //     name: String,
-    //     age: Number,
-    //     school: String
-    //   }
-    // ],

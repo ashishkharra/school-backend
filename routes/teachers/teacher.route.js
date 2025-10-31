@@ -7,6 +7,7 @@ const { verifyToken } = require('../../middlewares/verifyToken')
 const validationRule = require('../../validations/admins/auth');
 // const { teacherLogin } = require('../../services/teachers/teachers.service');
 const teacherController = require('../../controllers/teachers/teacher.controller');
+const teacherWalletController = require('../../controllers/teachers/wallet.controller');
 
 router.post('/request-profile-update/:teacherId', teacherController.requestProfileUpdate);
 router.get('/get-Profile',[verifyToken],teacherController.getProfile);
@@ -21,5 +22,8 @@ router.get("/dashboard", [verifyToken],teacherController.getTeacherDashboard);
 
 
 router.get('/my-class-details', [verifyToken], teacherController.getTeacherClassAndAssignments);
+// router.get('/', [verifyToken], teacherWalletController.getMyWallet);
+
+
 
 module.exports = router;

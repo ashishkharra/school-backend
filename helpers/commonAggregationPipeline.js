@@ -2204,8 +2204,6 @@ const getTeacherClassAndAssignmentsLookup = (teacherId) => {
     }
   ]
 }
-
-// module.exports = { getTeacherClassAndAssignmentsLookup }
 const getTeacherAttendanceSummaryLookup = (date, month, teacherId) => {
   const matchQuery = {};
 
@@ -2270,10 +2268,7 @@ const getTeacherStudentsLookup = (teacherId) => {
   const teacherObjId = new ObjectId(teacherId);
 
   return [
-    // 1️⃣ Match classes taught by the teacher
     { $match: { teacher: teacherObjId } },
-
-    // 2️⃣ Join with enrollments
     {
       $lookup: {
         from: 'enrollments',
@@ -2283,7 +2278,6 @@ const getTeacherStudentsLookup = (teacherId) => {
       }
     },
 
-    // 3️⃣ Unwind enrollments
     { $unwind: '$enrolledStudents' },
 
     // 4️⃣ Join with student details
@@ -2414,6 +2408,74 @@ function getTeachersAttendancesByMonth(monthStart, monthEnd, search) {
     { $sort: { teacherName: 1 } }
   ];
 }
+const teacherSalaryStatusLookup = (month) => [
+  {
+    $lookup: {
+      from: "salaries",
+      let: { teacherId: "$_id", monthParam: month },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$teacherId", "$$teacherId"] },
+                { $eq: ["$month", "$$monthParam"] }
+              ]
+            }
+          }
+        }
+      ],
+      as: "salaryData"
+    }
+  },
+  {
+    $addFields: {
+      salaryStatus: {
+        $cond: [
+          {
+            $gt: [
+              {
+                $size: {
+                  $filter: {
+                    input: "$salaryData",
+                    as: "s",
+                    cond: { $eq: ["$$s.status", "Paid"] }
+                  }
+                }
+              },
+              0
+            ]
+          },
+          "Paid",
+          "Pending"
+        ]
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      name: 1,
+      email: 1,
+      designation: 1,
+      salaryStatus: 1,
+      salaryData: {
+        $map: {
+          input: "$salaryData",
+          as: "s",
+          in: {
+            month: "$$s.month",
+            finalSalary: "$$s.finalSalary",
+            status: "$$s.status",
+            paymentDate: "$$s.paymentDate"
+          }
+        }
+      }
+    }
+  },
+  { $sort: { name: 1 } }
+];
+
 
 
 module.exports = {
@@ -2459,6 +2521,7 @@ module.exports = {
   getTeacherAttendanceSummaryLookup,
   getTeacherStudentsLookup,
   getTeachersAttendancesByMonth,
+  teacherSalaryStatusLookup,
   // fees
   getAllFeesStructurePipeline,
 

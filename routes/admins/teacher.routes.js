@@ -3,7 +3,8 @@ const validationRule = require('../../validations/admins/auth')
 const { verifyToken } = require('../../middlewares/verifyToken')
 const teacherController = require('../../controllers/admins/teacher.controller.js');
 const { teacherDocFields } = require('../../middlewares/multer.setup.js')
-const { parseMultipartJSONFields } = require('../../helpers/helper.js')
+const { parseMultipartJSONFields } = require('../../helpers/helper.js');
+const teacherWalletController = require('../../controllers/teachers/wallet.controller.js');
 
 const jsonFieldsForTeacher = [
   'address',
@@ -47,6 +48,7 @@ router.get('/get-attendance/:teacherId', [verifyToken], teacherController.getAtt
 router.get('/teacher-summary', verifyToken, teacherController.getTeacherAttendanceSummary);
 
 router.get('/get-all-attendance',[verifyToken], teacherController.getAllAttendance)
+
 
 
 

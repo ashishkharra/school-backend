@@ -111,41 +111,51 @@ module.exports = {
   },
 
   getAttendance: async (req, res) => {
-    const { date, month, page = 1, limit = 10, classId } = req.query
-    const teacherId = req.user._id
-    try {
-      const queryResult = await attendanceService.getAttendanceData(
-        date,
-        month,
-        parseInt(page),
-        parseInt(limit),
-        teacherId,
-        classId
-      )
-      if (!queryResult.results || queryResult.results.docs.length === 0) {
-        return res
-          .status(404)
-          .json(responseData('NO_ATTENDANCE_RECORDS_FOUND', {}, req, false))
-      }
+  const { date, month, page = 1, limit = 10, classId } = req.query;
+  const teacherId = req.user._id;
 
+  try {
+    const queryResult = await attendanceService.getAttendanceData(
+      date,
+      month,
+      parseInt(page),
+      parseInt(limit),
+      teacherId,
+      classId
+    );
+
+    // ✅ If no attendance records found
+    if (!queryResult.results?.docs?.length) {
       return res
         .status(200)
         .json(
           responseData(
-            'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
-            queryResult.results,
+            'No attendance records found',
+            'empty', // ✅ string instead of {} or []
             req,
-            queryResult.success
+            false
           )
-        )
-    } catch (error) {
-      res
-        .status(500)
-        .json(
-          responseData('SERVER_ERROR', { error: error.message }, req, false)
-        )
+        );
     }
-  },
+
+    // ✅ Success case
+    return res
+      .status(200)
+      .json(
+        responseData(
+          'ATTENDANCE_RECORDS_FETCHED_SUCCESSFULLY',
+          queryResult.results,
+          req,
+          queryResult.success
+        )
+      );
+  } catch (error) {
+    res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
+
 
   deleteAttendance: async (req, res) => {
     try {

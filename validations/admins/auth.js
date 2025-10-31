@@ -540,32 +540,22 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
-    case 'updateAttendance': {
-  return [
-    // ✅ teacherId is required and must be a valid MongoDB ObjectId
-    body('teacherId')
-      .notEmpty()
-      .withMessage('TEACHER_ID_REQUIRED')
-      .bail()
-      .isString()
-      .matches(/^[0-9a-fA-F]{24}$/)
-      .withMessage('TEACHER_ID_INVALID'),
+//     case 'updateAttendance': {
+//   return [
+//        body('status')
+//       .notEmpty()
+//       .withMessage('STATUS_REQUIRED')
+//       .bail()
+//       .isString()
+//       .withMessage('STATUS_STRING_REQUIRED')
+//       .custom((value) => ['present', 'absent', 'leave'].includes(value.toLowerCase()))
+//       .withMessage('STATUS_INVALID')
+//       .bail()
+//       .customSanitizer((value) => value.toLowerCase()),
 
-    // ✅ status is required and must be one of the allowed values
-    body('status')
-      .notEmpty()
-      .withMessage('STATUS_REQUIRED')
-      .bail()
-      .isString()
-      .withMessage('STATUS_STRING_REQUIRED')
-      .custom((value) => ['present', 'absent', 'leave'].includes(value.toLowerCase()))
-      .withMessage('STATUS_INVALID')
-      .bail()
-      .customSanitizer((value) => value.toLowerCase()),
-
-    validatorMiddleware
-  ]
-}
+//     validatorMiddleware
+//   ]
+// }
 
     case 'updateClassTeacherOf': {
       return [

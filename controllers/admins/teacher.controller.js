@@ -148,35 +148,54 @@ module.exports = {
     }
   },
 
-  getAllTeachers: async (req, res) => {
-    console.log('yoo')
-    try {
-      const { page = 1, limit = 10, status, search } = req.query
+getAllTeachers: async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, search } = req.query;
 
-      const queryResult = await adminTeacherService.getAllTeachers(page, limit, status, search);
+    const queryResult = await adminTeacherService.getAllTeachers(
+      page,
+      limit,
+      status,
+      search
+    );
+
+    if (!queryResult.success || !queryResult.docs.length) {
       return res.json(
         responseData(
-          'GET_LIST',
-          queryResult.docs.length > 0
-            ? queryResult
-            : constant.staticResponseForEmptyResult,
+          'NO_TEACHERS_FOUND',
+          constant.staticResponseForEmptyResult,
           req,
           true
         )
-      )
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          responseData(
-            'FAILED_TO_FETCH_TEACHERS',
-            { error: error.message },
-            req,
-            false
-          )
-        )
+      );
     }
-  },
+
+    // ✅ Send only docs and pagination — not full service response
+    return res.json(
+      responseData(
+        'GET_LIST',
+        {
+          docs: queryResult.docs,
+          pagination: queryResult.pagination
+        },
+        req,
+        true
+      )
+    );
+  } catch (error) {
+    return res
+      .status(500)
+      .json(
+        responseData(
+          'FAILED_TO_FETCH_TEACHERS',
+          { error: error.message },
+          req,
+          false
+        )
+      );
+  }
+},
+
 
   softDeleteTeacher: async (req, res) => {
     try {
@@ -273,33 +292,47 @@ module.exports = {
     }
   },
 
-  getAllTeachersWithClassData: async (req, res) => {
-    try {
-      const { keyword, page = 1, limit = 10 } = req.query
-      const queryResult = await adminTeacherService.getAllTeachersWithClassData(
-        keyword,
-        parseInt(page),
-        parseInt(limit)
-      )
+ getAllTeachersWithClassData: async (req, res) => {
+  try {
+    const { keyword, page = 1, limit = 10 } = req.query;
 
+    const queryResult = await adminTeacherService.getAllTeachersWithClassData(
+      keyword,
+      parseInt(page),
+      parseInt(limit)
+    );
+
+    // 🔹 If no data found
+    if (!queryResult.success || !queryResult.docs.length) {
       return res.json(
         responseData(
-          'GET_LIST',
-          queryResult.docs.length > 0
-            ? queryResult
-            : constant.staticResponseForEmptyResult,
+          'NO_TEACHERS_FOUND',
+          constant.staticResponseForEmptyResult,
           req,
-          true
+          false
         )
-      )
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          responseData('SERVER_ERROR', { error: error.message }, req, false)
-        )
+      );
     }
-  },
+
+    // 🔹 Send clean single-layer response
+    return res.json(
+      responseData(
+        queryResult.message,
+        {
+          docs: queryResult.docs,
+          pagination: queryResult.pagination
+        },
+        req,
+        true
+      )
+    );
+  } catch (error) {
+    return res
+      .status(500)
+      .json(responseData('SERVER_ERROR', { error: error.message }, req, false));
+  }
+},
+  
   removeClassTeacher: async (req, res) => {
     try {
       const { classId } = req.params
@@ -588,7 +621,7 @@ module.exports = {
   },
 getTeacherAttendanceSummary: async (req, res) => {
   try {
-    const { date, month, teacherId } = req.query; // ✅ from query
+    const { date, month, teacherId } = req.query; 
 
     if (!teacherId) {
       return res
@@ -624,10 +657,9 @@ getTeacherAttendanceSummary: async (req, res) => {
   }
 },
 
-
   getTeacherProfile: async (req, res) => {
     try {
-    const { teacherId } = req.params;
+      const {teacherId} = req.params;
 
       const result = await adminTeacherService.getTeacherProfile(teacherId)
       if (!result.success) {
