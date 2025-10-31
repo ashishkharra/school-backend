@@ -1711,7 +1711,7 @@
     "ar": ""
   },
   "TEACHER_PROFILE_FETCHED": {
-    "en": "Teacher not found",
+    "en": "Fetching teacher profile successfully",
     "ar": ""
   },
   "SCHOOL_SETTINGS_FETCHED": {
@@ -2174,28 +2174,17 @@
     "en": "Assignment id not valid",
     "ar": ""
   },
-  "TITLE_MUST_BE_STRING": {
-    "en": "Title must string",
-    "ar": ""
-  },
-  "DESCRIPTION_MUST_BE_STRING": {
-    "en": "Description must be string",
-    "ar": ""
-  },
-  "FILE_MUST_BE_STRING": {
-    "en": "File must be string",
-    "ar": ""
-  },
-  "SALARY_GENERATED_SUCCESSFULLY": {
-    "en": "salary generated",
+  
+  "SALARY_GENERATED_SUCCESSFULLY":{
+     "en": "salary generated",
     "ar": ""
   },
   "SALARY_GENERATION_FAILED": {
     "en": "salary generated failed",
     "ar": ""
   },
-  "SALARIES_FETCHED_SUCCESSFULLY": {
-    "en": "salary fetched failed",
+  "SALARIES_FETCHED_SUCCESSFULLY":{
+  "en": "salary fetched successfully",
     "ar": ""
   },
   "FETCH_SALARIES_FAILED": {
@@ -2204,10 +2193,6 @@
   },
   "TEACHER_NOT_FOUND": {
     "en": "Teacher not found",
-    "ar": ""
-  },
-  "INVALID_CLASS_ID": {
-    "en": "Invalid class ID",
     "ar": ""
   },
   "INVALID_SUBJECT": {
@@ -2358,224 +2343,206 @@
     "en": "Failed to fetch teacher profile",
     "ar": ""
   },
-  "TIMETABLE_ASSIGNED": {
-    "en": "Period assigned to teacher",
+ 
+  "DELETE_ATTENDANCE_FAILED": {
+    "en": "Failed to delete attendance",
     "ar": ""
   },
-  "TEACHER_ALREADY_ASSIGNED_IN_THIS_SLOT_IN_CLASS": {
-    "en": "Teacher is already assigned in this slot",
+  "FETCH_ATTENDANCE_SUMMARY_FAILED": {
+    "en": "Failed to fetch attendance summary",
     "ar": ""
   },
-  "BREAK_REQUIRED_BETWEEN_PERIOD 5 mins)": {
-    "en": "Can not assign in 5 min break"
-  },
-  "BREAK_REQUIRED_BETWEEN_PERIOD 10 mins)": {
-    "en": "Can not assign in 10 min break"
-  },
-  "SLOT_IS_OVERLAPPING_WITH_LUNCH_BREAK": {
-    "en": "This slot overlapping lunch break",
+
+  "ATTENDANCE_ALREADY_EXISTS": {
+    "en": "Attendance already exists for this class and session",
     "ar": ""
   },
-  "SLOT_MUST_BE_WITHIN_SCHOOL_HOUR": {
-    "en": "Slot must be within school hour",
+  "NO_VALID_STUDENTS_FOUND": {
+    "en": "No valid students found in this class",
     "ar": ""
   },
-  "SET_UP_SCHOOL_SETTING": {
-    "en": "Set up school setting",
+ 
+  "REQUIRED_FIELDS_MISSING": {
+    "en": "Required fields are missing",
     "ar": ""
   },
-  "TIMETABLE_UPDATED_SUCCESSFULLY": {
-    "en": "Time table updated"
-  },
-  "TEACHER_ALREADY_ASSIGNED": {
-    "en": "Teacher is already assigned in this slot"
-  },
-  "SLOT_AVAILABLE": {
-    "en": "Slot is available"
-  },
-  "INVALID_START_OR_END_TIME": {
-    "en": "Invalid start and end time"
-  },
-  "TIMETABLE_ASSIGNED_SUCCESSFULLY": {
-    "en": "Timetable assigned"
-  },
-  "Invalid value": {
-    "en": "Invalid value",
+  "REQUIRED_PARAMETERS_MISSING": {
+    "en": "Required parameters are missing",
     "ar": ""
-  },
-  "TIME_TABLE_RESET_SUCCESSFULLY": {
-    "en": "Time table reset successfully",
-    "ar": ""
-  },
-  "CLASS_TEACHER_ASSIGNED_SUCCESSFULLY": {
-    "en": "Class teacher assigned successfully"
-  },
-  "HOME_DATA_INSERTED": {
-    "en": "Data inserted at home sucessfully"
-  },
-  "HOME_DATA_FETCHED": {
-    "en": "Home data fetched successfully"
-  },
-  "SOCIAL_URL_INVALID": {
-    "en": "Social url is invalid"
-  },
-  "SOCIAL_URL_MUST_BE_STRING": {
-    "en": "Social url must be string"
-  },
-  "SOCIAL_URL_MUST_BE_ARRAY": {
-    "en": "Social url must be array"
-  },
-  "SOCIAL_URL_EACH_ITEM_MUST_BE_OBJECT": {
-    "en": "Social url must be object"
-  },
-  "SOCIAL_URL_URL_REQUIRED": {
-    "en": "Social url required"
-  },
-  "SOCIAL_URL_ICON_REQUIRED": {
-    "en": "Social url icon is required"
-  },
-  "HOME_DATA_NOT_FOUND": {
-    "en": "Home data not found"
-  },
-  "TOLL_FREE_MUST_BE_STRING": {
-    "en": "Toll free number must be string"
-  },
-  "FAQS_MUST_BE_ARRAY": {
-    "en": "Faqs must be array"
-  },
-  "FAQS_EACH_ITEM_MUST_BE_OBJECT": {
-    "en": "Faqs must be in object format"
-  },
-  "FAQS_REQUIRED": {
-    "en": "Faqs are required"
-  },
-  "__STUDENT_LOGIN_SUCCESS__": {
-    "en": "Student logged in successfully"
-  },
-  "__TEACHER_LOGIN_SUCCESS__": {
-    "en": "Teacher logged in successfully"
-  },
-  "ASSIGNMENT_FETCHED_SUCCESSFULLY": {
-    "en": "Assignments fetched sucessfully"
-  },
-  "DASHBOARD_DATA_FETCHED": {
-    "en": "Dashboard data fetched successfully"
-  },
-  "DATA_NOT_FOUND": {
-    "en": "Data not found"
-  },
-  "DATA_FETCHED": {
-    "en": "Data fetched successfully"
-  },
-  "GALLERY_NOT_FOUND": {
-    "en": "Gallery not found"
-  },
-  "GALLERY_DATA_FETCHED": {
-    "en": "Gallery data fetched sucessfully"
-  },
-  "ABOUT_DATA_NOT_FOUND": {
-    "en": "About data not found"
-  },
-  "ABOUT_DATA_FETCHED": {
-    "en": "About data fetched"
-  },
-  "MESSAGE_REQUIRED": {
-    "en": "Mess"
-  },
-  "YOUR_MESSAGE_HAS_BEEN_SENT!": {
-    "en": "Your message has been sent successfully!"
-  },
-  "SECTION_INVALID!": {
-    "en": "Invalid section"
-  },
-  "SUBJECT_ALREADY_EXISTS!": {
-    "en": "Subject already exist."
-  },
-  "FEEDBACK_SENT": {
-    "en": "Thank you for your feedback! Awaiting admin approval."
-  },
-  "ALREADY_POSTED": {
-    "en": "You’ve already submitted feedback recently. Please try again later."
-  },
-  "ADMIN_EMAIL_NOT_FOUND": {
-    "en": "Admin email not found"
-  },
-  "Invalid contact number": {
-    "en": "Invalid contact number"
-  },
-  "STUDENT_LOGIN_SUCCESS": {
-    "en": "Student logged in successfully"
-  },
-  "STUDENT_PERFORMANCE_FETCHED": {
-    "en": "Student performance fetched successfully"
-  },
-  "TESTIMONIAL_ID_NOT_VALID": {
-    "en": "Testimonial id is not valid"
-  },
-  "TESTIMONIAL_NOT_FOUND": {
-    "en": "Testimonial not found"
-  },
-  "TESTIMONIAL_APPROVED": {
-    "en": "Testimonial approved"
-  },
-  "TESTIMONIAL_REJECTED": {
-    "en": "Testimonial rejected"
-  },
-  "NO_TESTIMONIALS_FOUND": {
-    "en": "Testimonials not found"
-  },
-  "RECENT_TESTIMONIALS_FETCHED": {
-    "en": "Recent testimonials fetched successfully"
-  },
-  "INVALID_STATUS_VALUE": {
-    "en": "Status is invalid"
-  },
-  "STATUS_REQUIRED": {
-    "en": "Status is required"
-  },
-  "INVALID_PRIORITY": {
-    "en": "Invalid priority"
-  },
-  "INVALID_END_DATE": {
-    "en": "Invalid end date"
-  },
-  "INVALID_START_DATE": {
-    "en": "Invalid start date"
-  },
-  "ATTACHMENTS_MUST_BE_ARRAY": {
-    "en": "Attachments must be array"
-  },
-  "AUDIENCE_MUST_BE_ARRAY": {
-    "en": "Audience must be array"
-  },
-  "MESSAGE_TOO_LONG": {
-    "en": "Message is too long"
-  },
-  "RATING_MUST_BE_BETWEEN_1_AND_5": {
-    "en": "Rating must be between 1 to 5"
-  },
-  "TITLE_TOO_LONG": {
-    "en": "Title is too long"
-  },
-  "MESSAGE_TOO_SHORT": {
-    "en": "Message is too short"
-  },
-  "INVALID_ROLE": {
-    "en": "Invalid role"
-  },
-  "INVALID_PHONE_FORMAT": {
-    "en": "Invalid phone format"
-  },
-  "INVALID_EMAIL": {
-    "en": "Invalid email"
-  },
-  "SOCIAL_URL_MUST_HAVE_VALID_DOMAIN": {
-    "en": "Socail url must have valid domain"
-  },
-  "INVALID_SOCIAL_URL_FORMAT": {
-    "en": "Social url is invalid"
-  },
-  "EACH_SOCIAL_URL_MUST_BE_STRING": {
-    "en": "Social url must be string"
   }
+,
+ "UPLOAD_ASSIGNMENT_FAILED": {
+    "en": "Failed to upload assignment",
+    "ar": ""
+  },
+  "UPDATE_ASSIGNMENT_FAILED": {
+    "en": "Failed to update assignment",
+    "ar": ""
+  },
+  "FETCH_ASSIGNMENTS_FAILED": {
+    "en": "Failed to fetch assignments",
+    "ar": ""
+  },
+  "DOWNLOAD_FAILED": {
+    "en": "Failed to download salary invoice",
+    "ar": ""
+  },
+ 
+  "END_TIME_MUST_BE_AFTER_START_TIME": {
+    "en": "End time must be after start time",
+    "ar": ""
+  },
+ 
+  "TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT": {
+    "en": "Teacher is already assigned to another class during this time slot",
+    "ar": ""
+  },
+  "CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT": {
+    "en": "Class already has a teacher assigned during this time slot",
+    "ar": ""
+  },
+  "EMAIL_NOT_SENT": {
+    "en": "Failed to send email notification",
+    "ar": ""
+  },
+  "ASSIGNMENT_FAILED": {
+    "en": "Teacher assignment failed",
+    "ar": ""
+  },
+  "SCHOOL_SETTINGS_NOT_FOUND": {
+    "en": "School settings not found",
+    "ar": ""
+  },
+  "CLASS_TIME_MUST_BE_WITHIN_SCHOOL_TIMINGS": {
+    "en": "Class time must be within school timings",
+    "ar": ""
+  },
+  "CLASS_TIME_OVERLAPS_LUNCH_BREAK": {
+    "en": "Class time overlaps with lunch break",
+    "ar": ""
+  },
+
+  "SELECTED_SLOT_CONFLICTS_WITH_EXISTING_TEACHER_ASSIGNMENT": {
+    "en": "Selected time slot conflicts with existing teacher assignment",
+    "ar": ""
+  },
+  "ASSIGNMENT_IS_REQUIRED": {
+    "en": "Assignment ID is required for deletion",
+    "ar": ""
+  },
+  "ASSIGNMENT_NOT-FOUND": {
+    "en": "Teacher assignment not found for deletion",
+    "ar": ""
+  },
+  "CLASS_ID_AND_TEACHER_ID_REQUIRED": {
+    "en": "Class ID and Teacher ID are required",
+    "ar": ""
+  },
+
+  "TEACHER_ALREADY_CLASS_TEACHER_OF_ANOTHER_CLASS": {
+    "en": "This teacher is already assigned as class teacher of another class",
+    "ar": ""
+  },
+ 
+  "CLASS_TEACHER_ASSIGNMENT_FAILED": {
+    "en": "Class teacher assignment failed",
+    "ar": ""
+  },
+  "CLASS_TEACHER_UPDATE_FAILED": {
+    "en": "Failed to update class teacher",
+    "ar": ""
+  },
+  "FAILED_TO_FETCH_TEACHER_CLASSES": {
+    "en": "Failed to fetch teacher and class data",
+    "ar": ""
+  },
+ 
+  "FAILED_TO_REMOVE_CLASS_TEACHER": {
+    "en": "Failed to remove class teacher",
+    "ar": ""
+  },
+  "NAME_EMAIL_PASSWORD_REQUIRED": {
+  "en": "Name, email, and password are required",
+  "ar": ""
+},
+"TEACHER_WITH_THIS_EMAIL_ALREADY_EXISTS": {
+  "en": "A teacher with this email already exists",
+  "ar": ""
+},
+"TEACHER_WITH_THIS_PHONE_ALREADY_EXISTS": {
+  "en": "A teacher with this phone number already exists",
+  "ar": ""
+},
+
+"SALARY_REQUIRED_FIELDS": {
+  "en": "Teacher ID and month are required",
+  "ar": ""
+},
+
+"SALARY_RECORD_SAVE_FAILED": {
+  "en": "Failed to save salary record",
+  "ar": ""
+},
+"INVOICE_GENERATION_FAILED": {
+  "en": "Failed to generate salary invoice",
+  "ar": ""
+},
+"SALARY_EMAIL_FAILED": {
+  "en": "Failed to send salary notification email",
+  "ar": ""
+},
+
+"SALARIES_FETCH_FAILED": {
+  "en": "Failed to fetch salary records",
+  "ar": ""
+},
+"TIME_TABLE_FETCHED_SUCCESSFULLY": {
+  "en": "Timetable fetched successfully"
+},
+"TEACHER_ALREADY_ASSIGNED_IN_THIS_SLOT_IN_ANOTHER_CLASS": {
+  "en": "Teacher already assigned in another class"
+},
+"TIMETABLE_SLOT_ASSIGNED_OR_UPDATED": {
+  "en": "Timetable assigned"
+},
+"__TIMETABLE_ASSIGNED_SUCCESSFULLY__": {
+  "en": "Timetable assinged"
+},
+"TEACHER_ALREADY_ASSIGNED": {
+  "en": "Teacher already assigned"
+},
+"INVALID_START_OR_END_TIME": {
+  "en": "Invalid start or end date"
+},
+"SLOT_AVAILABLE": {
+  "en": "Slot is available"
+},
+"TIME_TABLE_RESET_SUCCESSFULLY": {
+  "en": "Time table reset succeffully"
+},
+"BREAK_REQUIRED_BETWEEN_PERIOD (5 mins)": {
+  "en": "Break is required of 5 min"
+},
+"BREAK_REQUIRED_BETWEEN_PERIOD (10 mins)": {
+  "en": "Break is required of 10 min"
+},
+"HOME_DATA_FETCHED":{
+  "en":"home page data fetch  successfully."
+},"ANNOUNCEMENTS_FETCHED_SUCCESSFULLY":{
+  "en":"ANNOUNCEMENTS FETCHED SUCCESSFULLY"
+},
+"DASHBOARD_FETCHED":{
+  "en":"Dashboard data fetched successfully"
+},
+"CLASS_TEACHER_ASSIGNED_SUCCESSFULLY":{
+  "en":"class teacher  assigned successfully"
+},
+"TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_":{
+ "en": "teacher already class techer of class"
+
+},
+"CLASS_TEACHER_ASSIGNMENT_FAILED":{
+  "en":" class teacher assigment failed."
 }
+}
+

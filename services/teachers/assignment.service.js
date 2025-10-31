@@ -15,178 +15,260 @@ const {
 } = require('../../helpers/helper')
 const Class = require('../../models/class/class.schema')
 module.exports = {
+uploadAssignment: async (
+  teacherId,
+  classId,
+  subject,
+  title,
+  description,
+  dueDate,
+  file
+) => {
+  try {
 
+    let teacherId= '69030162d92a9db366b14179'
+    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+      return { success: false, message: 'INVALID_TEACHER_ID' };
+    }
 
-  
-  uploadAssignment: async (
-    teacherId,
-    classId,
-    subject,
-    title,
-    description,
-    dueDate,
-    file
-  ) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(teacherId)) {
-        return { success: false, message: 'INVALID_TEACHER_ID' };
-      }
-      const teacher = await Teacher.findById(teacherId);
-      if (!teacher) {
-        return { success: false, message: 'TEACHER_NOT_FOUND' };
-      }
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) return { success: false, message: 'TEACHER_NOT_FOUND' };
 
-      if (!mongoose.Types.ObjectId.isValid(classId)) {
-        return { success: false, message: 'INVALID_CLASS_ID' };
-      }
-      const classExists = await Class.findById(classId);
-      if (!classExists) {
-        return { success: false, message: 'CLASS_NOT_FOUND' };
-      }
-      if (!subject || typeof subject !== 'string') {
-        return { success: false, message: 'INVALID_SUBJECT' };
-      }
-      const subjectExists = await Subject.findOne({ name: subject });
-      if (!subjectExists) {
-        return { success: false, message: 'SUBJECT_NOT_FOUND' };
-      }
-      const isSpecialized =
-        Array.isArray(teacher.subjectsHandled) &&
-        teacher.subjectsHandled.some((subj) => subj.subjectName === subject);
+    if (!mongoose.Types.ObjectId.isValid(classId)) {
+      return { success: false, message: 'INVALID_CLASS_ID' };
+    }
 
-      if (!isSpecialized) {
-        return { success: false, message: 'SUBJECT_NOT_ASSIGNED_TO_TEACHER' };
-      }
-      const filePath = file ? `/uploads/assignments/${file}` : null;
+    const classExists = await Class.findById(classId);
+    if (!classExists) return { success: false, message: 'CLASS_NOT_FOUND' };
 
-      const assignment = new Assignment({
-        title,
-        description,
-        dueDate,
-        fileUrl: filePath,
-        class: classId,
-        uploadedBy: teacherId,
-        subject: subject
-      });
+    if (!subject || typeof subject !== 'string') {
+      return { success: false, message: 'INVALID_SUBJECT' };
+    }
 
-      await assignment.save();
+    const subjectExists = await Subject.findOne({ name: subject });
+    if (!subjectExists)
+      return { success: false, message: 'SUBJECT_NOT_FOUND' };
 
-      return {
-        success: true,
-        message: 'ASSIGNMENT_UPLOADED_SUCCESSFULLY',
-        results: assignment
-      };
-    } catch (err) {
+    const isSpecialized =
+      Array.isArray(teacher.subjectsHandled) &&
+      teacher.subjectsHandled.some((subj) => subj.subjectName === subject);
+
+    if (!isSpecialized)
+      return { success: false, message: 'SUBJECT_NOT_ASSIGNED_TO_TEACHER' };
+
+    // ✅ Check for duplicate title (case-insensitive)
+    const existingAssignment = await Assignment.findOne({
+      title: { $regex: new RegExp(`^${title}$`, 'i') }
+    });
+
+    if (existingAssignment) {
       return {
         success: false,
-        message: 'SERVER_ERROR',
-        results: { error: err.message }
+        message: 'ASSIGNMENT_ALREADY_EXISTS_WITH_THIS_TITLE'
       };
     }
-  },
 
+    // ✅ Use formatted date (YYYY-MM-DD)
+    const formattedDate = new Date(dueDate).toISOString().split('T')[0];
 
-  updateAssignment: async (id, title, description, file = null) => {
-    try {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return {
-          success: false,
-          message: { en: 'ASSIGNMENT_ID_NOT_VALID' },
-          results: {}
-        }
-      }
-      const exist = await Assignment.findOne({_id : id})
-      if (!exist) {
-        return { success : false, messag : 'CLASS_NOT_FOUND'}
-      }
+    const filePath = file ? `/uploads/assignments/${file}` : null;
 
-    
-      const updateData = {}
-      if (title) updateData.title = title
-      if (description) updateData.description = description
-      if (file) updateData.fileUrl = `/uploads/assignments/${file}`
+    const assignment = new Assignment({
+      title,
+      description,
+      dueDate: formattedDate, // store as plain "YYYY-MM-DD"
+      fileUrl: filePath,
+      class: classId,
+      uploadedBy: teacherId,
+      subject
+    });
 
-      const updatedAssignment = await Assignment.findByIdAndUpdate(
-        id,
-        { $set: updateData },
-        { new: true, runValidators: true }
-      ).lean()
+    const saved = await assignment.save();
 
-      if (!updatedAssignment) {
-        return {
-          success: false,
-          message: { en: 'ASSIGNMENT_NOT_FOUND' },
-          results: {}
-        }
-      }
+    return {
+      success: true,
+      message: 'ASSIGNMENT_UPLOADED_SUCCESSFULLY',
+      results: saved
+    };
+  } catch (err) {
+    console.error('Upload Assignment Service Error:', err);
+    return { success: false, message: err.message };
+  }
+},
 
-      return {
-        success: true,
-        message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
-        results: updatedAssignment
-      }
-    } catch (err) {
+  updateAssignment: async (id, title, description, file = null, dueDate = null) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return {
         success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: err.message
+        message: { en: 'ASSIGNMENT_ID_NOT_VALID' },
+        results: {}
       }
     }
-  },
 
+    const exist = await Assignment.findOne({ _id: id })
+    if (!exist) {
+      return { success: false, message: { en: 'ASSIGNMENT_NOT_FOUND' } }
+    }
 
-  getAssignments: async (classId, subject, uploadedBy, page = 1, limit = 10) => {
-    try {
-      if (classId && !mongoose.Types.ObjectId.isValid(classId)) {
-        return {
-          success: false,
-          message: { en: 'CLASS_ID_NOT_VALID' },
-          results: {}
-        };
-      }
+    const updateData = {}
+    if (title) updateData.title = title
+    if (description) updateData.description = description
+    if (file) updateData.fileUrl = `/uploads/assignments/${file}`
+    if (dueDate) updateData.dueDate = new Date(dueDate)   // ✅ convert to Date object
 
-      if (uploadedBy && !mongoose.Types.ObjectId.isValid(uploadedBy)) {
-        return {
-          success: false,
-          message: { en: 'TEACHER_ID_NOT_VALID' },
-          results: {}
-        };
-      }
-      const matchQuery = {};
-      if (classId) matchQuery.class = new mongoose.Types.ObjectId(classId);
-      if (uploadedBy) matchQuery.uploadedBy = new mongoose.Types.ObjectId(uploadedBy);
-      if (subject) matchQuery.subject = subject;
+    const updatedAssignment = await Assignment.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).lean()
 
-
-      const pipeline = [
-        { $match: matchQuery },
-        ...getPaginationArrayJs(page, limit)
-      ];
-
-
-      const result = await Assignment.aggregate(pipeline);
-      const data = result[0] || {
-        docs: [],
-        totalDocs: 0,
-        limit,
-        page,
-        totalPages: 0
-      };
-
-      return {
-        success: true,
-        message: { en: 'ASSIGNMENTS_FETCHED_SUCCESSFULLY' },
-        results: data
-      };
-    } catch (err) {
+    if (!updatedAssignment) {
       return {
         success: false,
-        message: { en: 'SERVER_ERROR' },
-        results: { error: { en: err.message } }
+        message: { en: 'ASSIGNMENT_NOT_FOUND' },
+        results: {}
+      }
+    }
+
+    return {
+      success: true,
+      message: { en: 'ASSIGNMENT_UPDATED_SUCCESSFULLY' },
+      results: updatedAssignment
+    }
+  } catch (err) {
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: err.message
+    }
+  }
+},
+
+
+//  getAssignments: async (classId, subject, keyword, page = 1, limit = 10) => {
+//     try {
+//       // ✅ Validate classId if provided
+//       if (classId && !mongoose.Types.ObjectId.isValid(classId)) {
+//         return {
+//           success: false,
+//           message: { en: 'CLASS_ID_NOT_VALID' },
+//           results: {}
+//         }
+//       }
+
+//       // ✅ Base match query
+//       const matchQuery = {}
+//       if (classId) matchQuery.class = new mongoose.Types.ObjectId(classId)
+//       if (subject) matchQuery.subject = subject
+
+//       // ✅ Apply keyword filter
+//       filterByKeyword(matchQuery, keyword)
+
+//       // ✅ Lookup & Pagination
+//       const lookupPipeline = getAssignmentLookup(classId, subject)
+//       const paginationPipeline = getPaginationArrayJs(page, limit)
+
+//       // ✅ Full aggregation pipeline
+//       const pipeline = [
+//         { $match: matchQuery },
+//         ...lookupPipeline,
+//         ...paginationPipeline
+//       ]
+
+//       const result = await Assignment.aggregate(pipeline)
+
+//       const data = result[0] || {
+//         docs: [],
+//         totalDocs: 0,
+//         limit,
+//         page,
+//         totalPages: 0
+//       }
+
+//       return {
+//         success: true,
+//         message: { en: 'ASSIGNMENTS_FETCHED_SUCCESSFULLY' },
+//         results: data
+//       }
+//     } catch (err) {
+//       return {
+//         success: false,
+//         message: { en: 'SERVER_ERROR' },
+//         results: { error: { en: err.message } }
+//       }
+//     }
+//   }
+// ,
+
+getAssignments: async (teacherId, classId, subject, keyword, page = 1, limit = 10) => {
+  try {
+    // ✅ Validate teacherId
+    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+      return { success: false, message: { en: 'INVALID_TEACHER_ID' }, results: {} };
+    }
+
+    // ✅ Fetch teacher details
+    const teacher = await Teacher.findById(teacherId).lean();
+    if (!teacher) {
+      return { success: false, message: { en: 'TEACHER_NOT_FOUND' }, results: {} };
+    }
+
+    // ✅ Collect subjects teacher handles
+    const handledSubjects = teacher.subjectsHandled?.map(s => s.subjectName) || [];
+
+    if (!handledSubjects.length) {
+      return {
+        success: true,
+        message: { en: 'NO_SUBJECTS_ASSIGNED_TO_TEACHER' },
+        results: { docs: [] }
       };
     }
-  },
 
+    // ✅ Build match query
+    const matchQuery = { subject: { $in: handledSubjects } };
+    if (classId && mongoose.Types.ObjectId.isValid(classId))
+      matchQuery.class = new mongoose.Types.ObjectId(classId);
+    if (subject) matchQuery.subject = subject;
+
+    // ✅ Apply keyword filter
+    filterByKeyword(matchQuery, keyword);
+
+    // ✅ Lookup & Pagination
+    const lookupPipeline = getAssignmentLookup();
+    const paginationPipeline = getPaginationArrayJs(page, limit);
+
+    // ✅ Final aggregation pipeline
+    const pipeline = [
+      { $match: matchQuery },
+      ...lookupPipeline,
+      ...paginationPipeline
+    ];
+
+    const result = await Assignment.aggregate(pipeline);
+
+    const data = result[0] || {
+      docs: [],
+      totalDocs: 0,
+      limit,
+      page,
+      totalPages: 0
+    };
+
+    return {
+      success: true,
+      message: { en: 'ASSIGNMENTS_FETCHED_SUCCESSFULLY' },
+      results: data
+    };
+  } catch (err) {
+    console.error('getAssignments Error:', err);
+    return {
+      success: false,
+      message: { en: 'SERVER_ERROR' },
+      results: { error: { en: err.message } }
+    };
+  }
+},
 
   deleteAssignment: async (assignmentId) => {
     try {
@@ -221,9 +303,7 @@ module.exports = {
       }
     }
   },
-
-// 🧾 services/assignmentService.js
-  assignGradesToClassPerStudent: async ({ classId, gradesData }) => {
+ assignGradesToClassPerStudent: async ({ classId, gradesData }) => {
   try {
     // 🔹 Validate classId
     if (!mongoose.Types.ObjectId.isValid(classId)) {
@@ -236,7 +316,7 @@ module.exports = {
 
     // 🔹 Fetch all submissions of this class (with status field)
     const submissions = await Submission.find({ classId }).select(
-      'student assignment status isLate' // 🟢 Added status and isLate
+      'student assignment status isLate'
     );
 
     if (!submissions.length) {
@@ -247,6 +327,7 @@ module.exports = {
       };
     }
 
+    const validStatuses = ['Pending', 'Submitted']; // ✅ Only allowed values
     const gradeEntries = [];
 
     // 🔹 Loop through gradesData from frontend
@@ -264,15 +345,19 @@ module.exports = {
         const gradeValue =
           grade && ['A', 'B', 'C', 'D', 'F'].includes(grade) ? grade : null;
 
-        // 🔹 Build grade entry including submission status
+        // 🧹 Sanitize status value to prevent invalid enums
+        const safeStatus = validStatuses.includes(sub.status)
+          ? sub.status
+          : 'Pending';
+
         gradeEntries.push({
           student: sub.student,
           assignment: sub.assignment,
           marks: marks ?? null,
           grade: gradeValue,
           remark: remark || '',
-          status: sub.status || 'Pending', // 🟢 Include submission status
-          isLate: sub.isLate || false, // 🟢 Include isLate info for clarity
+          status: safeStatus, // ✅ Always valid now
+          isLate: sub.isLate || false,
           createdAt: new Date(),
           updatedAt: new Date()
         });
@@ -325,106 +410,152 @@ module.exports = {
       };
     }
   } catch (err) {
-    // ❌ Handle server errors gracefully
     return {
       success: false,
       message: { en: 'SERVER_ERROR' },
       results: err.message
     };
   }
-},
-
- // services/assignmentService.js
+}
+,
   updateGradeById: async ({ gradeId, marks, grade, remark }) => {
-  try {
-    // Find parent document that contains this grade subdocument
-    const parent = await Grade.findOne({ "grades._id": gradeId });
-    if (!parent) {
-      return { success: false, message: { en: "GRADE_NOT_FOUND" }, results: {} };
+    try {
+      const parent = await Grade.findOne({ 'grades._id': gradeId })
+
+      if (!parent) {
+        return {
+          success: false,
+          message: 'GRADE_NOT_FOUND',
+          results: {}
+        }
+      }
+      const target = parent.grades.id(gradeId)
+      if (!target) {
+        return {
+          success: false,
+          message: 'GRADE_NOT_FOUND',
+          results: {}
+        }
+      }
+
+      // ✅ Update only allowed fields
+      if (marks !== undefined) target.marks = marks
+      if (remark !== undefined) target.remark = remark
+
+      // Optional: Auto-calculate letter grade (A–F)
+      if (marks !== undefined) {
+        if (marks >= 90) target.grade = 'A'
+        else if (marks >= 75) target.grade = 'B'
+        else if (marks >= 60) target.grade = 'C'
+        else if (marks >= 40) target.grade = 'D'
+        else target.grade = 'F'
+      }
+
+      // ✅ Set status safely (use existing enum values only)
+      if (target.status === 'Pending') {
+        target.status = 'Submitted'
+      }
+
+      target.updatedAt = new Date()
+      parent.updatedAt = new Date()
+
+      // Save the document
+      await parent.save()
+
+      return {
+        success: true,
+        message: 'Grade updated successfully',
+        results: target
+      }
+    } catch (err) {
+      console.error('Error in updateGradeById:', err)
+      return {
+        success: false,
+        message: 'SERVER_ERROR',
+        results: err.message
+      }
     }
-
-    // Find the specific subdocument
-    const target = parent.grades.id(gradeId);
-    if (!target) {
-      return { success: false, message: { en: "GRADE_NOT_FOUND" }, results: {} };
-    }
-
-    // Update fields if provided
-    if (marks !== undefined) target.marks = marks;
-    if (grade && ["A", "B", "C", "D", "F"].includes(grade)) target.grade = grade;
-    if (remark !== undefined) target.remark = remark;
-
-    target.updatedAt = new Date();
-    parent.updatedAt = new Date();
-
-    await parent.save();
-
-    return { success: true, message: { en: "Grade updated successfully" }, results: target };
-  } catch (err) {
-    return { success: false, message: { en: "SERVER_ERROR" }, results: err.message };
-  }
-},
-
+  },
 
   deleteGrade: async (gradeId) => {
+    try {
+      // Find parent document containing this grade
+      const parent = await Grade.findOne({ 'grades._id': gradeId })
+      if (!parent) {
+        return {
+          success: false,
+          message: { en: 'GRADE_NOT_FOUND' },
+          results: {}
+        }
+      }
+
+      // Remove the subdocument
+      const target = parent.grades.id(gradeId)
+      if (!target) {
+        return {
+          success: false,
+          message: { en: 'GRADE_NOT_FOUND' },
+          results: {}
+        }
+      }
+
+      target.remove() // remove subdocument
+      parent.updatedAt = new Date()
+
+      await parent.save()
+
+      return {
+        success: true,
+        message: { en: 'GRADE_DELETED_SUCCESSFULLY' },
+        results: target // return deleted subdocument
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: { en: 'SERVER_ERROR' },
+        results: err.message
+      }
+    }
+  },
+
+getGrades: async ({ classId, assignmentId, keyword, status, page = 1, limit = 10 }) => {
   try {
-    // Find parent document containing this grade
-    const parent = await Grade.findOne({ "grades._id": gradeId });
-    if (!parent) {
-      return { success: false, message: { en: 'GRADE_NOT_FOUND' }, results: {} };
+    // ✅ Build base query
+    let whereStatement = {}
+
+    // ✅ Filter by classId (if provided)
+    if (classId && mongoose.Types.ObjectId.isValid(classId)) {
+      whereStatement.classId = new mongoose.Types.ObjectId(classId)
     }
 
-    // Remove the subdocument
-    const target = parent.grades.id(gradeId);
-    if (!target) {
-      return { success: false, message: { en: 'GRADE_NOT_FOUND' }, results: {} };
+    // ✅ Filter by assignmentId (if provided)
+    if (assignmentId && mongoose.Types.ObjectId.isValid(assignmentId)) {
+      // We’re matching inside grades array (after $unwind)
+      whereStatement['grades.assignment'] = new mongoose.Types.ObjectId(assignmentId)
     }
 
-    target.remove(); // remove subdocument
-    parent.updatedAt = new Date();
-
-    await parent.save();
-
-    return {
-      success: true,
-      message: { en: 'GRADE_DELETED_SUCCESSFULLY' },
-      results: target // return deleted subdocument
-    };
-  } catch (err) {
-    return {
-      success: false,
-      message: { en: 'SERVER_ERROR' },
-      results: err.message
-    };
-  }
-},
-
-
-  getGrades: async ({ classId, keyword, status, page = 1, limit = 10 }) => {
-  try {
-    // ✅ Always convert classId to ObjectId
-    let whereStatement = { classId: new mongoose.Types.ObjectId(classId) };
-
-    // 🔍 Apply keyword filter if provided
+    // 🔍 Keyword filter
     if (keyword) {
-      keyword = keyword.trim();
+      keyword = keyword.trim()
       whereStatement.$or = [
         { 'studentData.firstName': { $regex: keyword, $options: 'i' } },
         { 'studentData.lastName': { $regex: keyword, $options: 'i' } },
         { 'studentData.name': { $regex: keyword, $options: 'i' } }
-      ];
+      ]
     }
 
-    // ✅ Apply status filter (Pending / Submitted / Graded)
+    // ✅ Filter by status (Pending / Submitted / Graded)
     if (status && typeof status === 'string') {
-      whereStatement['grades.status'] = new RegExp(`^${status}$`, 'i');
+      whereStatement['grades.status'] = new RegExp(`^${status}$`, 'i')
     }
 
-    const pipeline = getGradeLookupPipeline({ whereStatement, page, limit });
-    const result = await Grade.aggregate(pipeline);
+    console.log('🧾 whereStatement:', whereStatement)
 
-    const totalDocs = result[0]?.totalCount[0]?.count || 0;
-    const totalPages = Math.ceil(totalDocs / limit);
+    const pipeline = getGradeLookupPipeline({ whereStatement, page, limit })
+    const result = await Grade.aggregate(pipeline)
+
+    const totalDocs = result[0]?.totalCount[0]?.count || 0
+    const totalPages = Math.ceil(totalDocs / limit)
 
     return {
       success: true,
@@ -436,16 +567,15 @@ module.exports = {
         page,
         totalPages
       }
-    };
+    }
   } catch (err) {
     return {
       success: false,
       message: { en: 'SERVER_ERROR' },
       results: err.message
-    };
+    }
   }
-},
-
+}
 
 
 }

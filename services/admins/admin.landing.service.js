@@ -84,6 +84,39 @@ const adminLandingService = {
             return { success: false, message: "SERVER_ERROR" };
         }
     },
+   getAnnouncements: async (filters = {}) => {
+    try {
+      const { audience, status, limit } = filters;
+      const query = {};
+
+      if (audience && audience !== "all") {
+        query.audience = { $in: [audience, "all"] };
+      }
+
+      if (status) {
+        query.status = status;
+      }
+
+      const announcements = await Announcement.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit ? Number(limit) : 0);
+
+      const base = process.env.STATIC_URL_?.replace(/\/+$/, '') || '';
+      const formatted = announcements.map(a => ({
+        ...a.toObject(),
+        attachments: a.attachments.map(att => `${base}${att}`)
+      }));
+
+      return {
+        success: true,
+        message:"Announcements fetch successfully.",
+        data: formatted,
+      };
+    } catch (error) {
+      console.error("Error while fetching announcements:", error);
+      return { success: false, message: "SERVER ERROR" };
+    }
+  },
 }
 
 module.exports = adminLandingService

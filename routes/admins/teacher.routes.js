@@ -3,7 +3,8 @@ const validationRule = require('../../validations/admins/auth')
 const { verifyToken } = require('../../middlewares/verifyToken')
 const teacherController = require('../../controllers/admins/teacher.controller.js');
 const { teacherDocFields } = require('../../middlewares/multer.setup.js')
-const { parseMultipartJSONFields } = require('../../helpers/helper.js')
+const { parseMultipartJSONFields } = require('../../helpers/helper.js');
+const teacherWalletController = require('../../controllers/teachers/wallet.controller.js');
 
 const jsonFieldsForTeacher = [
   'address',
@@ -21,8 +22,8 @@ const jsonFieldsForTeacher = [
 
 //   router.post('/reg', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('registerStudent'), adminStudentController.regStudent)
 
-router.post('/register', [verifyToken], teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('registerTeacher'), teacherController.registerTeacher);
-router.put('/update-teacher/:id', [verifyToken], teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('updateTeacher'), teacherController.updateTeacher);
+router.post('/register', teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), validationRule.validate('registerTeacher'), teacherController.registerTeacher);
+router.put('/update-teacher/:id', [verifyToken], teacherDocFields, parseMultipartJSONFields(jsonFieldsForTeacher), teacherController.updateTeacher);
 router.get('/getAllTeacher', [verifyToken], teacherController.getAllTeachers);
 router.get('/get-profile/:teacherId', [verifyToken], teacherController.getTeacherProfile);
 router.put('/soft-delete/:id', [verifyToken], teacherController.softDeleteTeacher);
@@ -42,10 +43,12 @@ router.delete('/delete-assign-teacher/:assignmentId', [verifyToken],teacherContr
 router.get("/get-teacher-assignments", [verifyToken],teacherController.getAssignTeacherToController);
 
 router.post('/attendance', [verifyToken], validationRule.validate('markAttendance'), teacherController.markAttendance);
-router.put('/attendance-update', [verifyToken], teacherController.updateAttendance);
+router.put('/attendance-update', [verifyToken],validationRule.validate('updateAttendance'), teacherController.updateAttendance);
 router.get('/get-attendance/:teacherId', [verifyToken], teacherController.getAttendance);
+router.get('/teacher-summary', verifyToken, teacherController.getTeacherAttendanceSummary);
 
 router.get('/get-all-attendance',[verifyToken], teacherController.getAllAttendance)
+
 
 
 

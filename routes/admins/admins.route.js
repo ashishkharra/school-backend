@@ -5,7 +5,7 @@ const { verifyToken } = require('../../middlewares/verifyToken')
 const admin = require('../../controllers/admins/admin.controller')
 const { adminDoc } = require('../../middlewares/multer.setup.js')
 const { parseMultipartJSONFields } = require('../../helpers/helper.js')
-
+const adminWalletController = require('../../controllers/admins/admin.wallet.controller.js');
 const adminJson = [
 
 ]
@@ -23,6 +23,8 @@ router
   .get('/country-list', [verifyToken], admin.countryList)
   .get('/profile', [verifyToken], admin.adminProfile)
   .post("/register", admin.registerAdmin)
-  .post("/logout", [verifyToken], admin.adminLogout);
+  .post("/logout", [verifyToken], admin.adminLogout)
+// router.post('/transaction', [verifyToken], adminWalletController.creditOrDebitTeacherWallet);
+// router.get('/:teacherId', [verifyToken], adminWalletController.getTeacherWallet);
 
 module.exports = router

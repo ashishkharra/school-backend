@@ -42,8 +42,7 @@ const fileFilter = (req, file, cb) => {
 
 const uploadAssignmanet = multer({
   storage: assignmentStorage,
-  fileFilter,
-  limits: { fileSize: constant.maxFileSizeLimit }
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 const uploadSubmission = multer({

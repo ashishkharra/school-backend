@@ -11,5 +11,8 @@ router.post('/mark-attendance', [verifyToken],validationRule.validate('markOrUpd
 router.get('/getstudent-attendance',[verifyToken],attendanceController.getAttendance)
 router.delete('/delete-attendance/:attendanceId',[verifyToken], attendanceController.deleteAttendance);
 router.put('/update-attendance/:attendanceId', [verifyToken],validationRule.validate('updateAttendance'),attendanceController.updateAttendanceController);
+router.get('/attendance-summary',[verifyToken], attendanceController.getAttendanceSummary
+);
+router.get('/teacher/students', [verifyToken], attendanceController.getStudentsByTeacherController);
 
 module.exports = router;

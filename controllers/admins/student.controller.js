@@ -4,6 +4,7 @@ const { responseData } = require("../../helpers/responseData.js");
 const { result } = require("lodash");
 const { deleteFileIfExists } = require('../../helpers/helper.js')
 const path = require('path')
+const mongoose = require('mongoose')
 
 const baseUploadDir = path.join(__dirname, '../../uploads');
 const normalizeUploadPath = (filePath) => {
@@ -81,60 +82,91 @@ module.exports = {
     }
   },
 
-  updateStudent: async (req, res) => {
-    try {
-      const { studentId } = req.params;
-      const files = req.files;
-      const bodyData = { ...req.body };
-
-      // Parse JSON strings if sent as strings
-      const fields = ["address", "parents", "guardian", "emergencyContact"];
-      fields.forEach(key => {
-        if (!bodyData[key] || bodyData[key] === "null") {
+ updateStudent: async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const files = req.files || {};
+    const bodyData = { ...req.body };
+ 
+    console.log("🟡 Starting update for student:", studentId);
+ 
+    // Validate studentId
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json(responseData("INVALID_STUDENT_ID", {}, req, false));
+    }
+ 
+    // Parse JSON strings safely
+    const jsonFields = ["address", "parents", "guardian", "emergencyContact"];
+    jsonFields.forEach(key => {
+      if (bodyData[key] && bodyData[key] !== "null" && typeof bodyData[key] === "string") {
+        try {
+          bodyData[key] = JSON.parse(bodyData[key]);
+        } catch (error) {
+          console.warn(`JSON parse failed for ${key}:`, error);
           bodyData[key] = key === "parents" ? [] : {};
-        } else if (typeof bodyData[key] === "string") {
-          try {
-            bodyData[key] = JSON.parse(bodyData[key]);
-          } catch {
-            bodyData[key] = key === "parents" ? [] : {};
-          }
         }
-      });
-
-      // 🖼️ File handling
-      const filePayload = {};
-
+      } else if (!bodyData[key] || bodyData[key] === "null") {
+        bodyData[key] = key === "parents" ? [] : {};
+      }
+    });
+ 
+    // File handling - DIRECT DATABASE APPROACH (safer)
+    const filePayload = {};
+    
+    try {
+      console.log("🟡 Fetching student data...");
+      
+      // APPROACH 1: Direct database call (recommended)
+      const currentStudent = await mongoose.model('Student').findById(studentId).lean();
+      
+      if (!currentStudent) {
+        console.log("🔴 Student not found in database");
+        return res.status(404).json(responseData("STUDENT_NOT_FOUND", {}, req, false));
+      }
+      
+      console.log("🟢 Student found:", currentStudent._id);
+ 
       // Single file fields
       const singleFileFields = ["profilePic", "aadharFront", "aadharBack", "transferCertificate"];
-      const student = await adminStudent.getStudentById(studentId); // Fetch current student for old file paths
-
+      
       for (const field of singleFileFields) {
         if (files[field]?.[0]) {
+          console.log(`🟡 Processing ${field} file`);
           // Delete old file if exists
-          if (student.result[0][field]) {
-            deleteFileIfExists(student.result[0][field]);
+          if (currentStudent[field]) {
+            try {
+              await deleteFileIfExists(currentStudent[field]);
+            } catch (error) {
+              console.warn(`Failed to delete old ${field}:`, error);
+            }
           }
           // Set new file path
           filePayload[field] = getRelativePath(files[field][0].path);
         } else if (bodyData[field] === null || bodyData[field] === "null") {
+          console.log(`🟡 Removing ${field} file`);
           // If explicitly null, remove the file
-          if (student.result[0][field]) {
-            deleteFileIfExists(student.result[0][field]);
+          if (currentStudent[field]) {
+            try {
+              await deleteFileIfExists(currentStudent[field]);
+            } catch (error) {
+              console.warn(`Failed to delete old ${field}:`, error);
+            }
           }
           filePayload[field] = null;
         }
-        // else leave undefined → don't overwrite old DB value
       }
-
+ 
       // Multiple files
       if (files.marksheets?.length) {
+        console.log("🟡 Processing marksheets");
         filePayload.marksheets = files.marksheets.map(f => ({
           exam: f.originalname,
           fileUrl: getRelativePath(f.path)
         }));
       }
-
+ 
       if (files.certificates?.length) {
+        console.log("🟡 Processing certificates");
         filePayload.certificates = files.certificates.map(f => ({
           name: f.originalname,
           issuedBy: bodyData.certificatesIssuedBy || null,
@@ -142,8 +174,9 @@ module.exports = {
           fileUrl: getRelativePath(f.path)
         }));
       }
-
+ 
       if (files.medicalRecords?.length) {
+        console.log("🟡 Processing medical records");
         filePayload.medicalRecords = files.medicalRecords.map(f => ({
           condition: bodyData.medicalCondition || "",
           doctorNote: bodyData.doctorNote || "",
@@ -151,32 +184,38 @@ module.exports = {
           fileUrl: getRelativePath(f.path)
         }));
       }
-
-      // 🧹 Clean nulls from bodyData
-      Object.keys(bodyData).forEach(key => {
-        if (bodyData[key] === "null" || bodyData[key] === null || bodyData[key] === undefined) {
-          delete bodyData[key];
-        }
-      });
-
-      // 🧠 Call Service
-      const result = await adminStudent.updateStudent(studentId, bodyData, filePayload);
-
-      if (!result.success) {
-        return res
-          .status(result.status || 400)
-          .json(responseData(result.message, {}, req, false));
-      }
-
-      return res
-        .status(200)
-        .json(responseData(result.message, result.student, req, true));
-
-    } catch (error) {
-      console.error("❌ UpdateStudent error:", error);
-      return res.status(500).json(responseData("SERVER_ERROR", {}, req, false));
+ 
+    } catch (fileError) {
+      console.error("❌ File handling error:", fileError);
+      return res.status(500).json(responseData("FILE_PROCESSING_ERROR", {}, req, false));
     }
-  },
+ 
+    // Clean nulls from bodyData
+    Object.keys(bodyData).forEach(key => {
+      if (bodyData[key] === "null" || bodyData[key] === null || bodyData[key] === undefined || bodyData[key] === "") {
+        delete bodyData[key];
+      }
+    });
+ 
+    console.log("🟡 Calling update service...");
+    
+    // Call Service
+    const result = await adminStudent.updateStudent(studentId, bodyData, filePayload);
+ 
+    if (!result || !result.success) {
+      const status = result?.status || 400;
+      const message = result?.message || "UPDATE_FAILED";
+      return res.status(status).json(responseData(message, {}, req, false));
+    }
+ 
+    console.log("🟢 Student updated successfully");
+    return res.status(200).json(responseData(result.message, result.student, req, true));
+ 
+  } catch (error) {
+    console.error("❌ UpdateStudent controller error:", error);
+    return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
+  }
+},
 
   // updateStudentClass: async (req, res) => {
   //   try {

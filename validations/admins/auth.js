@@ -434,16 +434,16 @@ module.exports.validate = (method) => {
           ),
 
         // Address (optional, object)
-        body('address')
-          .optional()
-          .isObject()
-          .trim().withMessage('ADDRESS_OBJECT_REQUIRED')
-          .bail()
-          .custom(
-            (addr) =>
-              !addr || (addr.street && addr.city && addr.state && addr.zipCode)
-          )
-          .withMessage('ADDRESS_INCOMPLETE'),
+        // body('address')
+        //   .optional()
+        //   .isObject()
+        //   .trim().withMessage('ADDRESS_OBJECT_REQUIRED')
+        //   .bail()
+        //   .custom(
+        //     (addr) =>
+        //       !addr || (addr.street && addr.city && addr.state && addr.zipCode)
+        //   )
+        //   .withMessage('ADDRESS_INCOMPLETE'),
 
         // Qualifications (optional, array of strings)
         body('qualifications')
@@ -540,6 +540,23 @@ module.exports.validate = (method) => {
         validatorMiddleware
       ]
     }
+//     case 'updateAttendance': {
+//   return [
+//        body('status')
+//       .notEmpty()
+//       .withMessage('STATUS_REQUIRED')
+//       .bail()
+//       .isString()
+//       .withMessage('STATUS_STRING_REQUIRED')
+//       .custom((value) => ['present', 'absent', 'leave'].includes(value.toLowerCase()))
+//       .withMessage('STATUS_INVALID')
+//       .bail()
+//       .customSanitizer((value) => value.toLowerCase()),
+
+//     validatorMiddleware
+//   ]
+// }
+
     case 'updateClassTeacherOf': {
       return [
         // classId is required and must be a valid ObjectId
@@ -685,6 +702,12 @@ module.exports.validate = (method) => {
           .bail()
           .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
           .withMessage('TEACHER_ID_INVALID'),
+        // body('teacherId')
+        //   .notEmpty()
+        //   .withMessage('TEACHER_ID_REQUIRED')
+        //   .bail()
+        //   .custom((value) => /^[0-9a-fA-F]{24}$/.test(value))
+        //   .withMessage('TEACHER_ID_INVALID'),
 
         // classId (required, ObjectId)
         body('classId')
@@ -1052,6 +1075,39 @@ module.exports.validate = (method) => {
 
       ]
     }
+
+case 'generateSalary': {
+     return [
+        // Teacher ID validation
+        body('teacherId')
+          .notEmpty()
+          .withMessage('TEACHER_ID_REQUIRED')
+          .custom((value) => mongoose.Types.ObjectId.isValid(value))
+          .withMessage('INVALID_TEACHER_ID'),
+
+        // Month validation (should be like 'October 2025' or '2025-10')
+        body('month')
+          .notEmpty()
+          .withMessage('MONTH_REQUIRED')
+          .isString()
+          .withMessage('MONTH_MUST_BE_STRING')
+          .custom((value) => {
+            const validMonthPattern =
+              /^(January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$/i
+            const validAltPattern = /^\d{4}-(0[1-9]|1[0-2])$/
+            if (validMonthPattern.test(value) || validAltPattern.test(value)) return true
+            throw new Error('MONTH_FORMAT_INVALID (e.g., October 2025 or 2025-10)')
+          }),
+
+        // Leaves validation (optional but must be a number >= 0)
+        body('leaves')
+          .optional()
+          .isInt({ min: 0 })
+          .withMessage('LEAVES_MUST_BE_POSITIVE_INTEGER'),
+
+        validatorMiddleware
+      ]
+}
     //---------
     case 'registerStudent': {
       return [
@@ -1100,11 +1156,11 @@ module.exports.validate = (method) => {
           .withMessage('PARENT_EMAIL_INVALID'),
 
         // Emergency Contact
-        body('emergencyContact')
-          .optional()
-          .trim()
-          .isObject()
-          .withMessage('EMERGENCY_CONTACT_INVALID'),
+        // body('emergencyContact')
+        //   .optional()
+        //   .trim()
+        //   .isObject()
+        //   .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
           .trim()
@@ -1410,11 +1466,11 @@ module.exports.validate = (method) => {
           .trim()
           .isMobilePhone('any')
           .withMessage('GUARDIAN_PHONE_INVALID'),
-        body('emergencyContact')
-          .optional()
-          .trim()
-          .isObject()
-          .withMessage('EMERGENCY_CONTACT_INVALID'),
+        // body('emergencyContact')
+        //   .optional()
+        //   .trim()
+        //   .isObject()
+        //   .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
           .trim()
