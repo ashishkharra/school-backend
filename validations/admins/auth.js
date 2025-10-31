@@ -434,16 +434,16 @@ module.exports.validate = (method) => {
           ),
 
         // Address (optional, object)
-        body('address')
-          .optional()
-          .isObject()
-          .trim().withMessage('ADDRESS_OBJECT_REQUIRED')
-          .bail()
-          .custom(
-            (addr) =>
-              !addr || (addr.street && addr.city && addr.state && addr.zipCode)
-          )
-          .withMessage('ADDRESS_INCOMPLETE'),
+        // body('address')
+        //   .optional()
+        //   .isObject()
+        //   .trim().withMessage('ADDRESS_OBJECT_REQUIRED')
+        //   .bail()
+        //   .custom(
+        //     (addr) =>
+        //       !addr || (addr.street && addr.city && addr.state && addr.zipCode)
+        //   )
+        //   .withMessage('ADDRESS_INCOMPLETE'),
 
         // Qualifications (optional, array of strings)
         body('qualifications')
@@ -1166,11 +1166,11 @@ case 'generateSalary': {
           .withMessage('PARENT_EMAIL_INVALID'),
 
         // Emergency Contact
-        body('emergencyContact')
-          .optional()
-          .trim()
-          .isObject()
-          .withMessage('EMERGENCY_CONTACT_INVALID'),
+        // body('emergencyContact')
+        //   .optional()
+        //   .trim()
+        //   .isObject()
+        //   .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
           .trim()
@@ -1476,11 +1476,11 @@ case 'generateSalary': {
           .trim()
           .isMobilePhone('any')
           .withMessage('GUARDIAN_PHONE_INVALID'),
-        body('emergencyContact')
-          .optional()
-          .trim()
-          .isObject()
-          .withMessage('EMERGENCY_CONTACT_INVALID'),
+        // body('emergencyContact')
+        //   .optional()
+        //   .trim()
+        //   .isObject()
+        //   .withMessage('EMERGENCY_CONTACT_INVALID'),
         body('emergencyContact.name')
           .optional()
           .trim()

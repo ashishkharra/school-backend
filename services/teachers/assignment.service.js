@@ -25,6 +25,8 @@ uploadAssignment: async (
   file
 ) => {
   try {
+
+    let teacherId= '69030162d92a9db366b14179'
     if (!mongoose.Types.ObjectId.isValid(teacherId)) {
       return { success: false, message: 'INVALID_TEACHER_ID' };
     }

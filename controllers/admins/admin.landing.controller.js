@@ -57,7 +57,17 @@ const adminLandingController = {
             console.error("Error while making announcement:", error);
             return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
         }
+    },
+     getAnnouncements: async (req, res) => {
+    try {
+      const { audience, status, limit } = req.query;
+      const result = await adminLandingService.getAnnouncements({ audience, status, limit });
+      res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+      console.error("Controller error (getAll):", error);
+      res.status(500).json({ success: false, message: "SERVER_ERROR" });
     }
+  },
 
 }
 

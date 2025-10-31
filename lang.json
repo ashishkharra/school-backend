@@ -1711,7 +1711,7 @@
     "ar": ""
   },
   "TEACHER_PROFILE_FETCHED": {
-    "en": "Teacher not found",
+    "en": "Fetching teacher profile successfully",
     "ar": ""
   },
   "SCHOOL_SETTINGS_FETCHED": {
@@ -2495,9 +2495,54 @@
 "SALARIES_FETCH_FAILED": {
   "en": "Failed to fetch salary records",
   "ar": ""
+},
+"TIME_TABLE_FETCHED_SUCCESSFULLY": {
+  "en": "Timetable fetched successfully"
+},
+"TEACHER_ALREADY_ASSIGNED_IN_THIS_SLOT_IN_ANOTHER_CLASS": {
+  "en": "Teacher already assigned in another class"
+},
+"TIMETABLE_SLOT_ASSIGNED_OR_UPDATED": {
+  "en": "Timetable assigned"
+},
+"__TIMETABLE_ASSIGNED_SUCCESSFULLY__": {
+  "en": "Timetable assinged"
+},
+"TEACHER_ALREADY_ASSIGNED": {
+  "en": "Teacher already assigned"
+},
+"INVALID_START_OR_END_TIME": {
+  "en": "Invalid start or end date"
+},
+"SLOT_AVAILABLE": {
+  "en": "Slot is available"
+},
+"TIME_TABLE_RESET_SUCCESSFULLY": {
+  "en": "Time table reset succeffully"
+},
+"BREAK_REQUIRED_BETWEEN_PERIOD (5 mins)": {
+  "en": "Break is required of 5 min"
+},
+"BREAK_REQUIRED_BETWEEN_PERIOD (10 mins)": {
+  "en": "Break is required of 10 min"
+},
+"HOME_DATA_FETCHED":{
+  "en":"home page data fetch  successfully."
+},"ANNOUNCEMENTS_FETCHED_SUCCESSFULLY":{
+  "en":"ANNOUNCEMENTS FETCHED SUCCESSFULLY"
+},
+"DASHBOARD_FETCHED":{
+  "en":"Dashboard data fetched successfully"
+},
+"CLASS_TEACHER_ASSIGNED_SUCCESSFULLY":{
+  "en":"class teacher  assigned successfully"
+},
+"TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_":{
+ "en": "teacher already class techer of class"
+
+},
+"CLASS_TEACHER_ASSIGNMENT_FAILED":{
+  "en":" class teacher assigment failed."
 }
-
-
-
 }
 

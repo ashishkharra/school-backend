@@ -12,7 +12,6 @@ const announcementDoc = [
 router
     .patch('/approve-testimonial/:testimonialId', [verifyToken], validationRule.validate('testimonial-status'), adminLandingController.approve)
     .get('/get-testimonials', [verifyToken], adminLandingController.getTestimonial)
-
-    .post('/make-announcement', [verifyToken], announcement, parseMultipartJSONFields(announcementDoc), validationRule.validate('make-announcement'), adminLandingController.makeAnnouncement)
-
+ .post('/make-announcement', [verifyToken], announcement, parseMultipartJSONFields(announcementDoc), validationRule.validate('make-announcement'), adminLandingController.makeAnnouncement)
+ .get('/get-announcement', adminLandingController.getAnnouncements)
 module.exports = router

@@ -127,7 +127,6 @@ async function assignTeacherToSlot({ teacherId, day, period, classId, subjectId,
 
     if (existingSlot) {
       await TeacherTimeTable.deleteOne({ _id: existingSlot._id });
-      console.log(`🧹 Old slot deleted: ${existingSlot._id}`);
     }
 
     // 7️⃣ Check break rule

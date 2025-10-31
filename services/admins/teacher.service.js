@@ -336,30 +336,39 @@ module.exports = {
     }
   },
 
-  getTeacherProfile: async (id) => {
-    try {
-      let profile = await Teacher.aggregate(teacherProfilePipeline(id))
-
-      if (!profile || profile.length === 0) {
-        return { success: false, message: 'TEACHER_NOT_FOUND' }
-      }
-
-      console.log('Teacher Profile:', profile[0])
-      profile[0].profilePic = process.env.STATIC_URL_ + profile[0].profilePic
-      profile[0].aadharFront = process.env.STATIC_URL_ + profile[0].aadharFront
-      profile[0].aadharBack = process.env.STATIC_URL_ + profile[0].aadharBack
-
-      return {
-        success: true,
-        message: 'TEACHER_PROFILE_FETCHED',
-        data: profile[0]
-      }
-    } catch (error) {
-      return { success: false, message: 'SERVER_ERROR' }
+getTeacherProfile: async (id) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { success: false, message: 'INVALID_TEACHER_ID' };
     }
-  },
 
-  //------------------
+    const _id = new mongoose.Types.ObjectId(id);
+
+    const profile = await Teacher.aggregate(teacherProfilePipeline(_id));
+
+    if (!profile || profile.length === 0) {
+      return { success: false, message: 'TEACHER_NOT_FOUND' };
+    }
+
+    const teacher = profile[0];
+
+    const base = process.env.STATIC_URL_?.replace(/\/+$/, '') || '';
+
+    ['profilePic', 'aadharFront', 'aadharBack'].forEach(field => {
+      teacher[field] = teacher[field] ? `${base}${teacher[field]}` : null;
+    });
+
+    return {
+      success: true,
+      message: 'TEACHER_PROFILE_FETCHED',
+      data: teacher
+    };
+
+  } catch (error) {
+    console.error("❌ getTeacherProfile error:", error);
+    return { success: false, message: 'SERVER_ERROR' };
+  }
+},
 
   assignClassTeacher: async ({ classId, teacherId }) => {
     try {
@@ -388,7 +397,7 @@ module.exports = {
       if (existingClassTeacher) {
         return {
           success: false,
-          message: `TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS_${existingClassTeacher.name}`,
+          message: `TEACHER_ALREADY_CLASS_TEACHER_OF_CLASS ${existingClassTeacher.name}`,
           data: {}
         }
       }
@@ -409,9 +418,9 @@ module.exports = {
         TEACHER_EMAIL: teacherData.email
       }
 
-      const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody)
-      if (!mailSent)
-        return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass }
+      // const mailSent = await sendEmailWithSlug('assign-class-teacher', dataBody)
+      // if (!mailSent)
+      //   return { success: false, message: 'EMAIL_NOT_SENT', data: savedClass }
 
       return {
         success: true,
@@ -555,7 +564,134 @@ module.exports = {
 
   //--------------------assign teacher by admin
 
-  assignTeacherToClass: async function ({
+  // assignTeacherToClass: async function ({
+  //   classId,
+  //   teacherId,
+  //   section,
+  //   subjectId,
+  //   startTime,
+  //   endTime
+  // }) {
+  //   try {
+  //     if (
+  //       !classId ||
+  //       !teacherId ||
+  //       !section ||
+  //       !subjectId ||
+  //       !startTime ||
+  //       !endTime
+  //     ) {
+  //       return { success: false, message: 'MISSING_REQUIRED_FIELDS', data: {} }
+  //     }
+
+  //     const startMinutes = convertToMinutes(startTime)
+  //     const endMinutes = convertToMinutes(endTime)
+
+  //     if (endMinutes <= startMinutes) {
+  //       return {
+  //         success: false,
+  //         message: 'END_TIME_MUST_BE_AFTER_START_TIME',
+  //         data: {}
+  //       }
+  //     }
+  //     const classData = await Class.findById(classId)
+  //     if (!classData)
+  //       return { success: false, message: 'CLASS_NOT_FOUND', data: {} }
+
+  //     const teacherData = await Teacher.findById(teacherId)
+  //     if (!teacherData)
+  //       return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
+
+  //     const subjectData = await subject.findById(subjectId)
+  //     if (!subjectData) {
+  //       return { success: false, message: 'SUBJECT_NOT_FOUND', data: {} }
+  //     }
+  //     const teacherConflict = await TeacherTimeTable.findOne({
+  //       teacherId: teacherId,
+  //       $and: [
+  //         { startMinutes: { $lt: endMinutes } },
+  //         { endMinutes: { $gt: startMinutes } }
+  //       ]
+  //     })
+
+  //     if (teacherConflict) {
+  //       return {
+  //         success: false,
+  //         message:
+  //           'TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT',
+  //         data: {}
+  //       }
+  //     }
+
+  //     const classConflict = await TeacherTimeTable.findOne({
+  //       classId: classId,
+  //       $and: [
+  //         { startMinutes: { $lt: endMinutes } },
+  //         { endMinutes: { $gt: startMinutes } }
+  //       ]
+  //     })
+  //     if (classConflict) {
+  //       return {
+  //         success: false,
+  //         message: 'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
+  //         data: {}
+  //       }
+  //     }
+
+  //     const newAssignment = new TeacherTimeTable({
+  //       class: classId,
+  //       section,
+  //       subject: subjectId,
+  //       teacher: teacherId,
+  //       startTime,
+  //       endTime,
+  //       startMinutes,
+  //       endMinutes
+  //     })
+
+  //     const savedAssignment = await newAssignment.save()
+  //     const dataBody = {
+  //       TEACHER_NAME: teacherData.name,
+  //       TEACHER_ID: teacherData._id.toString(),
+  //       CLASS_NAME: classData.name || 'N/A',
+  //       SECTION: section || assignment.section || 'N/A',
+  //       SUBJECT: subjectData ? subjectData.name : 'N/A',
+  //       OLD_START_TIME: assignment.startTime || 'N/A',
+  //       OLD_END_TIME: assignment.endTime || 'N/A',
+  //       NEW_START_TIME: startTime || assignment.startTime,
+  //       NEW_END_TIME: endTime || assignment.endTime,
+  //       UPDATED_DATE: new Date().toLocaleDateString('en-IN', {
+  //         timeZone: 'Asia/Kolkata'
+  //       }),
+  //       LOGIN_URL:
+  //         process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
+  //     }
+
+  //     const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
+
+  //     if (!isMailSent) {
+  //       return {
+  //         success: false,
+  //         message: 'EMAIL_NOT_SENT',
+  //         data: savedAssignment
+  //       }
+  //     }
+
+  //     return {
+  //       success: true,
+  //       message: 'TEACHER_ASSIGNED_TO_CLASS',
+  //       data: savedAssignment
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message || 'ASSIGNMENT_FAILED',
+  //       data: {}
+  //     }
+  //   }
+  // },
+
+assignTeacherToClass: async function ({
     classId,
     teacherId,
     section,
@@ -564,6 +700,7 @@ module.exports = {
     endTime
   }) {
     try {
+      // ✅ 1. Required field validation
       if (
         !classId ||
         !teacherId ||
@@ -572,238 +709,111 @@ module.exports = {
         !startTime ||
         !endTime
       ) {
-        return { success: false, message: 'MISSING_REQUIRED_FIELDS', data: {} }
+        return { success: false, message: "MISSING_REQUIRED_FIELDS", data: {} };
       }
 
-      const startMinutes = convertToMinutes(startTime)
-      const endMinutes = convertToMinutes(endTime)
-
+      // ✅ 2. Validate start/end times
+      const startMinutes = convertToMinutes(startTime);
+      const endMinutes = convertToMinutes(endTime);
       if (endMinutes <= startMinutes) {
         return {
           success: false,
-          message: 'END_TIME_MUST_BE_AFTER_START_TIME',
+          message: "END_TIME_MUST_BE_AFTER_START_TIME",
           data: {}
-        }
-      }
-      const classData = await Class.findById(classId)
-      if (!classData)
-        return { success: false, message: 'CLASS_NOT_FOUND', data: {} }
-
-      const teacherData = await Teacher.findById(teacherId)
-      if (!teacherData)
-        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
-
-      const subjectData = await subject.findById(subjectId)
-      if (!subjectData) {
-        return { success: false, message: 'SUBJECT_NOT_FOUND', data: {} }
-      }
-      const teacherConflict = await TeacherTimeTable.findOne({
-        teacherId: teacherId,
-        $and: [
-          { startMinutes: { $lt: endMinutes } },
-          { endMinutes: { $gt: startMinutes } }
-        ]
-      })
-
-      if (teacherConflict) {
-        return {
-          success: false,
-          message:
-            'TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT',
-          data: {}
-        }
+        };
       }
 
-      const classConflict = await TeacherTimeTable.findOne({
-        classId: classId,
-        $and: [
-          { startMinutes: { $lt: endMinutes } },
-          { endMinutes: { $gt: startMinutes } }
-        ]
-      })
-      if (classConflict) {
-        return {
-          success: false,
-          message: 'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
-          data: {}
-        }
-      }
-
-      const newAssignment = new TeacherTimeTable({
-        class: classId,
-        section,
-        subject: subjectId,
-        teacher: teacherId,
-        startTime,
-        endTime,
-        startMinutes,
-        endMinutes
-      })
-
-      const savedAssignment = await newAssignment.save()
-      const dataBody = {
-        TEACHER_NAME: teacherData.name,
-        TEACHER_ID: teacherData._id.toString(),
-        CLASS_NAME: classData.name || 'N/A',
-        SECTION: section || assignment.section || 'N/A',
-        SUBJECT: subjectData ? subjectData.name : 'N/A',
-        OLD_START_TIME: assignment.startTime || 'N/A',
-        OLD_END_TIME: assignment.endTime || 'N/A',
-        NEW_START_TIME: startTime || assignment.startTime,
-        NEW_END_TIME: endTime || assignment.endTime,
-        UPDATED_DATE: new Date().toLocaleDateString('en-IN', {
-          timeZone: 'Asia/Kolkata'
-        }),
-        LOGIN_URL:
-          process.env.TEACHER_LOGIN_URL || 'https://yourapp.com/teacher/login'
-      }
-
-      const isMailSent = await sendEmail('teacher-profile-updated', dataBody)
-
-      if (!isMailSent) {
-        return {
-          success: false,
-          message: 'EMAIL_NOT_SENT',
-          data: savedAssignment
-        }
-      }
-
-      return {
-        success: true,
-        message: 'TEACHER_ASSIGNED_TO_CLASS',
-        data: savedAssignment
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'ASSIGNMENT_FAILED',
-        data: {}
-      }
-    }
-  },
-
-  assignTeacherToClass: async function ({
-    classId,
-    teacherId,
-    section,
-    subjectId,
-    startTime,
-    endTime
-  }) {
-    try {
-      if (
-        !classId ||
-        !teacherId ||
-        !section ||
-        !subjectId ||
-        !startTime ||
-        !endTime
-      ) {
-        return { success: false, message: 'MISSING_REQUIRED_FIELDS', data: {} }
-      }
-
-      const startMinutes = convertToMinutes(startTime)
-      const endMinutes = convertToMinutes(endTime)
-      if (endMinutes <= startMinutes) {
-        return {
-          success: false,
-          message: 'END_TIME_MUST_BE_AFTER_START_TIME',
-          data: {}
-        }
-      }
-
-      const schoolSettings = await SchoolSettings.findOne()
+      // ✅ 3. Validate school settings
+      const schoolSettings = await SchoolSettings.findOne();
       if (!schoolSettings) {
         return {
           success: false,
-          message: 'SCHOOL_SETTINGS_NOT_FOUND',
+          message: "SCHOOL_SETTINGS_NOT_FOUND",
           data: {}
-        }
+        };
       }
 
-      const schoolStartMinutes = convertToMinutes(
-        schoolSettings.schoolTiming.startTime
-      )
-      const schoolEndMinutes = convertToMinutes(
-        schoolSettings.schoolTiming.endTime
-      )
+      const schoolStartMinutes = convertToMinutes(schoolSettings.schoolTiming.startTime);
+      const schoolEndMinutes = convertToMinutes(schoolSettings.schoolTiming.endTime);
 
       if (startMinutes < schoolStartMinutes || endMinutes > schoolEndMinutes) {
         return {
           success: false,
           message: `CLASS_TIME_MUST_BE_WITHIN_SCHOOL_TIMINGS (${schoolSettings.schoolTiming.startTime} - ${schoolSettings.schoolTiming.endTime})`,
           data: {}
-        }
+        };
       }
 
+      // ✅ 4. Check for lunch break overlap
       if (
-        schoolSettings.periods.lunchBreak.isEnabled &&
+        schoolSettings.periods?.lunchBreak?.isEnabled &&
         schoolSettings.periods.lunchBreak.time
       ) {
-        const lunchStartMinutes = convertToMinutes(
-          schoolSettings.periods.lunchBreak.time
-        )
-        const lunchEndMinutes =
-          lunchStartMinutes + (schoolSettings.periods.lunchBreak.duration || 0)
+        const lunchStartMinutes = convertToMinutes(schoolSettings.periods.lunchBreak.time);
+        const lunchEndMinutes = lunchStartMinutes + (schoolSettings.periods.lunchBreak.duration || 0);
 
         const isOverlapWithLunch =
-          startMinutes < lunchEndMinutes && endMinutes > lunchStartMinutes
+          startMinutes < lunchEndMinutes && endMinutes > lunchStartMinutes;
 
         if (isOverlapWithLunch) {
           return {
             success: false,
-            message: `CLASS_TIME_OVERLAPS_LUNCH_BREAK (${
-              schoolSettings.periods.lunchBreak.time
-            } - ${formatMinutesToTime(lunchEndMinutes)})`,
+            message: `CLASS_TIME_OVERLAPS_LUNCH_BREAK (${schoolSettings.periods.lunchBreak.time} - ${formatMinutesToTime(lunchEndMinutes)})`,
             data: {}
-          }
+          };
         }
       }
 
-      const classData = await Class.findById(classId)
+      // ✅ 5. Validate class, teacher, subject existence
+      const classData = await Class.findById(classId);
       if (!classData)
-        return { success: false, message: 'CLASS_NOT_FOUND', data: {} }
+        return { success: false, message: "CLASS_NOT_FOUND", data: {} };
 
-      const teacherData = await Teacher.findById(teacherId)
+      const teacherData = await Teacher.findById(teacherId);
       if (!teacherData)
-        return { success: false, message: 'TEACHER_NOT_FOUND', data: {} }
+        return { success: false, message: "TEACHER_NOT_FOUND", data: {} };
 
-      const subjectData = await Subject.findById(subjectId)
-      if (!subjectData) {
-        return { success: false, message: 'SUBJECT_NOT_FOUND', data: {} }
-      }
+      const subjectData = await Subject.findById(subjectId);
+      if (!subjectData)
+        return { success: false, message: "SUBJECT_NOT_FOUND", data: {} };
 
+      // ✅ 6. Check for teacher conflict (same time)
       const teacherConflict = await TeacherTimeTable.findOne({
         teacher: teacherId,
         $and: [
           { startMinutes: { $lt: endMinutes } },
           { endMinutes: { $gt: startMinutes } }
         ]
-      })
+      });
+
       if (teacherConflict) {
         return {
           success: false,
           message:
-            'TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT',
+            "TEACHER_ALREADY_ASSIGNED_TO_ANOTHER_CLASS_DURING_THIS_TIME_SLOT",
           data: {}
-        }
+        };
       }
 
+      // ✅ 7. Check for class conflict (same time)
       const classConflict = await TeacherTimeTable.findOne({
         class: classId,
         $and: [
           { startMinutes: { $lt: endMinutes } },
           { endMinutes: { $gt: startMinutes } }
         ]
-      })
+      });
+
       if (classConflict) {
         return {
           success: false,
-          message: 'CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT',
+          message:
+            "CLASS_ALREADY_HAS_TEACHER_ASSIGNED_DURING_THIS_TIME_SLOT",
           data: {}
-        }
+        };
       }
 
+      // ✅ 8. Save new assignment
       const newAssignment = new TeacherTimeTable({
         class: classId,
         section,
@@ -813,43 +823,26 @@ module.exports = {
         endTime,
         startMinutes,
         endMinutes
-      })
+      });
 
-      const savedAssignment = await newAssignment.save()
+      const savedAssignment = await newAssignment.save();
 
-      const dataBody = {
-        email: teacherData.email,
-        TeacherName: teacherData.name,
-        ClassName: classData.name,
-        Section: section,
-        SubjectName: subjectData ? subjectData.name : 'N/A',
-        StartTime: startTime,
-        EndTime: endTime,
-        URL: 'https://your-school-portal.com'
-      }
-      const isMailSent = await helper.sendEmail(
-        'teacher-class-assignment-notification',
-        dataBody
-      )
-      if (!isMailSent) {
-        return { success: false, message: 'EMAIL_NOT_SENT' }
-      }
-
+      // ✅ 9. Success response
       return {
         success: true,
-        message: 'TEACHER_ASSIGNED_TO_CLASS',
+        message: "TEACHER_ASSIGNED_TO_CLASS",
         data: savedAssignment
-      }
+      };
     } catch (error) {
+      console.error("Error assigning teacher to class:", error);
       return {
         success: false,
-        message: error.message || 'ASSIGNMENT_FAILED',
+        message: error.message || "ASSIGNMENT_FAILED",
         data: {}
-      }
+      };
     }
   },
-
-  updateTeacherAssign: async ({
+ updateTeacherAssign: async ({
     assignmentId,
     classId,
     teacherId,

@@ -848,16 +848,8 @@ const adminStudent = {
                     },
                     { $unwind: "$student" },
                     { $match: { "student.isRemoved": 0, ...matchStudent } },
-                    {
-                        $group: {
-                            _id: "$student._id"
-                        }
-                    },
-                    {
-                        $count: "total"
-                    }
+                    { $count: "total" }
                 ]);
-
             }
 
             let data = classId

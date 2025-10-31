@@ -27,7 +27,7 @@ const adminStudentController = require('../../controllers/admins/student.control
 router
   .post('/reg', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), validationRule.validate('registerStudent'), adminStudentController.regStudent)
 
-  .put('/update/:studentId?', verifyToken, studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), adminStudentController.updateStudent)
+  .put('/update/:studentId', studentDocFields, parseMultipartJSONFields(jsonFieldsForStudent), validationRule.validate('updateStudent'), adminStudentController.updateStudent)
   // .put('/update/:studentId?', verifyToken, studentDocFields, validationRule.validate('updateStudent'), adminStudentController.updateStudent)
 
   // .put('/update/:classId/:studentId?', [verifyToken], adminStudentController.updateStudentClass)

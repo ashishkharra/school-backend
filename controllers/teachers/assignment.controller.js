@@ -6,7 +6,8 @@ const { constant } = require('lodash')
 module.exports = {
 uploadAssignmentController: async (req, res) => {
   try {
-    const teacherId = req.user?._id;
+const teacherId = req.user?._id || req.user?.id;
+    // const teacherId = req.params;
     const { classId, subject, title, description, dueDate } = req.body;
     const file = req.file ? req.file.filename : '';
 

@@ -14,7 +14,7 @@ const timetableController = {
                 return res.status(400).json(responseData(result?.message, {}, req, result?.success || false))
             }
 
-            return res.status(200).json(responseData(result.message, result, req, result.success));
+            return res.status(200).json(responseData(result?.message, result, req, result?.success));
         } catch (error) {
             console.error("Error in checkSlot controller:", error);
             return res.status(500).json(responseData("SERVER_ERROR", { error: error.message }, req, false));
